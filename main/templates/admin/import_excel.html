@@ -1,0 +1,14 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <h1>📥 Importer un fichier Excel (.xlsx)</h1>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <p>
+      <input type="file" name="excel_file" accept=".xlsx" required>
+    </p>
+    <button type="submit" class="default">Importer</button>
+  </form>
+
+{% endblock %}

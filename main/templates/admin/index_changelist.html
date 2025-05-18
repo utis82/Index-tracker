@@ -1,0 +1,16 @@
+<!-- main/templates/admin/index_changelist.html -->
+{% extends "admin/change_list.html" %}
+
+{% block object-tools %}
+    <div class="object-tools">
+        <ul>
+            <li>
+                <a href="{% url 'main:index_import_excel' %}" class="addlink">
+                    📥 Importer fichier Excel
+                </a>
+            </li>
+        </ul>
+    </div>
+    {{ block.super }}
+{% endblock %}
+
