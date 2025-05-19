@@ -9,7 +9,7 @@
 <ul>
   {% for index in index_list %}
     <li>
-      <a href="{% url 'main:index_viewer' %}?index_id={{ index.id }}">
+      <a href="{% url 'main:index_viewer' index.id %}">
         {{ index.name }}
       </a>
     </li>

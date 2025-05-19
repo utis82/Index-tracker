@@ -10,6 +10,7 @@ from main.models import Index, IndexValue
 import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
+from django.http import JsonResponse
 
 
 def login_view(request):
@@ -67,4 +68,16 @@ from django.contrib.auth import logout
 def logout_view(request):
     logout(request)
     return redirect("main:home")
+
+def search_index(request):
+    term = request.GET.get('term', '')
+    results = []
+
+    if term:
+        indexes = Index.objects.filter(name__icontains=term)[:10]
+        results = [{'id': index.id, 'name': index.name} for index in indexes]
+
+    return JsonResponse(results, safe=False)
+
+
 
