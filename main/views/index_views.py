@@ -86,5 +86,9 @@ def import_excel_view(request):
 
 @login_required
 def liste_index_view(request):
-    index_list = Index.objects.all().order_by("name")  # trié par nom
-    return render(request, "liste_index.html", {"index_list": index_list})
+    index_list = Index.objects.all().order_by("name")
+    return render(request, "liste_index.html", {
+        "index_list": index_list,     # pour la liste affichée
+        "all_indexes": index_list     # pour la barre de recherche
+    })
+
