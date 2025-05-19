@@ -6,17 +6,23 @@
 </head>
 <body>
     <header>
-        <nav>
+        <nav style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
             <a href="{% url 'main:home' %}">🏠 Accueil</a> |
             <a href="{% url 'main:dashboard' %}">📊 Dashboard</a> |
             <a href="{% url 'main:liste_index' %}">📄 Liste des Index</a> |
             <a href="{% url 'main:index_viewer' %}">📈 Index Viewer</a> |
             {% if user.is_authenticated %}
-                <a href="{% url 'main:logout' %}">🔒 Déconnexion</a>
-
+              <a href="{% url 'main:logout' %}">🔒 Déconnexion</a>
             {% else %}
-                <a href="{% url 'main:login' %}">🔑 Connexion</a>
+              <a href="{% url 'main:login' %}">🔑 Connexion</a>
             {% endif %}
+          </div>
+          <div>
+            {% if request.resolver_match.url_name in 'dashboard liste_index' %}
+              {% include "components/search_bar.html" with all_indexes=index_list %}
+            {% endif %}
+          </div>
         </nav>
         <hr>
     </header>

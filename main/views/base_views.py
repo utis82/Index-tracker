@@ -30,6 +30,7 @@ def login_view(request):
 
 @login_required
 def dashboard(request):
+    index_list = Index.objects.all().order_by("name")
     return render(request, "dashboard.html")
 
 
