@@ -1,20 +1,27 @@
-<h1>📊 Visualisation d’un index</h1>
+{% extends 'base.html' %}
 
-<form method="get">
-    <label for="index_id">Choisir un index :</label>
-    <select name="index_id" id="index_id">
-        {% for idx in all_indexes %}
-            <option value="{{ idx.id }}" {% if idx.id|stringformat:"s" == selected_index_id %}selected{% endif %}>
-                {{ idx.name }}
-            </option>
-        {% endfor %}
+{% block title %}Index Viewer{% endblock %}
+
+{% block content %}
+  <h1>📈 Visualiseur d’index</h1>
+
+  <form method="get">
+    <label for="index_id">Sélectionnez un index :</label>
+    <select name="index_id" id="index_id" onchange="this.form.submit()">
+      <option value="">-- Choisissez --</option>
+      {% for index in all_indexes %}
+        <option value="{{ index.id }}"
+          {% if index.id|stringformat:"s" == selected_index_id %}selected{% endif %}>
+          {{ index.name }}
+        </option>
+      {% endfor %}
     </select>
-    <button type="submit">Afficher</button>
-</form>
+  </form>
 
-{% if chart %}
+  {% if chart %}
     <h2>Graphique</h2>
-    <img src="data:image/png;base64,{{ chart }}" alt="Graphique index">
-{% elif selected_index_id %}
-    <p>Aucune donnée disponible pour cet index.</p>
-{% endif %}
+    <img src="data:image/png;base64,{{ chart }}" alt="Graphique de l’index">
+  {% elif selected_index_id %}
+    <p>❌ Aucune donnée disponible pour cet index.</p>
+  {% endif %}
+{% endblock %}
