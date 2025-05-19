@@ -1,9 +1,16 @@
-<h1>📄 Liste des index disponibles</h1>
+{% extends 'base.html' %}
 
-<ul>
-  {% for index in index_list %}
-    <li>{{ index.name }}</li>
-  {% empty %}
-    <li>Aucun index disponible pour le moment.</li>
-  {% endfor %}
-</ul>
+{% block title %}Liste des index{% endblock %}
+
+{% block content %}
+  <h1>📄 Liste des index disponibles</h1>
+
+  <ul>
+    {% for index in index_list %}
+      <li>{{ index.name }}</li>
+    {% empty %}
+      <li>Aucun index disponible pour le moment.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}
+

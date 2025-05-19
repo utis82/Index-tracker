@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Ma plateforme Index{% endblock %}</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="{% url 'main:home' %}">🏠 Accueil</a> |
+            <a href="{% url 'main:dashboard' %}">📊 Dashboard</a> |
+            <a href="{% url 'main:liste_index' %}">📄 Liste des Index</a> |
+            <a href="{% url 'main:index_viewer' %}">📈 Index Viewer</a> |
+            {% if user.is_authenticated %}
+                <a href="{% url 'main:logout' %}">🔒 Déconnexion</a>
+
+            {% else %}
+                <a href="{% url 'main:login' %}">🔑 Connexion</a>
+            {% endif %}
+        </nav>
+        <hr>
+    </header>
+
+    <main>
+        {% block content %}
+        <!-- Contenu de chaque page ici -->
+        {% endblock %}
+    </main>
+</body>
+</html>
