@@ -4,14 +4,26 @@
 
 {% block content %}
 
-  <h1>📄 Liste des index disponibles</h1>
+<h1>📄 Liste des index disponibles</h1>
 
 <ul>
   {% for index in index_list %}
-    <li>
+    <li style="display: flex; align-items: center; gap: 10px;">
       <a href="{% url 'main:index_viewer' index.id %}">
         {{ index.name }}
       </a>
+      {% if user.is_authenticated %}
+        <form method="post" action="{% url 'main:toggle_favorite' index.id %}">
+          {% csrf_token %}
+          <button type="submit" style="border: none; background: none; cursor: pointer;">
+            {% if index in user.userprofile.favorite_indexes.all %}
+              ⭐
+            {% else %}
+              ☆
+            {% endif %}
+          </button>
+        </form>
+      {% endif %}
     </li>
   {% empty %}
     <li>Aucun index disponible pour le moment.</li>

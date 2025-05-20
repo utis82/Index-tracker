@@ -18,6 +18,19 @@
     </select>
   </form>
 
+  {% if current_index %}
+    <h2>
+      {{ current_index.name }}
+      <a href="{% url 'main:toggle_favorite' current_index.id %}" style="text-decoration: none;">
+        {% if current_index in user.userprofile.favorite_indexes.all %}
+          ⭐
+        {% else %}
+          ☆
+        {% endif %}
+      </a>
+    </h2>
+  {% endif %}
+
   {% if chart %}
     <h2>Graphique</h2>
     <img src="data:image/png;base64,{{ chart }}" alt="Graphique de l’index">
