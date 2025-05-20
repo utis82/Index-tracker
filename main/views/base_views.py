@@ -31,8 +31,45 @@ def login_view(request):
 
 @login_required
 def dashboard(request):
-    index_list = Index.objects.all().order_by("name")
-    return render(request, "dashboard.html")
+    user_profile = request.user.userprofile
+    favorites = user_profile.favorite_indexes.all()
+
+    charts = []
+    for index in favorites:
+        print("Traitement de :", index.name)
+        values = IndexValue.objects.filter(index=index).order_by("date")
+        print("Nb de valeurs :", values.count())
+
+        if values.exists():
+            dates = [v.date for v in values]
+            val = [v.value for v in values]
+
+            fig, ax = plt.subplots(figsize=(4, 2))
+            ax.plot(dates, val, marker='o')
+            ax.set_title(index.name)
+            ax.set_xlabel("Date")
+            ax.set_ylabel("Valeur")
+            ax.grid(True)
+
+            buffer = BytesIO()
+            plt.tight_layout()
+            fig.autofmt_xdate()
+            plt.savefig(buffer, format="png")
+            buffer.seek(0)
+            image_png = buffer.getvalue()
+            buffer.close()
+            chart = base64.b64encode(image_png).decode("utf-8")
+            charts.append({"name": index.name, "chart": chart})
+
+            plt.close(fig)
+
+    print("Nombre de graphiques générés :", len(charts))
+
+    return render(request, "dashboard.html", {
+        "charts": charts,
+        "user": request.user
+    })
+
 
 
 

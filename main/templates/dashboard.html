@@ -10,4 +10,19 @@
   <ul>
     <li><a href="{% url 'main:liste_index' %}">Voir la liste des index</a></li>
   </ul>
+
+  {% if charts %}
+    <h3>📊 Vos index favoris</h3>
+    <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+      {% for item in charts %}
+        <div style="flex: 1 1 calc(33.33% - 20px); max-width: calc(33.33% - 20px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 10px; border-radius: 10px;">
+          <h4 style="text-align: center;">{{ item.name }}</h4>
+          <img src="data:image/png;base64,{{ item.chart }}" alt="Graphique pour {{ item.name }}" style="width: 100%;">
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>Vous n'avez pas encore sélectionné d'index favoris.</p>
+  {% endif %}
+
 {% endblock %}
