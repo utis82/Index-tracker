@@ -4,71 +4,76 @@
     <meta charset="UTF-8">
     <title>{% block title %}Ma plateforme Index{% endblock %}</title>
 </head>
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const input = document.getElementById('index-search');
-      const suggestionsBox = document.getElementById('suggestions');
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const input = document.getElementById('index-search');
+  const suggestionsBox = document.getElementById('suggestions');
 
-      input.addEventListener('input', function () {
-        const query = input.value;
-
-        if (query.length < 2) {
-          suggestionsBox.innerHTML = '';
-          return;
-        }
-
-        fetch(`/search-index/?term=${encodeURIComponent(query)}`)
-          .then(response => response.json())
-          .then(data => {
-            suggestionsBox.innerHTML = '';
-            data.forEach(index => {
-              const div = document.createElement('div');
-              div.textContent = index.name;
-              div.style.cursor = 'pointer';
-              div.addEventListener('click', () => {
-                window.location.href = `/index-viewer/${index.id}/`;
-              });
-              suggestionsBox.appendChild(div);
-            });
+  input.addEventListener('input', function () {
+    const query = input.value;
+    if (query.length < 2) {
+      suggestionsBox.innerHTML = '';
+      return;
+    }
+    fetch(`/search-index/?term=${encodeURIComponent(query)}`)
+      .then(response => response.json())
+      .then(data => {
+        suggestionsBox.innerHTML = '';
+        data.forEach(index => {
+          const div = document.createElement('div');
+          div.textContent = index.name;
+          div.style.cursor = 'pointer';
+          div.addEventListener('click', () => {
+            window.location.href = `/index-viewer/${index.id}/`;
           });
+          suggestionsBox.appendChild(div);
+        });
       });
+  });
 
-      // Fermer les suggestions si on clique ailleurs
-      document.addEventListener('click', function (e) {
-        if (!document.getElementById('index-search-form').contains(e.target)) {
-          suggestionsBox.innerHTML = '';
-        }
-      });
-    });
-    </script>
+  document.addEventListener('click', function (e) {
+    if (!document.getElementById('index-search-form').contains(e.target)) {
+      suggestionsBox.innerHTML = '';
+    }
+  });
+});
+</script>
 
 <body>
-    <header>
-        
-        <nav style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <a href="{% url 'main:home' %}">🏠 Accueil</a> |
-            <a href="{% url 'main:dashboard' %}">📊 Dashboard</a> |
-            <a href="{% url 'main:liste_index' %}">📄 Liste des Index</a> ||
-            {% if user.is_authenticated %}
-              <a href="{% url 'main:logout' %}">🔒 Déconnexion</a>
-            {% else %}
-              <a href="{% url 'main:login' %}">🔑 Connexion</a>
-            {% endif %}
-          </div>
-            <form id="index-search-form" autocomplete="off" style="position: relative;">
-              <input type="text" id="index-search" placeholder="Rechercher un index..." />
-              <div id="suggestions" style="position: absolute; background: white; border: 1px solid #ccc; z-index: 1000;"></div>
-            </form>
+<header>
+  <nav style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <a href="{% url 'main:home' %}">🏠 Accueil</a> |
+      <a href="{% url 'main:dashboard' %}">📊 Dashboard</a> |
+      <a href="{% url 'main:liste_index' %}">📄 Liste des Index</a> |
 
-        </nav>
-        <hr>
-    </header>
+      {% if user.is_authenticated %}
+        {% with level=user.userprofile.subscription_level %}
+          {% if level == "pack5" or level == "pack10" or level == "premium" %}
+            <a href="{% url 'main:index_import_excel' %}">📤 Import Excel</a> |
+          {% endif %}
+          {% if level == "premium" %}
+            <a href="{% url 'main:upload' %}">🛠 Admin Upload</a> |
+          {% endif %}
+        {% endwith %}
+        <a href="{% url 'main:logout' %}">🔒 Déconnexion</a>
+      {% else %}
+        <a href="{% url 'main:login' %}">🔑 Connexion</a>
+      {% endif %}
+    </div>
 
-    <main>
-        {% block content %}
-        <!-- Contenu de chaque page ici -->
-        {% endblock %}
-    </main>
+    <form id="index-search-form" autocomplete="off" style="position: relative;">
+      <input type="text" id="index-search" placeholder="Rechercher un index..." />
+      <div id="suggestions" style="position: absolute; background: white; border: 1px solid #ccc; z-index: 1000;"></div>
+    </form>
+  </nav>
+  <hr>
+</header>
+
+<main>
+  {% block content %}
+  <!-- Contenu de chaque page ici -->
+  {% endblock %}
+</main>
 </body>
 </html>

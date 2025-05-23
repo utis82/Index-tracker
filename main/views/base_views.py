@@ -21,7 +21,8 @@ def login_view(request):
 
         if user is not None:
             login(request, user)
-            return redirect("dashboard")
+            return redirect("main:dashboard")
+
         else:
             return render(request, "login.html",
                           {"error": "Identifiants invalides."})
@@ -36,9 +37,7 @@ def dashboard(request):
 
     charts = []
     for index in favorites:
-        print("Traitement de :", index.name)
         values = IndexValue.objects.filter(index=index).order_by("date")
-        print("Nb de valeurs :", values.count())
 
         if values.exists():
             dates = [v.date for v in values]
@@ -60,17 +59,15 @@ def dashboard(request):
             buffer.close()
             chart = base64.b64encode(image_png).decode("utf-8")
             charts.append({"name": index.name, "chart": chart})
-
             plt.close(fig)
 
-    print("Nombre de graphiques générés :", len(charts))
-
-    return render(request, "dashboard.html", {
-        "charts": charts,
-        "user": request.user
-    })
-
-
+    return render(
+        request,
+        "dashboard.html",
+        {
+            "charts": charts,
+            "subscription": user_profile.subscription_plan,  # 👈 Ajout
+        })
 
 
 def is_admin(user):
@@ -99,12 +96,15 @@ def register_view(request):
 def home(request):
     return render(request, "home.html")
 
+
 from django.contrib.auth import logout
+
 
 @login_required
 def logout_view(request):
     logout(request)
     return redirect("main:home")
+
 
 def search_index(request):
     term = request.GET.get('term', '')
@@ -117,4 +117,34 @@ def search_index(request):
     return JsonResponse(results, safe=False)
 
 
+@login_required
+def choose_primary_index(request):
+    user_profile = request.user.userprofile
+    max_changes = 3
 
+    if user_profile.subscription_plan != 'free':
+        return redirect('main:dashboard')
+
+    if request.method == 'POST':
+        new_index_id = request.POST.get('index_id')
+        if new_index_id:
+            new_index = Index.objects.get(id=new_index_id)
+            if user_profile.primary_index != new_index:
+                if user_profile.primary_index_change_count >= max_changes:
+                    return render(
+                        request, "choose_primary_index.html", {
+                            "indexes":
+                            Index.objects.all(),
+                            "error":
+                            "Vous avez atteint la limite de modifications."
+                        })
+                user_profile.primary_index = new_index
+                user_profile.primary_index_change_count += 1
+                user_profile.save()
+                return redirect('main:dashboard')
+
+    return render(
+        request, "choose_primary_index.html", {
+            "indexes": Index.objects.all(),
+            "current_index": user_profile.primary_index
+        })
