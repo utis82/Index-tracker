@@ -3,30 +3,73 @@ from django.contrib.auth.models import User
 
 # Ce modèle représente un index (exemple : "CUIVRE - LME", "ALUMINIUM - LME", etc.)
 class Index(models.Model):
-    name = models.CharField(max_length=100)  # Le nom de l'index (chaine de caractères limitée à 100 caractères)
+    name = models.CharField(max_length=100)
 
     def __str__(self):
-        return self.name  # Ce que Django affiche dans l’interface admin ou en console (affiche le nom)
+        return self.name
 
-# Ce modèle représente une valeur d’un index à une certaine date (ex : "CUIVRE - LME" le 01/01/2024 → 8400)
+
+# Ce modèle représente une valeur d’un index à une certaine date
 class IndexValue(models.Model):
     index = models.ForeignKey(
-        Index,                      # Référence à un objet de type Index (clé étrangère)
-        on_delete=models.CASCADE,  # Si l’index est supprimé, ses valeurs le sont aussi automatiquement
-        related_name='values'      # Permet d’accéder facilement aux valeurs d’un index (ex : mon_index.values.all())
+        Index,
+        on_delete=models.CASCADE,
+        related_name='values'
     )
-    date = models.DateField()      # La date à laquelle la valeur de l’index a été enregistrée
-    value = models.FloatField()    # La valeur numérique de l’index ce jour-là (ex : 8400.5)
+    date = models.DateField()
+    value = models.FloatField()
 
     def __str__(self):
-        # Affiche par exemple : "CUIVRE - LME - 2024-01-01: 8400.5"
         return f"{self.index.name} - {self.date}: {self.value}"
+
 
 # Ce modèle représente des infos supplémentaires liées à l'utilisateur
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    subscription_valid = models.BooleanField(default=False)
+
+    PLAN_CHOICES = [
+        ('free', 'Gratuit'),
+        ('pack_5', 'Pack 5 index'),
+        ('pack_10', 'Pack 10 index'),
+        ('premium', 'Premium'),
+    ]
+    subscription_plan = models.CharField(
+        max_length=20,
+        choices=PLAN_CHOICES,
+        default='free'
+    )
+
     favorite_indexes = models.ManyToManyField(Index, blank=True)
 
-    def __str__(self):
-        return f"Profil de {self.user.username}"
+    # Champs pour gérer l’index principal
+    primary_index = models.ForeignKey(
+        Index,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='users_with_primary_index'
+    )
+    primary_index_change_count = models.PositiveIntegerField(default=0)
+
+    # Méthodes utilitaires
+    def index_limit(self):
+        return {
+            'free': 1,
+            'pack_5': 5,
+            'pack_10': 10,
+            'premium': float('inf')
+        }[self.subscription_plan]
+
+    def change_limit(self):
+        return {
+            'free': 3,
+            'pack_5': 5,
+            'pack_10': 10,
+            'premium': float('inf')
+        }[self.subscription_plan]
+
+    def can_add_favorite(self):
+        return self.favorite_indexes.count() < self.index_limit()
+
+    def can_modify_favorites(self):
+        return self.primary_index_change_count < self.change_limit()

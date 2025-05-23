@@ -5,6 +5,21 @@
 {% block content %}
   <h1>📈 Visualiseur d’index</h1>
 
+  {% with level=user.userprofile.subscription_level %}
+    <p><strong>🪪 Niveau d'abonnement :</strong> {{ level|capfirst }}</p>
+
+    {% if level == "free" %}
+      <p style="color: orange;">⚠️ Vous êtes sur la version gratuite. Vous avez accès à un seul index à la fois.</p>
+      <p><a href="#">🎁 Passer à un forfait supérieur</a></p>
+    {% elif level == "pack5" %}
+      <p style="color: green;">✅ Forfait 5 index. Vous pouvez explorer jusqu’à 5 index favoris.</p>
+    {% elif level == "pack10" %}
+      <p style="color: green;">✅ Forfait 10 index. Vous bénéficiez d’un accès étendu.</p>
+    {% elif level == "premium" %}
+      <p style="color: blue;">✨ Accès premium : visualisation illimitée, comparaisons, exports…</p>
+    {% endif %}
+  {% endwith %}
+
   <form method="get">
     <label for="index_id">Sélectionnez un index :</label>
     <select name="index_id" id="index_id" onchange="this.form.submit()">

@@ -11,6 +11,21 @@
     <li><a href="{% url 'main:liste_index' %}">Voir la liste des index</a></li>
   </ul>
 
+  {% with level=user.userprofile.subscription_level %}
+    <p><strong>🪪 Niveau d'abonnement :</strong> {{ subscription|capfirst }}</p>
+
+    {% if level == "free" %}
+      <p style="color: orange;">⚠️ Vous utilisez la version gratuite. Vous pouvez suivre 1 seul index favori.</p>
+      <p><a href="#">🎁 Passer à un forfait supérieur</a></p>
+    {% elif level == "pack5" %}
+      <p style="color: green;">✅ Vous pouvez suivre jusqu'à 5 index favoris.</p>
+    {% elif level == "pack10" %}
+      <p style="color: green;">✅ Vous pouvez suivre jusqu'à 10 index favoris.</p>
+    {% elif level == "premium" %}
+      <p style="color: blue;">✨ Accès premium : index illimités, analyses avancées, fonctions d'import…</p>
+    {% endif %}
+  {% endwith %}
+
   {% if charts %}
     <h3>📊 Vos index favoris</h3>
     <div style="display: flex; flex-wrap: wrap; gap: 20px;">

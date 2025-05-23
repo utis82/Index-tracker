@@ -3,6 +3,7 @@ from django.http import HttpResponseRedirect
 from django.urls import path
 from django.shortcuts import render
 from django.contrib import messages
+from .models import UserProfile
 
 import pandas as pd
 
@@ -11,6 +12,7 @@ from .models import Index, IndexValue
 # Enregistrement des modèles dans l'admin classique
 admin.site.register(IndexValue)
 
+
 @admin.register(Index)
 class IndexAdmin(admin.ModelAdmin):
     change_list_template = "admin/index_changelist.html"
@@ -18,9 +20,7 @@ class IndexAdmin(admin.ModelAdmin):
     def get_urls(self):
         # On ajoute une URL personnalisée qui sera utilisée pour uploader le fichier Excel
         urls = super().get_urls()
-        custom_urls = [
-            path("import-excel/", self.import_excel_view)
-        ]
+        custom_urls = [path("import-excel/", self.import_excel_view)]
         return custom_urls + urls
 
     def import_excel_view(self, request):
@@ -44,7 +44,9 @@ class IndexAdmin(admin.ModelAdmin):
                     index_obj, _ = Index.objects.get_or_create(name=index_name)
 
                     # Ajoute la valeur correspondante
-                    IndexValue.objects.create(index=index_obj, date=date, value=value)
+                    IndexValue.objects.create(index=index_obj,
+                                              date=date,
+                                              value=value)
 
                 messages.success(request, "Importation réussie ✔")
             except Exception as e:
@@ -53,3 +55,8 @@ class IndexAdmin(admin.ModelAdmin):
             return HttpResponseRedirect("../")
 
         return render(request, "admin/import_excel.html")
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'subscription_plan')
