@@ -1,16 +1,13 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
-from django.contrib.auth import authenticate, login
+from django.http import HttpResponse, JsonResponse
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.admin.views.decorators import staff_member_required
 import pandas as pd
 from datetime import datetime
 from main.models import Index, IndexValue
-import matplotlib.pyplot as plt
-import base64
-from io import BytesIO
-from django.http import JsonResponse
+import json
 
 
 def login_view(request):
@@ -22,7 +19,6 @@ def login_view(request):
         if user is not None:
             login(request, user)
             return redirect("main:dashboard")
-
         else:
             return render(request, "login.html",
                           {"error": "Identifiants invalides."})
@@ -38,36 +34,21 @@ def dashboard(request):
     charts = []
     for index in favorites:
         values = IndexValue.objects.filter(index=index).order_by("date")
-
         if values.exists():
-            dates = [v.date for v in values]
+            dates = [v.date.strftime("%Y-%m-%d") for v in values]
             val = [v.value for v in values]
 
-            fig, ax = plt.subplots(figsize=(4, 2))
-            ax.plot(dates, val, marker='o')
-            ax.set_title(index.name)
-            ax.set_xlabel("Date")
-            ax.set_ylabel("Valeur")
-            ax.grid(True)
+            charts.append({
+                "id": index.id,  # ✅ Ajout de l'ID nécessaire pour les URLs
+                "name": index.name,
+                "dates_json": json.dumps(dates),
+                "values_json": json.dumps(val),
+            })
 
-            buffer = BytesIO()
-            plt.tight_layout()
-            fig.autofmt_xdate()
-            plt.savefig(buffer, format="png")
-            buffer.seek(0)
-            image_png = buffer.getvalue()
-            buffer.close()
-            chart = base64.b64encode(image_png).decode("utf-8")
-            charts.append({"name": index.name, "chart": chart})
-            plt.close(fig)
-
-    return render(
-        request,
-        "dashboard.html",
-        {
-            "charts": charts,
-            "subscription": user_profile.subscription_plan,  # 👈 Ajout
-        })
+    return render(request, "dashboard.html", {
+        "charts": charts,
+        "subscription": user_profile.subscription_plan,
+    })
 
 
 def is_admin(user):
@@ -87,7 +68,7 @@ def register_view(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('dashboard')  # redirige vers le tableau de bord
+            return redirect('dashboard')
     else:
         form = UserCreationForm()
     return render(request, 'register.html', {'form': form})
@@ -95,9 +76,6 @@ def register_view(request):
 
 def home(request):
     return render(request, "home.html")
-
-
-from django.contrib.auth import logout
 
 
 @login_required
@@ -133,10 +111,8 @@ def choose_primary_index(request):
                 if user_profile.primary_index_change_count >= max_changes:
                     return render(
                         request, "choose_primary_index.html", {
-                            "indexes":
-                            Index.objects.all(),
-                            "error":
-                            "Vous avez atteint la limite de modifications."
+                            "indexes": Index.objects.all(),
+                            "error": "Vous avez atteint la limite de modifications."
                         })
                 user_profile.primary_index = new_index
                 user_profile.primary_index_change_count += 1

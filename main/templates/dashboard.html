@@ -4,40 +4,74 @@
 
 {% block content %}
 
-  <h2>Bienvenue {{ user.username }} 👋</h2>
+<h2>Bienvenue {{ user.username }} 👋</h2>
 
-  <p>Ceci est votre tableau de bord. Vous pouvez :</p>
-  <ul>
-    <li><a href="{% url 'main:liste_index' %}">Voir la liste des index</a></li>
-  </ul>
+<p>Ceci est votre tableau de bord. Vous pouvez :</p>
+<ul>
+  <li><a href="{% url 'main:liste_index' %}">Voir la liste des index</a></li>
+</ul>
 
-  {% with level=user.userprofile.subscription_level %}
-    <p><strong>🪪 Niveau d'abonnement :</strong> {{ subscription|capfirst }}</p>
+{% with level=user.userprofile.subscription_level %}
+  <p><strong>🪪 Niveau d'abonnement :</strong> {{ subscription|capfirst }}</p>
 
-    {% if level == "free" %}
-      <p style="color: orange;">⚠️ Vous utilisez la version gratuite. Vous pouvez suivre 1 seul index favori.</p>
-      <p><a href="#">🎁 Passer à un forfait supérieur</a></p>
-    {% elif level == "pack5" %}
-      <p style="color: green;">✅ Vous pouvez suivre jusqu'à 5 index favoris.</p>
-    {% elif level == "pack10" %}
-      <p style="color: green;">✅ Vous pouvez suivre jusqu'à 10 index favoris.</p>
-    {% elif level == "premium" %}
-      <p style="color: blue;">✨ Accès premium : index illimités, analyses avancées, fonctions d'import…</p>
-    {% endif %}
-  {% endwith %}
-
-  {% if charts %}
-    <h3>📊 Vos index favoris</h3>
-    <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-      {% for item in charts %}
-        <div style="flex: 1 1 calc(33.33% - 20px); max-width: calc(33.33% - 20px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 10px; border-radius: 10px;">
-          <h4 style="text-align: center;">{{ item.name }}</h4>
-          <img src="data:image/png;base64,{{ item.chart }}" alt="Graphique pour {{ item.name }}" style="width: 100%;">
-        </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <p>Vous n'avez pas encore sélectionné d'index favoris.</p>
+  {% if level == "free" %}
+    <p style="color: orange;">⚠️ Vous utilisez la version gratuite. Vous pouvez suivre 1 seul index favori.</p>
+    <p><a href="#">🎁 Passer à un forfait supérieur</a></p>
+  {% elif level == "pack5" %}
+    <p style="color: green;">✅ Vous pouvez suivre jusqu'à 5 index favoris.</p>
+  {% elif level == "pack10" %}
+    <p style="color: green;">✅ Vous pouvez suivre jusqu'à 10 index favoris.</p>
+  {% elif level == "premium" %}
+    <p style="color: blue;">✨ Accès premium : index illimités, analyses avancées, fonctions d'import…</p>
   {% endif %}
+{% endwith %}
+
+{% if charts %}
+  <h3>📊 Vos index favoris</h3>
+  <div class="dashboard-grid">
+    {% for item in charts %}
+      <a href="{% url 'main:index_viewer' index_id=item.id %}" class="card-link">
+        <div class="card">
+          <h4>{{ item.name }}</h4>
+          <div id="chart-{{ forloop.counter }}" class="chart-box"></div>
+          <script>
+            const dates_{{ forloop.counter }} = {{ item.dates_json|safe }};
+            const values_{{ forloop.counter }} = {{ item.values_json|safe }};
+
+            const layout_{{ forloop.counter }} = {
+              height: 220,
+              margin: { l: 30, r: 10, t: 30, b: 30 },
+              plot_bgcolor: 'rgba(0,0,0,0)',
+              paper_bgcolor: 'rgba(0,0,0,0)',
+              xaxis: { showgrid: false, zeroline: false, type: 'date' },
+              yaxis: { showgrid: true, zeroline: false, gridcolor: 'rgba(200,200,255,0.2)' },
+              font: { color: '#1e2a36' }
+            };
+
+            const trace_{{ forloop.counter }} = {
+              x: dates_{{ forloop.counter }},
+              y: values_{{ forloop.counter }},
+              mode: 'lines+markers',
+              line: { shape: 'spline', color: '#60a5fa', width: 3 },
+              marker: { size: 5, color: '#38bdf8', line: { color: 'white', width: 1.5 } },
+              hoverinfo: 'skip', // ✅ pas de tooltip
+              type: 'scatter',
+              fill: 'tozeroy',
+              fillcolor: 'rgba(96, 165, 250, 0.15)'
+            };
+
+            Plotly.newPlot('chart-{{ forloop.counter }}', [trace_{{ forloop.counter }}], layout_{{ forloop.counter }}, {
+              staticPlot: true,
+              responsive: true,
+              useResizeHandler: true
+            });
+          </script>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <p>Vous n'avez pas encore sélectionné d'index favoris.</p>
+{% endif %}
 
 {% endblock %}
