@@ -1,79 +1,112 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>{% block title %}Ma plateforme Index{% endblock %}</title>
+  <meta charset="UTF-8">
+  <title>{% block title %}Ma plateforme Index{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>  <!-- ✅ déplacé ici -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const input = document.getElementById('index-search');
-  const suggestionsBox = document.getElementById('suggestions');
-
-  input.addEventListener('input', function () {
-    const query = input.value;
-    if (query.length < 2) {
-      suggestionsBox.innerHTML = '';
-      return;
-    }
-    fetch(`/search-index/?term=${encodeURIComponent(query)}`)
-      .then(response => response.json())
-      .then(data => {
-        suggestionsBox.innerHTML = '';
-        data.forEach(index => {
-          const div = document.createElement('div');
-          div.textContent = index.name;
-          div.style.cursor = 'pointer';
-          div.addEventListener('click', () => {
-            window.location.href = `/index-viewer/${index.id}/`;
-          });
-          suggestionsBox.appendChild(div);
-        });
-      });
-  });
-
-  document.addEventListener('click', function (e) {
-    if (!document.getElementById('index-search-form').contains(e.target)) {
-      suggestionsBox.innerHTML = '';
-    }
-  });
-});
-</script>
-
 <body>
-<header>
-  <nav style="display: flex; justify-content: space-between; align-items: center;">
-    <div>
-      <a href="{% url 'main:home' %}">🏠 Accueil</a> |
-      <a href="{% url 'main:dashboard' %}">📊 Dashboard</a> |
-      <a href="{% url 'main:liste_index' %}">📄 Liste des Index</a> |
+  <header>
+    <nav class="navbar">
+      <div class="nav-left">
+        <a href="{% url 'main:home' %}"><i data-lucide="home"></i> Accueil</a>
+        <a href="{% url 'main:dashboard' %}"><i data-lucide="bar-chart-3"></i> Dashboard</a>
+        <a href="{% url 'main:liste_index' %}"><i data-lucide="file-text"></i> Liste des Index</a>
 
-      {% if user.is_authenticated %}
-        {% with level=user.userprofile.subscription_level %}
-          {% if level == "pack5" or level == "pack10" or level == "premium" %}
-            <a href="{% url 'main:index_import_excel' %}">📤 Import Excel</a> |
-          {% endif %}
-          {% if level == "premium" %}
-            <a href="{% url 'main:upload' %}">🛠 Admin Upload</a> |
-          {% endif %}
-        {% endwith %}
-        <a href="{% url 'main:logout' %}">🔒 Déconnexion</a>
-      {% else %}
-        <a href="{% url 'main:login' %}">🔑 Connexion</a>
-      {% endif %}
-    </div>
+        {% if user.is_authenticated %}
+          {% with level=user.userprofile.subscription_level %}
+            {% if level == "pack5" or level == "pack10" or level == "premium" %}
+              <a href="{% url 'main:index_import_excel' %}"><i data-lucide="upload"></i> Import Excel</a>
+            {% endif %}
+            {% if level == "premium" %}
+              <a href="{% url 'main:upload' %}"><i data-lucide="settings"></i> Admin Upload</a>
+            {% endif %}
+          {% endwith %}
+        {% endif %}
+      </div>
 
-    <form id="index-search-form" autocomplete="off" style="position: relative;">
-      <input type="text" id="index-search" placeholder="Rechercher un index..." />
-      <div id="suggestions" style="position: absolute; background: white; border: 1px solid #ccc; z-index: 1000;"></div>
-    </form>
-  </nav>
-  <hr>
-</header>
+      <div class="nav-center">
+        <form id="index-search-form" autocomplete="off" class="search-form">
+          <input type="text" id="index-search" placeholder="Rechercher un index..." />
+          <div id="suggestions" class="suggestions-box"></div>
+        </form>
+      </div>
 
-<main>
-  {% block content %}
-  <!-- Contenu de chaque page ici -->
-  {% endblock %}
-</main>
+      <div class="nav-right">
+        <label class="theme-switch">
+          <input type="checkbox" id="theme-toggle">
+          <span class="slider"></span>
+        </label>
+        {% if user.is_authenticated %}
+          <a href="{% url 'main:logout' %}"><i data-lucide="log-out"></i> Déconnexion</a>
+        {% else %}
+          <a href="{% url 'main:login' %}"><i data-lucide="log-in"></i> Connexion</a>
+        {% endif %}
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    const toggle = document.getElementById('theme-toggle');
+    const darkClass = 'dark-mode';
+
+    if (localStorage.getItem('theme') === 'dark') {
+      document.body.classList.add(darkClass);
+      toggle.checked = true;
+    }
+
+    toggle.addEventListener('change', () => {
+      if (toggle.checked) {
+        document.body.classList.add(darkClass);
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.body.classList.remove(darkClass);
+        localStorage.setItem('theme', 'light');
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const input = document.getElementById('index-search');
+      const suggestionsBox = document.getElementById('suggestions');
+
+      input.addEventListener('input', function () {
+        const query = input.value;
+        if (query.length < 2) {
+          suggestionsBox.innerHTML = '';
+          return;
+        }
+        fetch(`/search-index/?term=${encodeURIComponent(query)}`)
+          .then(response => response.json())
+          .then(data => {
+            suggestionsBox.innerHTML = '';
+            data.forEach(index => {
+              const div = document.createElement('div');
+              div.textContent = index.name;
+              div.className = 'suggestion-item';
+              div.addEventListener('click', () => {
+                window.location.href = `/index-viewer/${index.id}/`;
+              });
+              suggestionsBox.appendChild(div);
+            });
+          });
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!document.getElementById('index-search-form').contains(e.target)) {
+          suggestionsBox.innerHTML = '';
+        }
+      });
+    });
+  </script>
 </body>
 </html>
