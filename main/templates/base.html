@@ -6,14 +6,16 @@
   <title>{% block title %}Ma plateforme Index{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>  <!-- ✅ déplacé ici -->
+  <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
   <header>
     <nav class="navbar">
       <div class="nav-left">
-        <a href="{% url 'main:home' %}"><i data-lucide="home"></i> Accueil</a>
+        <a href="{% url 'main:home' %}" class="logo">
+          <img src="{% static 'img/logo.png' %}" alt="Logo Index Tracker" class="logo-image" />
+        </a>
         <a href="{% url 'main:dashboard' %}"><i data-lucide="bar-chart-3"></i> Dashboard</a>
         <a href="{% url 'main:liste_index' %}"><i data-lucide="file-text"></i> Liste des Index</a>
 
@@ -53,6 +55,10 @@
   <main>
     {% block content %}{% endblock %}
   </main>
+
+  <footer>
+    © 2025 Index-Tracker. Tous droits réservés.
+  </footer>
 
   <script>
     lucide.createIcons();
