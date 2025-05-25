@@ -3,6 +3,34 @@
 {% block title %}Accueil{% endblock %}
 
 {% block content %}
-  <h1>Bienvenue sur la page d'accueil</h1>
-  <p>Ceci est une plateforme de suivi des index.</p>
+
+<div class="hero-container">
+  <svg class="animated-wave" viewBox="0 0 1440 320" preserveAspectRatio="none">
+    <path fill="#60a5fa" fill-opacity="0.3">
+      <animate attributeName="d" dur="10s" repeatCount="indefinite"
+        values="
+          M0,160 C360,80 1080,240 1440,160 L1440,320 L0,320 Z;
+          M0,120 C360,200 1080,40 1440,120 L1440,320 L0,320 Z;
+          M0,160 C360,80 1080,240 1440,160 L1440,320 L0,320 Z;
+        "
+      />
+    </path>
+  </svg>
+
+  <div class="hero-content">
+    <h1 class="hero-title">Centralisez, suivez, anticipez.</h1>
+    <p class="hero-subtitle">Tous vos index, enfin réunis au même endroit.</p>
+
+    <div class="rotating-messages">
+      <div class="message-list">
+        <div class="message">📊 Visualisez tous vos index dans votre tableau de bord</div>
+        <div class="message">📤 Exportez les données dont vous avez besoin</div>
+        <div class="message">🧠 Créez vos propres modèles avec vos données</div>
+      </div>
+    </div>
+
+    <a href="{% url 'main:register' %}" class="cta-button">Créer un compte</a>
+  </div>
+
+
 {% endblock %}
