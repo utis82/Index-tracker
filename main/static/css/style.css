@@ -458,28 +458,29 @@ footer {
   width: auto;
   margin-right: 12px;
 }
-.rotating-messages {
-  height: 1.6em;
+.rotating-wrapper {
+  height: 1.5em;
   overflow: hidden;
   position: relative;
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: #1e2a36;
   margin-bottom: 4rem;
 }
 
-.message-list {
-  animation: slideMessages 6s linear infinite;
+.rotating-track {
+  display: flex;
+  flex-direction: column;
+  animation: scrollInfinite 9s linear infinite;
 }
 
 .message {
-  height: 1.6em;
-  line-height: 1.6em;
+  height: 1.5em;
+  line-height: 1.5em;
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-align: center;
+  color: #1e2a36;
 }
 
-@keyframes slideMessages {
-  0%, 20%    { transform: translateY(0); }
-  33.33%, 53.33%  { transform: translateY(-1.6em); }
-  66.66%, 86.66%  { transform: translateY(-3.2em); }
-  100%       { transform: translateY(0); }
+@keyframes scrollInfinite {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-50%); } /* scroll la moitié car on a dupliqué */
 }
