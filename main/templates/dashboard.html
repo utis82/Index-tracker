@@ -4,34 +4,22 @@
 
 {% block content %}
 
-<h2>Bienvenue {{ user.username }} 👋</h2>
+<div class="dashboard-header with-badge">
+  <h2> Bienvenue {{ user.username }}, quel index allons-nous explorer aujourd’hui ?</h2>
+  <div class="subscription-badge">🔐 {{ subscription|capfirst }}</div>
+</div>
 
-<p>Ceci est votre tableau de bord. Vous pouvez :</p>
-<ul>
-  <li><a href="{% url 'main:liste_index' %}">Voir la liste des index</a></li>
-</ul>
 
-{% with level=user.userprofile.subscription_level %}
-  <p><strong>🪪 Niveau d'abonnement :</strong> {{ subscription|capfirst }}</p>
 
-  {% if level == "free" %}
-    <p style="color: orange;">⚠️ Vous utilisez la version gratuite. Vous pouvez suivre 1 seul index favori.</p>
-    <p><a href="#">🎁 Passer à un forfait supérieur</a></p>
-  {% elif level == "pack5" %}
-    <p style="color: green;">✅ Vous pouvez suivre jusqu'à 5 index favoris.</p>
-  {% elif level == "pack10" %}
-    <p style="color: green;">✅ Vous pouvez suivre jusqu'à 10 index favoris.</p>
-  {% elif level == "premium" %}
-    <p style="color: blue;">✨ Accès premium : index illimités, analyses avancées, fonctions d'import…</p>
-  {% endif %}
-{% endwith %}
 
 {% if charts %}
-  <h3>📊 Vos index favoris</h3>
+<div class="section-title">
+  <span class="emoji">📊</span> Vos index favoris
+</div>
   <div class="dashboard-grid">
     {% for item in charts %}
       <a href="{% url 'main:index_viewer' index_id=item.id %}" class="card-link">
-        <div class="card">
+        <div class="card fade-in">
           <h4>{{ item.name }}</h4>
           <div id="chart-{{ forloop.counter }}" class="chart-box"></div>
           <script>
@@ -54,7 +42,7 @@
               mode: 'lines+markers',
               line: { shape: 'spline', color: '#60a5fa', width: 3 },
               marker: { size: 5, color: '#38bdf8', line: { color: 'white', width: 1.5 } },
-              hoverinfo: 'skip', // ✅ pas de tooltip
+              hoverinfo: 'skip',
               type: 'scatter',
               fill: 'tozeroy',
               fillcolor: 'rgba(96, 165, 250, 0.15)'
@@ -71,7 +59,11 @@
     {% endfor %}
   </div>
 {% else %}
-  <p>Vous n'avez pas encore sélectionné d'index favoris.</p>
+  <div class="no-favorites">
+    <p>Vous n'avez pas encore sélectionné d'index favoris 🧐</p>
+    <a href="{% url 'main:liste_index' %}" class="button">👉 Voir la liste des index</a>
+    <p>ou utilisez la barre de recherche ci-dessus 🔍</p>
+  </div>
 {% endif %}
 
 {% endblock %}
