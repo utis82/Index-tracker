@@ -3,6 +3,23 @@
 {% block title %}Index Viewer{% endblock %}
 
 {% block content %}
+  <style>
+    #chart-container {
+      width: 100%;
+      max-width: 700px;
+      margin: 2rem auto;
+      background: linear-gradient(to bottom, #0f172a, #1e293b, #1e40af); /* ✅ fond dégradé bleu foncé */
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(8px);
+    }
+    #chart {
+      color: white;
+    }
+  </style>
+
   <h1>📈 Visualiseur d’index</h1>
 
   {% with level=user.userprofile.subscription_level %}
@@ -46,9 +63,69 @@
     </h2>
   {% endif %}
 
-  {% if chart %}
-    <h2>Graphique</h2>
-    <img src="data:image/png;base64,{{ chart }}" alt="Graphique de l’index">
+  {% if dates_json and values_json %}
+    <div id="chart-container">
+      <div id="chart"></div>
+    </div>
+
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    <script>
+      const dates = {{ dates_json|safe }};
+      const values = {{ values_json|safe }};
+
+      const layout = {
+        height: 320,
+        margin: { l: 40, r: 20, t: 30, b: 40 },
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        xaxis: {
+          range: [dates[0], dates[dates.length - 1]],
+          showgrid: false,
+          zeroline: false,
+          type: 'date'
+        },
+        yaxis: {
+          range: [Math.min(...values) - 50, Math.max(...values) + 50],
+          showgrid: true,
+          gridcolor: 'rgba(255,255,255,0.1)',
+          zeroline: false
+        },
+        font: {
+          color: 'white'
+        }
+      };
+
+      // Initial trace vide
+      const trace = {
+        x: [],
+        y: [],
+        mode: 'lines+markers',
+        line: { shape: 'spline', color: '#60a5fa', width: 3 },
+        marker: { size: 6, color: '#38bdf8', line: { color: 'white', width: 1.5 } },
+        hovertemplate: '%{x}<br><b>%{y:.0f}</b><extra></extra>',
+        fill: 'tozeroy',
+        fillcolor: 'rgba(96, 165, 250, 0.15)',
+        type: 'scatter'
+      };
+
+      Plotly.newPlot('chart', [trace], layout, { responsive: true });
+
+      let index = 0;
+      const speed = 10;  // ms par étape, ajustable
+      function drawStep() {
+        if (index <= dates.length) {
+          Plotly.react('chart', [{
+            ...trace,
+            x: dates.slice(0, index),
+            y: values.slice(0, index)
+          }], layout);
+          index++;
+          setTimeout(drawStep, speed);
+        }
+      }
+
+      drawStep();
+    </script>
   {% elif selected_index_id %}
     <p>❌ Aucune donnée disponible pour cet index.</p>
   {% endif %}
