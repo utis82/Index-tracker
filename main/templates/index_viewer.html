@@ -11,6 +11,11 @@
       margin-top: 2rem;
       align-items: flex-start;
       justify-content: center;
+      transition: transform 0.6s ease;
+    }
+
+    .chart-panel.shift-left {
+      transform: translateX(-60px);
     }
 
     #index-chart-container {
@@ -53,15 +58,23 @@
     }
 
     .analysis-cards {
-      flex: 0 0 300px;
+      flex: 0 0 400px;
       display: flex;
       flex-direction: column;
       gap: 1rem;
-      margin-top: 2.2rem;
+      
+      opacity: 0;
+      transform: translateX(40px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .analysis-cards.visible {
+      opacity: 1;
+      transform: translateX(0);
     }
 
     #chart {
-      height: 320px;
+      height: 384px;
     }
 
     @keyframes drawLine {
@@ -74,85 +87,41 @@
     }
   </style>
 
-  <form method="get" id="favorites-form" style="position: relative;">
-    <div class="dropdown-multiselect">
-      <button type="button" id="dropdown-toggle" class="dropdown-button">📌 Sélectionner des index</button>
-      <div class="dropdown-content" id="dropdown-menu">
-        {% for index in user_favorites %}
-          <label>
-            <input type="checkbox" name="index_id" value="{{ index.id }}"
-              {% if index in selected_indexes %}checked{% endif %}>
-            {{ index.name }}
-          </label><br>
-        {% endfor %}
-        <button type="submit" class="dropdown-validate">Afficher</button>
-      </div>
-    </div>
-  </form>
+  <!-- formulaire sélection -->
+  
 
-  {% if current_index %}
-    <div style="display: none;">{{ current_index.name }}</div>
-  {% endif %}
+  {% if current_index %}<div style="display: none;">{{ current_index.name }}</div>{% endif %}
 
   {% if series_data %}
     <form method="get" style="margin-top: 2rem;">
-      {% for index in selected_indexes %}
-        <input type="hidden" name="index_id" value="{{ index.id }}">
-      {% endfor %}
-
+      {% for index in selected_indexes %}<input type="hidden" name="index_id" value="{{ index.id }}">{% endfor %}
       <div class="section-title"><span class="emoji">🕒</span> Analyse de deux périodes</div>
-
-      <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
-        <div>
-          <label><strong>Période A :</strong></label><br>
-          <input type="date" name="start_a" value="{{ start_a|default:'' }}">
-          <input type="date" name="end_a" value="{{ end_a|default:'' }}">
-        </div>
-
-        <div>
-          <label><strong>Période B :</strong></label><br>
-          <input type="date" name="start_b" value="{{ start_b|default:'' }}">
-          <input type="date" name="end_b" value="{{ end_b|default:'' }}">
-        </div>
-
-        <div style="align-self: end;">
-          <button type="submit" class="dropdown-validate">📊 Analyser</button>
-        </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; align-items: flex-end;">
+        <div><label><strong>Période A :</strong></label><br><input type="date" name="start_a" value="{{ start_a|default:'' }}"><input type="date" name="end_a" value="{{ end_a|default:'' }}"></div>
+        <div><label><strong>Période B :</strong></label><br><input type="date" name="start_b" value="{{ start_b|default:'' }}"><input type="date" name="end_b" value="{{ end_b|default:'' }}"></div>
+        <div><button type="submit" class="dropdown-validate">📊 Analyser</button></div>
       </div>
     </form>
 
-    <div class="chart-panel">
+    <div class="chart-panel" id="chartPanel">
       <div id="index-chart-container">
         <div id="chart-title">
           {{ current_index.name }}
-          <button
-            class="favorite-btn {% if current_index in user.userprofile.favorite_indexes.all %}filled{% endif %}"
-            data-index-id="{{ current_index.id }}"
-            title="Ajouter ou retirer des favoris">
-            {% if current_index in user.userprofile.favorite_indexes.all %}★{% else %}☆{% endif %}
-          </button>
+          <button class="favorite-btn {% if current_index in user.userprofile.favorite_indexes.all %}filled{% endif %}" data-index-id="{{ current_index.id }}">{% if current_index in user.userprofile.favorite_indexes.all %}★{% else %}☆{% endif %}</button>
         </div>
         <div id="chart"></div>
       </div>
 
       {% if period_stats %}
-        <div class="analysis-cards">
+        <div class="analysis-cards" id="analysisCards">
           {% for index_name, stats in period_stats.items %}
             <div class="card">
               <h4 style="color: #fb923c;">🟠 {{ index_name }} — Période 1</h4>
-              <ul>
-                <li>Min : {{ stats.min_a }}</li>
-                <li>Max : {{ stats.max_a }}</li>
-                <li>Moyenne : {{ stats.mean_a }}</li>
-              </ul>
+              <ul><li>Min : {{ stats.min_a }}</li><li>Max : {{ stats.max_a }}</li><li>Moyenne : {{ stats.mean_a }}</li></ul>
             </div>
             <div class="card">
               <h4 style="color: #38bdf8;">🔵 {{ index_name }} — Période 2</h4>
-              <ul>
-                <li>Min : {{ stats.min_b }}</li>
-                <li>Max : {{ stats.max_b }}</li>
-                <li>Moyenne : {{ stats.mean_b }}</li>
-              </ul>
+              <ul><li>Min : {{ stats.min_b }}</li><li>Max : {{ stats.max_b }}</li><li>Moyenne : {{ stats.mean_b }}</li></ul>
             </div>
             <div class="card">
               <h4 style="color: #64748b;">⚖️ Analyse</h4>
@@ -163,35 +132,34 @@
       {% endif %}
     </div>
 
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        const chartPanel = document.getElementById('chartPanel');
+        const analysisCards = document.getElementById('analysisCards');
+        if (analysisCards) {
+          chartPanel.classList.add('shift-left');
+          setTimeout(() => {
+            analysisCards.classList.add('visible');
+          }, 100);
+        }
+      });
+    </script>
+
     <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
     <script>
       const seriesData = {{ series_data|safe }};
-
-      const traces = seriesData.map((serie, i) => {
-        return {
-          x: serie.dates,
-          y: serie.values,
-          mode: 'lines+markers',
-          name: serie.name,
-          line: {
-            shape: 'spline',
-            color: '#60a5fa',
-            width: 3
-          },
-          marker: {
-            size: 5,
-            color: '#38bdf8',
-            line: {
-              color: 'white',
-              width: 1.5
-            }
-          },
-          hovertemplate: '%{x}<br><b>%{y}</b><extra></extra>',
-          type: 'scatter',
-          fill: 'tozeroy',
-          fillcolor: 'rgba(96, 165, 250, 0.15)'
-        };
-      });
+      const traces = seriesData.map((serie) => ({
+        x: serie.dates,
+        y: serie.values,
+        mode: 'lines+markers',
+        name: serie.name,
+        line: { shape: 'spline', color: '#60a5fa', width: 3 },
+        marker: { size: 5, color: '#38bdf8', line: { color: 'white', width: 1.5 } },
+        hovertemplate: '%{x}<br><b>%{y}</b><extra></extra>',
+        type: 'scatter',
+        fill: 'tozeroy',
+        fillcolor: 'rgba(96, 165, 250, 0.15)'
+      }));
 
       const layout = {
         height: 320,
@@ -199,46 +167,12 @@
         hovermode: 'closest',
         plot_bgcolor: 'rgba(0,0,0,0)',
         paper_bgcolor: 'rgba(0,0,0,0)',
-        xaxis: {
-          showgrid: false,
-          zeroline: false,
-          type: 'date'
-        },
-        yaxis: {
-          showgrid: true,
-          zeroline: false,
-          gridcolor: 'rgba(200,200,255,0.2)'
-        },
+        xaxis: { showgrid: false, zeroline: false, type: 'date' },
+        yaxis: { showgrid: true, zeroline: false, gridcolor: 'rgba(200,200,255,0.2)' },
         font: { color: '#1e2a36' },
         shapes: [
-          {% if start_a and end_a %}
-          {
-            type: 'rect',
-            xref: 'x',
-            yref: 'paper',
-            x0: '{{ start_a }}',
-            x1: '{{ end_a }}',
-            y0: 0,
-            y1: 1,
-            fillcolor: 'rgba(255, 165, 0, 0.15)',
-            line: { width: 0 },
-            layer: 'below'
-          },
-          {% endif %}
-          {% if start_b and end_b %}
-          {
-            type: 'rect',
-            xref: 'x',
-            yref: 'paper',
-            x0: '{{ start_b }}',
-            x1: '{{ end_b }}',
-            y0: 0,
-            y1: 1,
-            fillcolor: 'rgba(0, 191, 255, 0.15)',
-            line: { width: 0 },
-            layer: 'below'
-          }
-          {% endif %}
+          {% if start_a and end_a %}{ type: 'rect', xref: 'x', yref: 'paper', x0: '{{ start_a }}', x1: '{{ end_a }}', y0: 0, y1: 1, fillcolor: 'rgba(255, 165, 0, 0.15)', line: { width: 0 }, layer: 'below' },{% endif %}
+          {% if start_b and end_b %}{ type: 'rect', xref: 'x', yref: 'paper', x0: '{{ start_b }}', x1: '{{ end_b }}', y0: 0, y1: 1, fillcolor: 'rgba(0, 191, 255, 0.15)', line: { width: 0 }, layer: 'below' }{% endif %}
         ]
       };
 
@@ -270,49 +204,5 @@
         }, 1000);
       });
     </script>
-
-    <script>
-      document.querySelectorAll(".favorite-btn").forEach(button => {
-        button.addEventListener("click", function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          const indexId = this.dataset.indexId;
-          fetch(`/toggle-favorite/${indexId}/`, {
-            method: "POST",
-            headers: {
-              "X-CSRFToken": "{{ csrf_token }}",
-              "X-Requested-With": "XMLHttpRequest"
-            }
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.is_favorite) {
-              this.textContent = "★";
-              this.classList.add("filled");
-            } else {
-              this.textContent = "☆";
-              this.classList.remove("filled");
-            }
-          });
-        });
-      });
-    </script>
-  {% elif selected_index_id %}
-    <p>❌ Aucune donnée disponible pour cet index.</p>
-  {% endif %}
-
-  <script>
-    const toggleBtn = document.getElementById("dropdown-toggle");
-    const menu = document.getElementById("dropdown-menu");
-
-    toggleBtn.addEventListener("click", function () {
-      menu.style.display = menu.style.display === "block" ? "none" : "block";
-    });
-
-    document.addEventListener("click", function (event) {
-      if (!event.target.closest(".dropdown-multiselect")) {
-        menu.style.display = "none";
-      }
-    });
-  </script>
+  {% elif selected_index_id %}<p>❌ Aucune donnée disponible pour cet index.</p>{% endif %}
 {% endblock %}
