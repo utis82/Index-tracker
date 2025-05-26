@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 
 
+
 @login_required
 def toggle_favorite(request, index_id):
     if request.method == 'POST':
@@ -31,7 +32,6 @@ def toggle_favorite(request, index_id):
 
     return redirect('main:liste_index')
 
-
 @login_required
 def choose_primary_index(request):
     if request.method == 'POST':
@@ -53,7 +53,6 @@ def choose_primary_index(request):
             user_profile.save()
             messages.success(request, "Index principal mis à jour.")
         else:
-            messages.info(request,
-                          "Cet index est déjà votre favori principal.")
+            messages.info(request, "Cet index est déjà votre favori principal.")
 
         return redirect('main:dashboard')

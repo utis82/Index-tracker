@@ -4,129 +4,282 @@
 
 {% block content %}
   <style>
-    #chart-container {
-      width: 100%;
-      max-width: 700px;
-      margin: 2rem auto;
-      background: linear-gradient(to bottom, #0f172a, #1e293b, #1e40af); /* ✅ fond dégradé bleu foncé */
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(8px);
+    .chart-panel {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 2rem;
+      margin-top: 2rem;
+      align-items: flex-start;
+      justify-content: center;
     }
+
+    #index-chart-container {
+      background: transparent;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      padding: 1.5rem;
+      flex: 0 1 60%;
+      max-width: 700px;
+      position: relative;
+    }
+
+    #chart-title {
+      position: absolute;
+      top: 0.8rem;
+      left: 1.2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    #chart-title .favorite-btn {
+      font-size: 20px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: #ccc;
+      transition: color 0.2s ease;
+    }
+
+    #chart-title .favorite-btn.filled {
+      color: gold;
+    }
+
+    #chart-title .favorite-btn:hover {
+      color: orange;
+    }
+
+    .analysis-cards {
+      flex: 0 0 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 2.2rem;
+    }
+
     #chart {
-      color: white;
+      height: 320px;
     }
   </style>
 
-  <h1>📈 Visualiseur d’index</h1>
-
-  {% with level=user.userprofile.subscription_level %}
-    <p><strong>🪪 Niveau d'abonnement :</strong> {{ level|capfirst }}</p>
-
-    {% if level == "free" %}
-      <p style="color: orange;">⚠️ Vous êtes sur la version gratuite. Vous avez accès à un seul index à la fois.</p>
-      <p><a href="#">🎁 Passer à un forfait supérieur</a></p>
-    {% elif level == "pack5" %}
-      <p style="color: green;">✅ Forfait 5 index. Vous pouvez explorer jusqu’à 5 index favoris.</p>
-    {% elif level == "pack10" %}
-      <p style="color: green;">✅ Forfait 10 index. Vous bénéficiez d’un accès étendu.</p>
-    {% elif level == "premium" %}
-      <p style="color: blue;">✨ Accès premium : visualisation illimitée, comparaisons, exports…</p>
-    {% endif %}
-  {% endwith %}
-
-  <form method="get">
-    <label for="index_id">Sélectionnez un index :</label>
-    <select name="index_id" id="index_id" onchange="this.form.submit()">
-      <option value="">-- Choisissez --</option>
-      {% for index in all_indexes %}
-        <option value="{{ index.id }}"
-          {% if index.id|stringformat:"s" == selected_index_id %}selected{% endif %}>
-          {{ index.name }}
-        </option>
-      {% endfor %}
-    </select>
+  <form method="get" id="favorites-form" style="position: relative;">
+    <div class="dropdown-multiselect">
+      <button type="button" id="dropdown-toggle" class="dropdown-button">📌 Sélectionner des index</button>
+      <div class="dropdown-content" id="dropdown-menu">
+        {% for index in user_favorites %}
+          <label>
+            <input type="checkbox" name="index_id" value="{{ index.id }}"
+              {% if index in selected_indexes %}checked{% endif %}>
+            {{ index.name }}
+          </label><br>
+        {% endfor %}
+        <button type="submit" class="dropdown-validate">Afficher</button>
+      </div>
+    </div>
   </form>
 
   {% if current_index %}
-    <h2>
-      {{ current_index.name }}
-      <a href="{% url 'main:toggle_favorite' current_index.id %}" style="text-decoration: none;">
-        {% if current_index in user.userprofile.favorite_indexes.all %}
-          ⭐
-        {% else %}
-          ☆
-        {% endif %}
-      </a>
-    </h2>
+    <div style="display: none;">{{ current_index.name }}</div>
   {% endif %}
 
-  {% if dates_json and values_json %}
-    <div id="chart-container">
-      <div id="chart"></div>
+  {% if series_data %}
+    <form method="get" style="margin-top: 2rem;">
+      {% for index in selected_indexes %}
+        <input type="hidden" name="index_id" value="{{ index.id }}">
+      {% endfor %}
+
+      <div class="section-title"><span class="emoji">🕒</span> Analyse de deux périodes</div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+        <div>
+          <label><strong>Période A :</strong></label><br>
+          <input type="date" name="start_a" value="{{ start_a|default:'' }}">
+          <input type="date" name="end_a" value="{{ end_a|default:'' }}">
+        </div>
+
+        <div>
+          <label><strong>Période B :</strong></label><br>
+          <input type="date" name="start_b" value="{{ start_b|default:'' }}">
+          <input type="date" name="end_b" value="{{ end_b|default:'' }}">
+        </div>
+
+        <div style="align-self: end;">
+          <button type="submit" class="dropdown-validate">📊 Analyser</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="chart-panel">
+      <div id="index-chart-container">
+        <div id="chart-title">
+          {{ current_index.name }}
+          <button
+            class="favorite-btn {% if current_index in user.userprofile.favorite_indexes.all %}filled{% endif %}"
+            data-index-id="{{ current_index.id }}"
+            title="Ajouter ou retirer des favoris">
+            {% if current_index in user.userprofile.favorite_indexes.all %}★{% else %}☆{% endif %}
+          </button>
+        </div>
+        <div id="chart"></div>
+      </div>
+
+      {% if period_stats %}
+        <div class="analysis-cards">
+          {% for index_name, stats in period_stats.items %}
+            <div class="card">
+              <h4 style="color: #fb923c;">🟠 {{ index_name }} — Période 1</h4>
+              <ul>
+                <li>Min : {{ stats.min_a }}</li>
+                <li>Max : {{ stats.max_a }}</li>
+                <li>Moyenne : {{ stats.mean_a }}</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4 style="color: #38bdf8;">🔵 {{ index_name }} — Période 2</h4>
+              <ul>
+                <li>Min : {{ stats.min_b }}</li>
+                <li>Max : {{ stats.max_b }}</li>
+                <li>Moyenne : {{ stats.mean_b }}</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4 style="color: #64748b;">⚖️ Analyse</h4>
+              <p><strong>Variation moyenne :</strong><br>{{ stats.variation }} %</p>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
     </div>
 
     <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
     <script>
-      const dates = {{ dates_json|safe }};
-      const values = {{ values_json|safe }};
+      const seriesData = {{ series_data|safe }};
+
+      const traces = seriesData.map((serie, i) => {
+        return {
+          x: serie.dates,
+          y: serie.values,
+          mode: 'lines+markers',
+          name: serie.name,
+          line: {
+            shape: 'spline',
+            color: '#60a5fa',
+            width: 3
+          },
+          marker: {
+            size: 5,
+            color: '#38bdf8',
+            line: {
+              color: 'white',
+              width: 1.5
+            }
+          },
+          hovertemplate: '%{x}<br><b>%{y}</b><extra></extra>',
+          type: 'scatter',
+          fill: 'tozeroy',
+          fillcolor: 'rgba(96, 165, 250, 0.15)'
+        };
+      });
 
       const layout = {
+        
         height: 320,
-        margin: { l: 40, r: 20, t: 30, b: 40 },
+        margin: { l: 30, r: 10, t: 30, b: 30 },
+        hovermode: 'closest',  // Ajoute cette ligne
         plot_bgcolor: 'rgba(0,0,0,0)',
         paper_bgcolor: 'rgba(0,0,0,0)',
         xaxis: {
-          range: [dates[0], dates[dates.length - 1]],
           showgrid: false,
           zeroline: false,
           type: 'date'
         },
         yaxis: {
-          range: [Math.min(...values) - 50, Math.max(...values) + 50],
           showgrid: true,
-          gridcolor: 'rgba(255,255,255,0.1)',
-          zeroline: false
+          zeroline: false,
+          gridcolor: 'rgba(200,200,255,0.2)'
         },
-        font: {
-          color: 'white'
-        }
+        
+        font: { color: '#1e2a36' },
+        shapes: [
+          {% if start_a and end_a %}
+          {
+            type: 'rect',
+            xref: 'x',
+            yref: 'paper',
+            x0: '{{ start_a }}',
+            x1: '{{ end_a }}',
+            y0: 0,
+            y1: 1,
+            fillcolor: 'rgba(255, 165, 0, 0.15)',
+            line: { width: 0 },
+            layer: 'below'
+          },
+          {% endif %}
+          {% if start_b and end_b %}
+          {
+            type: 'rect',
+            xref: 'x',
+            yref: 'paper',
+            x0: '{{ start_b }}',
+            x1: '{{ end_b }}',
+            y0: 0,
+            y1: 1,
+            fillcolor: 'rgba(0, 191, 255, 0.15)',
+            line: { width: 0 },
+            layer: 'below'
+          }
+          {% endif %}
+        ]
       };
 
-      // Initial trace vide
-      const trace = {
-        x: [],
-        y: [],
-        mode: 'lines+markers',
-        line: { shape: 'spline', color: '#60a5fa', width: 3 },
-        marker: { size: 6, color: '#38bdf8', line: { color: 'white', width: 1.5 } },
-        hovertemplate: '%{x}<br><b>%{y:.0f}</b><extra></extra>',
-        fill: 'tozeroy',
-        fillcolor: 'rgba(96, 165, 250, 0.15)',
-        type: 'scatter'
-      };
+      Plotly.newPlot('chart', traces, layout, { responsive: true });
+    </script>
 
-      Plotly.newPlot('chart', [trace], layout, { responsive: true });
-
-      let index = 0;
-      const speed = 10;  // ms par étape, ajustable
-      function drawStep() {
-        if (index <= dates.length) {
-          Plotly.react('chart', [{
-            ...trace,
-            x: dates.slice(0, index),
-            y: values.slice(0, index)
-          }], layout);
-          index++;
-          setTimeout(drawStep, speed);
-        }
-      }
-
-      drawStep();
+    <script>
+      document.querySelectorAll(".favorite-btn").forEach(button => {
+        button.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const indexId = this.dataset.indexId;
+          fetch(`/toggle-favorite/${indexId}/`, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": "{{ csrf_token }}",
+              "X-Requested-With": "XMLHttpRequest"
+            }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.is_favorite) {
+              this.textContent = "★";
+              this.classList.add("filled");
+            } else {
+              this.textContent = "☆";
+              this.classList.remove("filled");
+            }
+          });
+        });
+      });
     </script>
   {% elif selected_index_id %}
     <p>❌ Aucune donnée disponible pour cet index.</p>
   {% endif %}
+
+  <script>
+    const toggleBtn = document.getElementById("dropdown-toggle");
+    const menu = document.getElementById("dropdown-menu");
+
+    toggleBtn.addEventListener("click", function () {
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
+    });
+
+    document.addEventListener("click", function (event) {
+      if (!event.target.closest(".dropdown-multiselect")) {
+        menu.style.display = "none";
+      }
+    });
+  </script>
 {% endblock %}
