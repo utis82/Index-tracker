@@ -646,15 +646,7 @@
     justify-content: center;
   }
   
-  .chart-box {
-    flex: 1 1 700px;
-    background: linear-gradient(to bottom, #0f172a, #1e293b, #1e40af);
-    border-radius: 16px;
-    padding: 16px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-    backdrop-filter: blur(6px);
-    overflow: hidden;
-  }
+ 
   
   .analysis-cards {
     display: flex;

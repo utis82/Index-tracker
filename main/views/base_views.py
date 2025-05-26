@@ -39,16 +39,21 @@ def dashboard(request):
             val = [v.value for v in values]
 
             charts.append({
-                "id": index.id,  # ✅ Ajout de l'ID nécessaire pour les URLs
+                "id": index.id,
                 "name": index.name,
                 "dates_json": json.dumps(dates),
                 "values_json": json.dumps(val),
             })
 
+    # ✅ Ajout nécessaire pour permettre l'affichage des étoiles dans le template
+    favorite_ids = [index.id for index in favorites]
+
     return render(request, "dashboard.html", {
         "charts": charts,
         "subscription": user_profile.subscription_plan,
+        "favorite_ids": favorite_ids,  # 🔥 ligne ajoutée
     })
+
 
 
 def is_admin(user):
