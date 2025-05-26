@@ -5,57 +5,61 @@
 {% block content %}
 
 <div class="dashboard-header with-badge">
-  <h2> Bienvenue {{ user.username }}, quel index allons-nous explorer aujourd’hui ?</h2>
+  <h2>Bienvenue {{ user.username }}, quel index allons-nous explorer aujourd’hui ?</h2>
   <div class="subscription-badge">🔐 {{ subscription|capfirst }}</div>
 </div>
 
-
-
-
 {% if charts %}
-<div class="section-title">
-  <span class="emoji">📊</span> Vos index favoris
-</div>
+  <div class="section-title">
+    <span class="emoji">📊</span> Vos index favoris
+  </div>
   <div class="dashboard-grid">
     {% for item in charts %}
-      <a href="{% url 'main:index_viewer' index_id=item.id %}" class="card-link">
-        <div class="card fade-in">
-          <h4>{{ item.name }}</h4>
-          <div id="chart-{{ forloop.counter }}" class="chart-box"></div>
-          <script>
-            const dates_{{ forloop.counter }} = {{ item.dates_json|safe }};
-            const values_{{ forloop.counter }} = {{ item.values_json|safe }};
-
-            const layout_{{ forloop.counter }} = {
-              height: 220,
-              margin: { l: 30, r: 10, t: 30, b: 30 },
-              plot_bgcolor: 'rgba(0,0,0,0)',
-              paper_bgcolor: 'rgba(0,0,0,0)',
-              xaxis: { showgrid: false, zeroline: false, type: 'date' },
-              yaxis: { showgrid: true, zeroline: false, gridcolor: 'rgba(200,200,255,0.2)' },
-              font: { color: '#1e2a36' }
-            };
-
-            const trace_{{ forloop.counter }} = {
-              x: dates_{{ forloop.counter }},
-              y: values_{{ forloop.counter }},
-              mode: 'lines+markers',
-              line: { shape: 'spline', color: '#60a5fa', width: 3 },
-              marker: { size: 5, color: '#38bdf8', line: { color: 'white', width: 1.5 } },
-              hoverinfo: 'skip',
-              type: 'scatter',
-              fill: 'tozeroy',
-              fillcolor: 'rgba(96, 165, 250, 0.15)'
-            };
-
-            Plotly.newPlot('chart-{{ forloop.counter }}', [trace_{{ forloop.counter }}], layout_{{ forloop.counter }}, {
-              staticPlot: true,
-              responsive: true,
-              useResizeHandler: true
-            });
-          </script>
+      <div class="card fade-in" onclick="window.location.href='{% url 'main:index_viewer' index_id=item.id %}'">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <h4 style="margin: 0;">{{ item.name }}</h4>
+          <button
+            class="favorite-btn {% if item.id in favorite_ids %}filled{% endif %}"
+            data-index-id="{{ item.id }}"
+            title="Ajouter ou retirer des favoris"
+            onclick="toggleFavorite(event, {{ item.id }})">
+            {% if item.id in favorite_ids %}★{% else %}☆{% endif %}
+          </button>
         </div>
-      </a>
+        <div id="chart-{{ forloop.counter }}" class="chart-box"></div>
+        <script>
+          const dates_{{ forloop.counter }} = {{ item.dates_json|safe }};
+          const values_{{ forloop.counter }} = {{ item.values_json|safe }};
+
+          const layout_{{ forloop.counter }} = {
+            height: 220,
+            margin: { l: 30, r: 10, t: 30, b: 30 },
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            xaxis: { showgrid: false, zeroline: false, type: 'date' },
+            yaxis: { showgrid: true, zeroline: false, gridcolor: 'rgba(200,200,255,0.2)' },
+            font: { color: '#1e2a36' }
+          };
+
+          const trace_{{ forloop.counter }} = {
+            x: dates_{{ forloop.counter }},
+            y: values_{{ forloop.counter }},
+            mode: 'lines+markers',
+            line: { shape: 'spline', color: '#60a5fa', width: 3 },
+            marker: { size: 5, color: '#38bdf8', line: { color: 'white', width: 1.5 } },
+            hoverinfo: 'skip',
+            type: 'scatter',
+            fill: 'tozeroy',
+            fillcolor: 'rgba(96, 165, 250, 0.15)'
+          };
+
+          Plotly.newPlot('chart-{{ forloop.counter }}', [trace_{{ forloop.counter }}], layout_{{ forloop.counter }}, {
+            staticPlot: true,
+            responsive: true,
+            useResizeHandler: true
+          });
+        </script>
+      </div>
     {% endfor %}
   </div>
 {% else %}
@@ -65,5 +69,27 @@
     <p>ou utilisez la barre de recherche ci-dessus 🔍</p>
   </div>
 {% endif %}
+
+<script>
+  function toggleFavorite(event, indexId) {
+    event.stopPropagation();  // Empêche d'ouvrir index_viewer
+    fetch(`/toggle-favorite/${indexId}/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    }).then(res => res.json()).then(data => {
+      const btn = document.querySelector(`button[data-index-id='${indexId}']`);
+      if (data.is_favorite) {
+        btn.textContent = "★";
+        btn.classList.add("filled");
+      } else {
+        btn.textContent = "☆";
+        btn.classList.remove("filled");
+      }
+    });
+  }
+</script>
 
 {% endblock %}
