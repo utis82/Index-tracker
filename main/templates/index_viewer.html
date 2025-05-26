@@ -63,6 +63,15 @@
     #chart {
       height: 320px;
     }
+
+    @keyframes drawLine {
+      from {
+        stroke-dashoffset: 1000;
+      }
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
   </style>
 
   <form method="get" id="favorites-form" style="position: relative;">
@@ -185,10 +194,9 @@
       });
 
       const layout = {
-        
         height: 320,
         margin: { l: 30, r: 10, t: 30, b: 30 },
-        hovermode: 'closest',  // Ajoute cette ligne
+        hovermode: 'closest',
         plot_bgcolor: 'rgba(0,0,0,0)',
         paper_bgcolor: 'rgba(0,0,0,0)',
         xaxis: {
@@ -201,7 +209,6 @@
           zeroline: false,
           gridcolor: 'rgba(200,200,255,0.2)'
         },
-        
         font: { color: '#1e2a36' },
         shapes: [
           {% if start_a and end_a %}
@@ -235,7 +242,33 @@
         ]
       };
 
-      Plotly.newPlot('chart', traces, layout, { responsive: true });
+      Plotly.newPlot('chart', traces, layout, { responsive: true }).then(() => {
+        const chart = document.getElementById('chart');
+        const svgLine = chart.querySelector('.scatter .lines path');
+        const fill = chart.querySelector('.scatter .js-fill');
+        const markers = chart.querySelectorAll('.scatter .points path');
+
+        if (svgLine) {
+          const length = svgLine.getTotalLength();
+          svgLine.style.strokeDasharray = length;
+          svgLine.style.strokeDashoffset = length;
+          svgLine.style.animation = 'drawLine 1s ease-out forwards';
+        }
+
+        if (fill) fill.style.opacity = '0';
+        markers.forEach(m => m.style.opacity = '0');
+
+        setTimeout(() => {
+          if (fill) {
+            fill.style.transition = 'opacity 0.6s ease';
+            fill.style.opacity = '0.8';
+          }
+          markers.forEach(m => {
+            m.style.transition = 'opacity 0.4s ease';
+            m.style.opacity = '1';
+          });
+        }, 1000);
+      });
     </script>
 
     <script>

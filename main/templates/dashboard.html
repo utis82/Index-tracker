@@ -4,6 +4,23 @@
 
 {% block content %}
 
+<style>
+  .card.clickable {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card.clickable:hover {
+    transform: scale(1.015);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  .card.clickable:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+</style>
+
 <div class="dashboard-header with-badge">
   <h2>Bienvenue {{ user.username }}, quel index allons-nous explorer aujourd’hui ?</h2>
   <div class="subscription-badge">🔐 {{ subscription|capfirst }}</div>
@@ -15,7 +32,7 @@
   </div>
   <div class="dashboard-grid">
     {% for item in charts %}
-      <div class="card fade-in" onclick="window.location.href='{% url 'main:index_viewer' index_id=item.id %}'">
+      <div class="card fade-in clickable" onclick="window.location.href='{% url 'main:index_viewer' index_id=item.id %}'">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
           <h4 style="margin: 0;">{{ item.name }}</h4>
           <button
@@ -44,9 +61,8 @@
           const trace_{{ forloop.counter }} = {
             x: dates_{{ forloop.counter }},
             y: values_{{ forloop.counter }},
-            mode: 'lines+markers',
+            mode: 'lines',
             line: { shape: 'spline', color: '#60a5fa', width: 3 },
-            marker: { size: 5, color: '#38bdf8', line: { color: 'white', width: 1.5 } },
             hoverinfo: 'skip',
             type: 'scatter',
             fill: 'tozeroy',
@@ -57,6 +73,26 @@
             staticPlot: true,
             responsive: true,
             useResizeHandler: true
+          }).then(() => {
+            const chart = document.getElementById('chart-{{ forloop.counter }}');
+            const svgLine = chart.querySelector('.scatter .lines path');
+            const fill = chart.querySelector('.scatter .js-fill');
+
+            if (svgLine) {
+              const length = svgLine.getTotalLength();
+              svgLine.style.strokeDasharray = length;
+              svgLine.style.strokeDashoffset = length;
+              svgLine.style.animation = 'drawLine 1s ease-out forwards';
+            }
+
+            if (fill) fill.style.opacity = '0';
+
+            setTimeout(() => {
+              if (fill) {
+                fill.style.transition = 'opacity 0.6s ease';
+                fill.style.opacity = '0.8';
+              }
+            }, 1000);
           });
         </script>
       </div>
@@ -72,7 +108,7 @@
 
 <script>
   function toggleFavorite(event, indexId) {
-    event.stopPropagation();  // Empêche d'ouvrir index_viewer
+    event.stopPropagation();
     fetch(`/toggle-favorite/${indexId}/`, {
       method: "POST",
       headers: {
