@@ -7,6 +7,7 @@ from main.views.index_views import import_excel_view, liste_index_view
 from main.views.chart_views import index_viewer
 from main.views.user_views import toggle_favorite
 
+
 app_name = 'main'
 
 urlpatterns = [
@@ -26,4 +27,5 @@ urlpatterns = [
     path('choose-primary-index/',
          choose_primary_index,
          name='choose_primary_index'),
+
 ]

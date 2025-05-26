@@ -21,7 +21,7 @@
               {% csrf_token %}
               <button type="submit" class="favorite-btn">
                 {% if index in user.userprofile.favorite_indexes.all %}
-                  ⭐
+                  ★
                 {% else %}
                   ☆
                 {% endif %}
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(data => {
         // Met à jour l'icône selon la réponse
         if (data.is_favorite) {
-          button.textContent = '⭐';
+          button.textContent = "★";
         } else {
           button.textContent = '☆';
         }
