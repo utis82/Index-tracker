@@ -2,21 +2,35 @@ from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from main.models import Index, UserProfile
 from django.contrib import messages
+from django.http import JsonResponse
+
 
 @login_required
 def toggle_favorite(request, index_id):
-    user_profile = request.user.userprofile
-    index = get_object_or_404(Index, id=index_id)
+    if request.method == 'POST':
+        index = get_object_or_404(Index, id=index_id)
+        user_profile = request.user.userprofile
 
-    if index in user_profile.favorite_indexes.all():
-        user_profile.favorite_indexes.remove(index)
-    else:
-        if not user_profile.can_add_favorite():
-            messages.error(request, "Vous avez atteint la limite d’index favoris pour votre plan.")
+        # Vérifier si l'index est déjà dans les favoris
+        if index in user_profile.favorite_indexes.all():
+            user_profile.favorite_indexes.remove(index)
+            is_favorite = False
         else:
             user_profile.favorite_indexes.add(index)
+            is_favorite = True
 
-    return redirect('main:index_viewer', index_id=index_id)
+        # Si c'est une requête AJAX, retourner JSON
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'is_favorite': is_favorite,
+                'message': 'Favori mis à jour avec succès'
+            })
+
+        # Sinon, redirection classique (pour compatibilité)
+        return redirect('main:liste_index')
+
+    return redirect('main:liste_index')
+
 
 @login_required
 def choose_primary_index(request):
@@ -39,6 +53,7 @@ def choose_primary_index(request):
             user_profile.save()
             messages.success(request, "Index principal mis à jour.")
         else:
-            messages.info(request, "Cet index est déjà votre favori principal.")
+            messages.info(request,
+                          "Cet index est déjà votre favori principal.")
 
         return redirect('main:dashboard')

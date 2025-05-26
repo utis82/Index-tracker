@@ -114,5 +114,13 @@
       });
     });
   </script>
+  <script>
+    document.querySelectorAll('.favorite-form').forEach(form => {
+      form.addEventListener('click', event => {
+        event.stopPropagation();  // 🛑 Empêche le clic de propager au <li>
+      });
+    });
+  </script>
+
 </body>
 </html>

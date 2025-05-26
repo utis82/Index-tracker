@@ -484,3 +484,65 @@ footer {
   0%   { transform: translateY(0); }
   100% { transform: translateY(-50%); } /* scroll la moitié car on a dupliqué */
 }
+
+.index-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 2rem;
+  border: 1px solid rgba(200, 200, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+/* Ajoutez ces règles CSS à votre style.css existant */
+
+.index-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1.2rem;
+  border-bottom: 1px solid rgba(200, 200, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(2px);
+  transition: background-color 0.2s ease, transform 0.1s ease; /* Transition douce */
+  cursor: pointer; /* Indique que l'élément est cliquable */
+}
+
+/* Effet de survol bleu clair froid */
+.index-item:hover {
+  background-color: rgba(224, 242, 254, 0.8); /* Bleu clair froid légèrement transparent */
+  transform: translateX(2px); /* Légère translation pour l'effet visuel */
+}
+
+/* Mode sombre - effet de survol adapté */
+body.dark-mode .index-item:hover {
+  background-color: rgba(30, 58, 138, 0.3); /* Bleu plus sombre pour le mode sombre */
+}
+
+/* S'assurer que le bouton favori reste cliquable */
+.favorite-form {
+  display: inline;
+  position: relative;
+  z-index: 10; /* Au-dessus du hover de la ligne */
+}
+
+.favorite-btn {
+  font-size: 1.2rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 4px 8px; /* Un peu plus de zone cliquable */
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.favorite-btn:hover {
+  background-color: rgba(59, 130, 246, 0.1); /* Légère surbrillance sur le bouton */
+}
+
+/* Effet de focus pour l'accessibilité */
+.favorite-btn:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
