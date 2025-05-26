@@ -1,33 +1,80 @@
 {% extends "base.html" %}
-
 {% block title %}Liste des Index{% endblock %}
 
 {% block content %}
+<div class="page-container">
+  <h1 class="section-title"><span class="emoji">📄</span> Tous les index</h1>
 
-<h1>📄 Liste des index disponibles</h1>
+  <ul class="index-list">
+    {% for index in index_list %}
+      <li class="index-item">
+        <div class="index-left">
+          <a href="{% url 'main:index_viewer' index.id %}" class="index-name">
+            {{ index.name }}
+          </a>
+        </div>
+        {% if user.is_authenticated %}
+          <div class="index-right">
+            <form method="post"
+                  action="{% url 'main:toggle_favorite' index.id %}"
+                  class="favorite-form">
+              {% csrf_token %}
+              <button type="submit" class="favorite-btn">
+                {% if index in user.userprofile.favorite_indexes.all %}
+                  ⭐
+                {% else %}
+                  ☆
+                {% endif %}
+              </button>
+            </form>
+          </div>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
 
-<ul>
-  {% for index in index_list %}
-    <li style="display: flex; align-items: center; gap: 10px;">
-      <a href="{% url 'main:index_viewer' index.id %}">
-        {{ index.name }}
-      </a>
-      {% if user.is_authenticated %}
-        <form method="post" action="{% url 'main:toggle_favorite' index.id %}">
-          {% csrf_token %}
-          <button type="submit" style="border: none; background: none; cursor: pointer;">
-            {% if index in user.userprofile.favorite_indexes.all %}
-              ⭐
-            {% else %}
-              ☆
-            {% endif %}
-          </button>
-        </form>
-      {% endif %}
-    </li>
-  {% empty %}
-    <li>Aucun index disponible pour le moment.</li>
-  {% endfor %}
-</ul>
+</div>
+
+<script>
+// Gestion des formulaires favoris
+document.addEventListener('DOMContentLoaded', function() {
+  // Pour chaque formulaire favori
+  document.querySelectorAll('.favorite-form').forEach(form => {
+    form.addEventListener('submit', function(event) {
+      event.preventDefault(); // Empêche le rechargement de page
+      event.stopPropagation(); // Empêche la propagation vers le lien parent
+      
+      const formData = new FormData(form);
+      const button = form.querySelector('.favorite-btn');
+      
+      // Envoi de la requête AJAX
+      fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Met à jour l'icône selon la réponse
+        if (data.is_favorite) {
+          button.textContent = '⭐';
+        } else {
+          button.textContent = '☆';
+        }
+      })
+      .catch(error => {
+        console.error('Erreur:', error);
+      });
+    });
+    
+    // Empêche aussi le clic sur le bouton de déclencher le lien
+    form.querySelector('.favorite-btn').addEventListener('click', function(event) {
+      event.stopPropagation();
+    });
+  });
+});
+</script>
 
 {% endblock %}
