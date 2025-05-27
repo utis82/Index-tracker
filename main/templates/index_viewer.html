@@ -4,6 +4,14 @@
 
 {% block content %}
   <style>
+    .card-analyse {
+      padding-top: 0px;
+      padding-bottom: 0px;
+      font-size: 0 rem;
+      line-height: 1.2;
+      margin: 0;
+    }
+
     .chart-panel {
       display: flex;
       flex-wrap: nowrap;
@@ -24,8 +32,9 @@
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
       padding: 1.5rem;
       flex: 0 1 60%;
-      max-width: 700px;
+      max-width: 750px;
       position: relative;
+      min-height: 380px;
     }
 
     #chart-title {
@@ -57,12 +66,15 @@
       color: orange;
     }
 
+    .favorite-btn.toggleable {
+      pointer-events: auto;
+    }
+
     .analysis-cards {
       flex: 0 0 400px;
       display: flex;
       flex-direction: column;
       gap: 1rem;
-      
       opacity: 0;
       transform: translateX(40px);
       transition: opacity 0.6s ease, transform 0.6s ease;
@@ -74,7 +86,7 @@
     }
 
     #chart {
-      height: 384px;
+      height: 380px;
     }
 
     @keyframes drawLine {
@@ -85,18 +97,70 @@
         stroke-dashoffset: 0;
       }
     }
-  </style>
 
-  <!-- formulaire sélection -->
-  
+    .dropdown-content {
+      right: 0;
+      left: auto;
+    }
+
+    .counter-badge {
+      background: #2563eb;
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 999px;
+      margin-left: 6px;
+    }
+
+    .dropdown-validate {
+      margin-top: 8px;
+      padding: 6px 12px;
+      background: linear-gradient(to right, #4f46e5, #3b82f6);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .dropdown-validate:hover {
+      background: linear-gradient(to right, #3b82f6, #2563eb);
+    }
+  </style>
 
   {% if current_index %}<div style="display: none;">{{ current_index.name }}</div>{% endif %}
 
   {% if series_data %}
-    <form method="get" style="margin-top: 2rem;">
-      {% for index in selected_indexes %}<input type="hidden" name="index_id" value="{{ index.id }}">{% endfor %}
-      <div class="section-title"><span class="emoji">🕒</span> Analyse de deux périodes</div>
-      <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; align-items: flex-end;">
+    <form method="get" id="periodAnalysisForm" style="margin-top: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 1rem;">
+        <div class="section-title">
+          <span class="emoji">🕒</span> Analyse de deux périodes
+        </div>
+
+        <div class="dropdown-multiselect">
+          <div class="dropdown-button" onclick="toggleDropdown()">
+            ⭐ Mes favoris <span id="selectedCount" class="counter-badge">0</span>
+          </div>
+          <div class="dropdown-content" id="favoriteDropdown">
+              {% for index in user_favorites %}
+                <label>
+                  <input type="checkbox" name="index_id" value="{{ index.id }}" {% if index in selected_indexes %}checked{% endif %}>
+                  {{ index.name }}
+                </label>
+              {% empty %}
+                <p style="font-style: italic;">Aucun favori</p>
+              {% endfor %}
+              <input type="hidden" name="start_a" value="{{ start_a|default:'' }}">
+              <input type="hidden" name="end_a" value="{{ end_a|default:'' }}">
+              <input type="hidden" name="start_b" value="{{ start_b|default:'' }}">
+              <input type="hidden" name="end_b" value="{{ end_b|default:'' }}">
+              <button type="submit" class="dropdown-validate">🧪 Filtrer</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
         <div><label><strong>Période A :</strong></label><br><input type="date" name="start_a" value="{{ start_a|default:'' }}"><input type="date" name="end_a" value="{{ end_a|default:'' }}"></div>
         <div><label><strong>Période B :</strong></label><br><input type="date" name="start_b" value="{{ start_b|default:'' }}"><input type="date" name="end_b" value="{{ end_b|default:'' }}"></div>
         <div><button type="submit" class="dropdown-validate">📊 Analyser</button></div>
@@ -107,7 +171,12 @@
       <div id="index-chart-container">
         <div id="chart-title">
           {{ current_index.name }}
-          <button class="favorite-btn {% if current_index in user.userprofile.favorite_indexes.all %}filled{% endif %}" data-index-id="{{ current_index.id }}">{% if current_index in user.userprofile.favorite_indexes.all %}★{% else %}☆{% endif %}</button>
+          <button
+            class="favorite-btn toggleable {% if current_index in user.userprofile.favorite_indexes.all %}filled{% endif %}"
+            data-index-id="{{ current_index.id }}"
+            onclick="toggleFavorite(this)">
+            {% if current_index in user.userprofile.favorite_indexes.all %}★{% else %}☆{% endif %}
+          </button>
         </div>
         <div id="chart"></div>
       </div>
@@ -123,14 +192,37 @@
               <h4 style="color: #38bdf8;">🔵 {{ index_name }} — Période 2</h4>
               <ul><li>Min : {{ stats.min_b }}</li><li>Max : {{ stats.max_b }}</li><li>Moyenne : {{ stats.mean_b }}</li></ul>
             </div>
-            <div class="card">
-              <h4 style="color: #64748b;">⚖️ Analyse</h4>
-              <p><strong>Variation moyenne :</strong><br>{{ stats.variation }} %</p>
-            </div>
+          <div class="card card-analyse">
+            <h4 style="color: #64748b;">⚖️ Analyse</h4>
+            <p><strong>Variation moyenne :</strong><br>{{ stats.variation }} %</p>
+          </div>
           {% endfor %}
         </div>
       {% endif %}
     </div>
+
+    <script>
+      function toggleFavorite(button) {
+        const indexId = button.dataset.indexId;
+        fetch(`/toggle_favorite/${indexId}/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.is_favorite) {
+            button.classList.add('filled');
+            button.textContent = '★';
+          } else {
+            button.classList.remove('filled');
+            button.textContent = '☆';
+          }
+        });
+      }
+    </script>
 
     <script>
       window.addEventListener('DOMContentLoaded', () => {
@@ -141,6 +233,29 @@
           setTimeout(() => {
             analysisCards.classList.add('visible');
           }, 100);
+        }
+
+        updateSelectedCount();
+        document.querySelectorAll('#favoriteDropdown input[type="checkbox"]').forEach(cb => {
+          cb.addEventListener('change', updateSelectedCount);
+        });
+      });
+
+      function toggleDropdown() {
+        const dropdown = document.getElementById("favoriteDropdown");
+        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+      }
+
+      function updateSelectedCount() {
+        const count = document.querySelectorAll('#favoriteDropdown input[type="checkbox"]:checked').length;
+        document.getElementById('selectedCount').textContent = count;
+      }
+
+      document.addEventListener("click", function (event) {
+        const dropdown = document.getElementById("favoriteDropdown");
+        const button = event.target.closest(".dropdown-multiselect");
+        if (!button) {
+          dropdown.style.display = "none";
         }
       });
     </script>
@@ -162,7 +277,7 @@
       }));
 
       const layout = {
-        height: 320,
+        height: 400,
         margin: { l: 30, r: 10, t: 30, b: 30 },
         hovermode: 'closest',
         plot_bgcolor: 'rgba(0,0,0,0)',
