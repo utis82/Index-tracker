@@ -21,8 +21,11 @@ def prix_indexes_view(request):
             return redirect('main:prix_indexes')
 
     else:
-        form = IndexedPriceStructureForm()
+        form = IndexedPriceStructureForm()  # ✅ manquait ici
         formset = StructureComponentFormSet(user=request.user, instance=structure)
+        formset.empty_form.user = request.user
+        formset.empty_form.fields['index'].queryset = request.user.userprofile.favorite_indexes.all()
+ 
 
     structures = IndexedPriceStructure.objects.filter(user=request.user).order_by('-created_at')
 

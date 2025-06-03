@@ -119,12 +119,13 @@
 
         <!-- hidden clone source -->
         <div id="form-empty-source" style="display:none;">
-          {{ formset.empty_form.label }}
-          {{ formset.empty_form.component_type }}
-          {{ formset.empty_form.index }}
-          {{ formset.empty_form.fixed_amount }}
-          {{ formset.empty_form.percentage }}
+          {{ formset.empty_form.label|safe }}
+          {{ formset.empty_form.component_type|safe }}
+          {{ formset.empty_form.index|safe }}
+          {{ formset.empty_form.fixed_amount|safe }}
+          {{ formset.empty_form.percentage|safe }}
         </div>
+
 
         <!-- template row -->
         <template id="form-empty-template">
@@ -193,6 +194,15 @@
 
 <!-- JS -->
 <script>
+  let favoriteIndexOptions = null;
+
+  window.addEventListener('load', () => {
+    const existingIndexSelect = document.querySelector("select[name$='index']");
+    if (existingIndexSelect) {
+      favoriteIndexOptions = existingIndexSelect.innerHTML;
+    }
+  });
+
 function openModal() {
   document.getElementById("modal").style.display = "flex";
 }
@@ -216,12 +226,15 @@ function addTranche() {
   const newRowHtml = tmpl
     .replace('__label__', getWidget('label'))
     .replace('__type__', getWidget('component_type'))
-    .replace('__index__', getWidget('index'))
+    .replace('__index__', `<select name="form-${formIndex}-index" id="id_form-${formIndex}-index">${favoriteIndexOptions}</select>`)
+
+
     .replace('__amount__', getWidget('fixed_amount'))
     .replace('__percent__', getWidget('percentage'));
 
   const row = document.createElement("tr");
   row.innerHTML = newRowHtml;
+  console.log(row.querySelector("select[name$='index']").innerHTML);
   document.getElementById("formset-body").appendChild(row);
   document.getElementById("id_form-TOTAL_FORMS").value = ++formIndex;
 }
