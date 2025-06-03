@@ -4,6 +4,7 @@ from django.urls import path
 from django.shortcuts import render
 from django.contrib import messages
 from .models import UserProfile
+from .models import IndexedPriceStructure, StructureComponent
 
 import pandas as pd
 
@@ -15,6 +16,7 @@ admin.site.register(IndexValue)
 
 @admin.register(Index)
 class IndexAdmin(admin.ModelAdmin):
+    search_fields = ("name",)  # ✅ Ajoute cette ligne
     change_list_template = "admin/index_changelist.html"
 
     def get_urls(self):
@@ -60,3 +62,18 @@ class IndexAdmin(admin.ModelAdmin):
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'subscription_plan')
+
+class StructureComponentInline(admin.TabularInline):
+    model = StructureComponent
+    extra = 1  # Nombre de lignes vierges à afficher
+    fields = ("label", "component_type", "percentage", "fixed_amount", "index")
+    autocomplete_fields = ("index",)
+
+
+@admin.register(IndexedPriceStructure)
+class IndexedPriceStructureAdmin(admin.ModelAdmin):
+    list_display = ("name", "user", "base_price", "reference_date", "created_at")
+    list_filter = ("user", "reference_date")
+    search_fields = ("name", "user__username")
+    date_hierarchy = "created_at"
+    inlines = [StructureComponentInline]
