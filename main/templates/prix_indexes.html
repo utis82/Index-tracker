@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Prix Indexés{% endblock %}
+
+{% block content %}
+<style>
+  .card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .card h4 {
+    margin-top: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .form-table, .tranche-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  .form-table th, .tranche-table th,
+  .form-table td, .tranche-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #ddd;
+  }
+  .form-table th, .tranche-table th {
+    background-color: #f1f5f9;
+    text-align: left;
+    font-size: 0.9rem;
+  }
+  .form-table td input, .tranche-table td input,
+  .form-table td select, .tranche-table td select {
+    width: 100%;
+    font-size: 0.85rem;
+  }
+  .tranche-table tr:nth-child(even) {
+    background-color: #f9fafb;
+  }
+  button {
+    background-color: #0ea5e9;
+    border: none;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  button:hover {
+    background-color: #0284c7;
+  }
+</style>
+
+<!-- Bouton ouvrir le popup -->
+<div style="margin-bottom: 1rem;">
+  <button onclick="openModal()">➕ Créer une nouvelle structure</button>
+</div>
+
+<!-- POPUP modal -->
+<div id="modal" class="modal-overlay" style="display: none; justify-content: center; align-items: flex-start; position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); z-index: 1000;">
+  <div class="modal-content" style="background:white; margin-top: 2rem; border-radius: 12px; max-width: 900px; width: 90%; padding: 1.5rem;">
+    <span class="modal-close" onclick="closeModal()" style="float:right; cursor:pointer; font-weight: bold;">×</span>
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="card">
+        <h4>🧮 Informations générales</h4>
+        <table class="form-table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Prix de base (€)</th>
+              <th>Date de référence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ form.name }}</td>
+              <td>{{ form.base_price }}</td>
+              <td>{{ form.reference_date }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h4>📊 Tranches de calcul</h4>
+        {{ formset.management_form }}
+        <table class="tranche-table">
+          <thead>
+            <tr>
+              <th>Libellé</th>
+              <th>Type</th>
+              <th>Index</th>
+              <th>€</th>
+              <th>%</th>
+              <th>🗑️</th>
+            </tr>
+          </thead>
+          <tbody id="formset-body">
+            {% for form in formset %}
+              <tr>
+                <td>{{ form.label }}</td>
+                <td>{{ form.component_type }}</td>
+                <td>{{ form.index }}</td>
+                <td>{{ form.fixed_amount }}</td>
+                <td>{{ form.percentage }}</td>
+                <td><button type="button" onclick="deleteRow(this)">🗑️</button></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <!-- hidden clone source -->
+        <div id="form-empty-source" style="display:none;">
+          {{ formset.empty_form.label }}
+          {{ formset.empty_form.component_type }}
+          {{ formset.empty_form.index }}
+          {{ formset.empty_form.fixed_amount }}
+          {{ formset.empty_form.percentage }}
+        </div>
+
+        <!-- template row -->
+        <template id="form-empty-template">
+          <tr>
+            <td>__label__</td>
+            <td>__type__</td>
+            <td>__index__</td>
+            <td>__amount__</td>
+            <td>__percent__</td>
+            <td><button type="button" onclick="deleteRow(this)">🗑️</button></td>
+          </tr>
+        </template>
+
+        <button type="button" onclick="addTranche()">➕ Ajouter une tranche</button>
+      </div>
+
+      <br>
+      <button type="submit">✅ Enregistrer</button>
+    </form>
+  </div>
+</div>
+
+<!-- STRUCTURES EXISTANTES -->
+<h2>📦 Mes structures</h2>
+{% if structures %}
+  <div class="card">
+    <table class="form-table">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Prix de base</th>
+          <th>Référence</th>
+          <th>Création</th>
+          <th>Nb tranches</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in structures %}
+        <tr onclick="toggleDetails('{{ s.id }}')" style="cursor:pointer;">
+          <td>{{ s.name }}</td>
+          <td>{{ s.base_price }}</td>
+          <td>{{ s.reference_date }}</td>
+          <td>{{ s.created_at|date:"Y-m-d" }}</td>
+          <td>{{ s.components.count }}</td>
+        </tr>
+        <tr id="details-{{ s.id }}" style="display: none;">
+          <td colspan="5">
+            <ul>
+              {% for c in s.components.all %}
+              <li><strong>{{ c.label }}</strong> — {{ c.component_type }}
+                {% if c.fixed_amount %}: {{ c.fixed_amount }} €{% endif %}
+                {% if c.percentage %}: {{ c.percentage }} %{% endif %}
+                {% if c.index %} ({{ c.index.name }}){% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p>Aucune structure enregistrée.</p>
+{% endif %}
+
+<!-- JS -->
+<script>
+function openModal() {
+  document.getElementById("modal").style.display = "flex";
+}
+function closeModal() {
+  document.getElementById("modal").style.display = "none";
+}
+function toggleDetails(id) {
+  const row = document.getElementById("details-" + id);
+  row.style.display = row.style.display === "none" ? "table-row" : "none";
+}
+
+let formIndex = {{ formset.total_form_count }};
+function addTranche() {
+  const tmpl = document.getElementById("form-empty-template").innerHTML;
+  const getWidget = (nameEndsWith) => {
+    const el = Array.from(document.querySelectorAll("#form-empty-source input, #form-empty-source select"))
+      .find(e => e.name.endsWith(nameEndsWith));
+    return el ? el.outerHTML.replace(/__prefix__/g, formIndex) : '';
+  };
+
+  const newRowHtml = tmpl
+    .replace('__label__', getWidget('label'))
+    .replace('__type__', getWidget('component_type'))
+    .replace('__index__', getWidget('index'))
+    .replace('__amount__', getWidget('fixed_amount'))
+    .replace('__percent__', getWidget('percentage'));
+
+  const row = document.createElement("tr");
+  row.innerHTML = newRowHtml;
+  document.getElementById("formset-body").appendChild(row);
+  document.getElementById("id_form-TOTAL_FORMS").value = ++formIndex;
+}
+
+function deleteRow(btn) {
+  const row = btn.closest("tr");
+  row.remove();
+}
+</script>
+{% endblock %}
