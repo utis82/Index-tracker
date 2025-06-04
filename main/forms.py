@@ -6,6 +6,7 @@ from .models import IndexedPriceStructure, StructureComponent
 
 
 class IndexedPriceStructureForm(forms.ModelForm):
+
     class Meta:
         model = IndexedPriceStructure
         fields = ['name', 'base_price', 'reference_date']
@@ -22,17 +23,27 @@ class IndexedPriceStructureForm(forms.ModelForm):
                 Column('name', css_class='col-md-4'),
                 Column('base_price', css_class='col-md-4'),
                 Column('reference_date', css_class='col-md-4'),
-            )
-        )
+            ))
 
 
 class StructureComponentForm(forms.ModelForm):
+
     class Meta:
         model = StructureComponent
-        fields = ['label', 'component_type', 'index', 'fixed_amount', 'percentage']
+        fields = [
+            'label', 'component_type', 'index', 'fixed_amount', 'percentage'
+        ]
         widgets = {
-            'fixed_amount': forms.NumberInput(attrs={'step': '0.01', 'class': 'fixed-field'}),
-            'percentage': forms.NumberInput(attrs={'step': '0.01', 'class': 'percentage-field'}),
+            'fixed_amount':
+            forms.NumberInput(attrs={
+                'step': '0.01',
+                'class': 'fixed-field'
+            }),
+            'percentage':
+            forms.NumberInput(attrs={
+                'step': '0.01',
+                'class': 'percentage-field'
+            }),
         }
 
     def __init__(self, *args, **kwargs):
@@ -40,7 +51,9 @@ class StructureComponentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if self.user:
-            self.fields['index'].queryset = self.user.userprofile.favorite_indexes.all()
+            self.fields[
+                'index'].queryset = self.user.userprofile.favorite_indexes.all(
+                )
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -53,11 +66,11 @@ class StructureComponentForm(forms.ModelForm):
                 ),
                 Row(
                     Column('fixed_amount', css_class='col-md-6 fixed-wrapper'),
-                    Column('percentage', css_class='col-md-6 percentage-wrapper'),
+                    Column('percentage',
+                           css_class='col-md-6 percentage-wrapper'),
                 ),
                 css_class='card p-3 mb-3 tranche-card position-relative',
-            )
-        )
+            ))
 
     def clean(self):
         cleaned_data = super().clean()
@@ -65,11 +78,14 @@ class StructureComponentForm(forms.ModelForm):
         perc = cleaned_data.get("percentage")
 
         if fixed and perc:
-            raise forms.ValidationError("Remplissez soit un montant (€), soit un pourcentage (%), pas les deux.")
+            raise forms.ValidationError(
+                "Remplissez soit un montant (€), soit un pourcentage (%), pas les deux."
+            )
         return cleaned_data
 
 
 class CustomStructureComponentFormSet(BaseInlineFormSet):
+
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
@@ -80,6 +96,22 @@ class CustomStructureComponentFormSet(BaseInlineFormSet):
         kwargs["user"] = self.user
         return super()._construct_form(i, **kwargs)
 
+    def clean(self):
+        super().clean()
+        print("🧪 Formset CLEAN called")
+        total = 0
+        for form in self.forms:
+            if self.can_delete and self._should_delete_form(form):
+                continue
+            if form.cleaned_data.get("percentage"):
+                total += form.cleaned_data["percentage"]
+
+        if total < 100:
+            raise forms.ValidationError(
+                "La somme des pourcentages doit être exactement 100%.")
+        if total > 100:
+            raise forms.ValidationError("La somme des pourcentages dépasse 100%.")
+
 
 StructureComponentFormSet = forms.inlineformset_factory(
     IndexedPriceStructure,
@@ -87,5 +119,7 @@ StructureComponentFormSet = forms.inlineformset_factory(
     form=StructureComponentForm,
     formset=CustomStructureComponentFormSet,
     extra=1,
-    can_delete=True
-)
+    can_delete=True)
+
+
+
