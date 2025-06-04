@@ -3,14 +3,14 @@ from django.shortcuts import render, redirect
 from main.forms import IndexedPriceStructureForm, StructureComponentFormSet
 from main.models import IndexedPriceStructure
 
-
 @login_required
 def prix_indexes_view(request):
-    structure = IndexedPriceStructure(user=request.user)
+    prefix = "components"
 
     if request.method == "POST":
         form = IndexedPriceStructureForm(request.POST)
-        formset = StructureComponentFormSet(request.POST, user=request.user, instance=structure)
+        formset = StructureComponentFormSet(request.POST, user=request.user, prefix="components")
+
 
         if form.is_valid() and formset.is_valid():
             structure = form.save(commit=False)
@@ -21,11 +21,14 @@ def prix_indexes_view(request):
             return redirect('main:prix_indexes')
 
     else:
-        form = IndexedPriceStructureForm()  # ✅ manquait ici
-        formset = StructureComponentFormSet(user=request.user, instance=structure)
-        formset.empty_form.user = request.user
-        formset.empty_form.fields['index'].queryset = request.user.userprofile.favorite_indexes.all()
- 
+        structure = IndexedPriceStructure(user=request.user)
+        form = IndexedPriceStructureForm()
+        formset = StructureComponentFormSet(user=request.user, instance=structure, prefix="components")
+
+
+    # appliquer les indexes favoris à l’empty_form
+    formset.empty_form.user = request.user
+    formset.empty_form.fields['index'].queryset = request.user.userprofile.favorite_indexes.all()
 
     structures = IndexedPriceStructure.objects.filter(user=request.user).order_by('-created_at')
 

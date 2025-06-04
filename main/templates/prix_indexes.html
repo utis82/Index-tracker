@@ -90,15 +90,27 @@
       </div>
 
       <div class="card">
-        <h4>📊 Tranches de calcul</h4>
+        <h4>📊 Tranches de calcul (formset.count = {{ formset.total_form_count }})</h4>
+
         {{ formset.management_form }}
+       
+
+       
+
+        {% if formset.non_form_errors %}
+          <div style="color: red; margin-bottom: 1rem;">
+            {{ formset.non_form_errors }}
+          </div>
+        {% endif %}
+        <p>📊 Total forms déclarés : <span id="debug-total-forms"></span></p>
+
         <table class="tranche-table">
           <thead>
             <tr>
               <th>Libellé</th>
               <th>Type</th>
               <th>Index</th>
-              <th>€</th>
+              
               <th>%</th>
               <th>🗑️</th>
             </tr>
@@ -106,15 +118,35 @@
           <tbody id="formset-body">
             {% for form in formset %}
               <tr>
-                <td>{{ form.label }}</td>
-                <td>{{ form.component_type }}</td>
-                <td>{{ form.index }}</td>
-                <td>{{ form.fixed_amount }}</td>
-                <td>{{ form.percentage }}</td>
+                <td>
+                  {{ form.label }}
+                  {% if form.label.errors %}
+                    <div style="color:red;">{{ form.label.errors.0 }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  {{ form.component_type }}
+                  {% if form.component_type.errors %}
+                    <div style="color:red;">{{ form.component_type.errors.0 }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  {{ form.index }}
+                  {% if form.index.errors %}
+                    <div style="color:red;">{{ form.index.errors.0 }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  {{ form.percentage }}
+                  {% if form.percentage.errors %}
+                    <div style="color:red;">{{ form.percentage.errors.0 }}</div>
+                  {% endif %}
+                </td>
                 <td><button type="button" onclick="deleteRow(this)">🗑️</button></td>
               </tr>
             {% endfor %}
           </tbody>
+
         </table>
 
         <!-- hidden clone source -->
@@ -133,7 +165,7 @@
             <td>__label__</td>
             <td>__type__</td>
             <td>__index__</td>
-            <td>__amount__</td>
+            
             <td>__percent__</td>
             <td><button type="button" onclick="deleteRow(this)">🗑️</button></td>
           </tr>
@@ -192,7 +224,8 @@
   <p>Aucune structure enregistrée.</p>
 {% endif %}
 
-<!-- JS -->
+{% block extra_scripts %}
+
 <script>
   let favoriteIndexOptions = null;
 
@@ -219,29 +252,55 @@ function addTranche() {
   const tmpl = document.getElementById("form-empty-template").innerHTML;
   const getWidget = (nameEndsWith) => {
     const el = Array.from(document.querySelectorAll("#form-empty-source input, #form-empty-source select"))
-      .find(e => e.name.endsWith(nameEndsWith));
-    return el ? el.outerHTML.replace(/__prefix__/g, formIndex) : '';
+      .find(e => e.name.includes('__prefix__') && e.name.endsWith(nameEndsWith));
+    if (!el) return '';
+
+    let html = el.outerHTML;
+    html = html.replace(/__prefix__/g, formIndex);
+
+    return html;
   };
+
+
 
   const newRowHtml = tmpl
     .replace('__label__', getWidget('label'))
     .replace('__type__', getWidget('component_type'))
-    .replace('__index__', `<select name="form-${formIndex}-index" id="id_form-${formIndex}-index">${favoriteIndexOptions}</select>`)
+    .replace('__index__', `<select name="components-${formIndex}-index" id="id_components-${formIndex}-index">${favoriteIndexOptions}</select>`)
 
 
-    .replace('__amount__', getWidget('fixed_amount'))
+
+
     .replace('__percent__', getWidget('percentage'));
 
   const row = document.createElement("tr");
   row.innerHTML = newRowHtml;
   console.log(row.querySelector("select[name$='index']").innerHTML);
   document.getElementById("formset-body").appendChild(row);
-  document.getElementById("id_form-TOTAL_FORMS").value = ++formIndex;
+  formIndex++;
+  document.getElementById("id_components-TOTAL_FORMS").value = formIndex;
+
+  document.getElementById("debug-total-forms").textContent = formIndex;
+
 }
 
 function deleteRow(btn) {
   const row = btn.closest("tr");
   row.remove();
 }
+  window.addEventListener("load", () => {
+    const errorBox = document.querySelector("div[style*='color: red']");
+    if (errorBox) {
+      console.log("❗ Erreur détectée — popup va s’ouvrir");
+      setTimeout(() => openModal(), 100);  // ⏱️ délai court pour fiabilité
+    }
+    const totalFormsInput = document.getElementById("id_components-TOTAL_FORMS");
+
+    const debugSpan = document.getElementById("debug-total-forms");
+    if (totalFormsInput && debugSpan) {
+      debugSpan.textContent = totalFormsInput.value;
+    }
+  });
 </script>
+{% endblock %}
 {% endblock %}
