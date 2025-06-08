@@ -4,6 +4,10 @@
 
 {% block content %}
 <style>
+  
+  input[name$='-DELETE'] {
+    display: none;
+  }
   .card {
     background: white;
     border-radius: 12px;
@@ -66,8 +70,26 @@
 <div id="modal" class="modal-overlay" style="display: none; justify-content: center; align-items: flex-start; position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); z-index: 1000;">
   <div class="modal-content" style="background:white; margin-top: 2rem; border-radius: 12px; max-width: 900px; width: 90%; padding: 1.5rem;">
     <span class="modal-close" onclick="closeModal()" style="float:right; cursor:pointer; font-weight: bold;">×</span>
+    <!-- DEBUG DOM -->
+    <script>
+      setTimeout(() => {
+        const form = document.querySelector("#modal form");
+        if (!form) {
+          console.error("❌ Formulaire introuvable !");
+        } else {
+          const idField = form.querySelector("input[name='structure_id']");
+          if (idField) {
+            console.log("✅ structure_id dans le formulaire avec valeur :", idField.value);
+          } else {
+            console.error("❌ Champ structure_id non trouvé dans le formulaire !");
+          }
+        }
+      }, 500);
+    </script>
+
     <form method="post">
       {% csrf_token %}
+      <input type="hidden" name="structure_id" id="structure-id-field">
 
       <div class="card">
         <h4>🧮 Informations générales</h4>
@@ -117,33 +139,39 @@
           </thead>
           <tbody id="formset-body">
             {% for form in formset %}
-              <tr>
-                <td>
-                  {{ form.label }}
-                  {% if form.label.errors %}
-                    <div style="color:red;">{{ form.label.errors.0 }}</div>
-                  {% endif %}
-                </td>
-                <td>
-                  {{ form.component_type }}
-                  {% if form.component_type.errors %}
-                    <div style="color:red;">{{ form.component_type.errors.0 }}</div>
-                  {% endif %}
-                </td>
-                <td>
-                  {{ form.index }}
-                  {% if form.index.errors %}
-                    <div style="color:red;">{{ form.index.errors.0 }}</div>
-                  {% endif %}
-                </td>
-                <td>
-                  {{ form.percentage }}
-                  {% if form.percentage.errors %}
-                    <div style="color:red;">{{ form.percentage.errors.0 }}</div>
-                  {% endif %}
-                </td>
-                <td><button type="button" onclick="deleteRow(this)">🗑️</button></td>
-              </tr>
+            <tr>
+              {{ form.DELETE }}  <!-- ✅ Champ caché pour suppression logique -->
+              <td>
+                {{ form.label }}
+
+                {% if form.label.errors %}
+                  <div style="color:red;">{{ form.label.errors.0 }}</div>
+                {% endif %}
+              </td>
+              <td>
+                {{ form.component_type }}
+                {% if form.component_type.errors %}
+                  <div style="color:red;">{{ form.component_type.errors.0 }}</div>
+                {% endif %}
+              </td>
+              <td>
+                {{ form.index }}
+                {% if form.index.errors %}
+                  <div style="color:red;">{{ form.index.errors.0 }}</div>
+                {% endif %}
+              </td>
+              <td>
+                {{ form.percentage }}
+                {% if form.percentage.errors %}
+                  <div style="color:red;">{{ form.percentage.errors.0 }}</div>
+                {% endif %}
+              </td>
+              <td>
+                {{ form.DELETE }}  <!-- ✅ champ caché -->
+                <button type="button" onclick="deleteRow(this)">🗑️</button>
+              </td>
+            </tr>
+
             {% endfor %}
           </tbody>
 
@@ -192,19 +220,27 @@
           <th>Référence</th>
           <th>Création</th>
           <th>Nb tranches</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for s in structures %}
-        <tr onclick="toggleDetails('{{ s.id }}')" style="cursor:pointer;">
+        <tr onclick="toggleDetails('{{ s.id }}')" style="cursor: pointer;">
           <td>{{ s.name }}</td>
           <td>{{ s.base_price }}</td>
           <td>{{ s.reference_date }}</td>
           <td>{{ s.created_at|date:"Y-m-d" }}</td>
           <td>{{ s.components.count }}</td>
+          <td onclick="event.stopPropagation();">
+            <button type="button" onclick="editStructure({{ s.id }})" title="Modifier">✏️</button>
+            <form method="post" action="{% url 'main:delete_structure' s.id %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" onclick="return confirm('Supprimer cette structure ?')" title="Supprimer">🗑️</button>
+            </form>
+          </td>
         </tr>
         <tr id="details-{{ s.id }}" style="display: none;">
-          <td colspan="5">
+          <td colspan="6">
             <ul>
               {% for c in s.components.all %}
               <li><strong>{{ c.label }}</strong> — {{ c.component_type }}
@@ -224,9 +260,65 @@
   <p>Aucune structure enregistrée.</p>
 {% endif %}
 
+{% endblock %}  
+
 {% block extra_scripts %}
 
 <script>
+  function editStructure(structureId) {
+    fetch(`/structure-data/${structureId}/`)
+      .then(response => {
+        if (!response.ok) throw new Error("Erreur lors du chargement des données.");
+        return response.json();
+      })
+      .then(data => {
+        console.log("🧠 Données structure récupérées :", data);
+
+        // 🧹 Réinitialise le formulaire
+        const form = document.querySelector("#modal form");
+        form.reset();
+
+        // 🧠 Remplit les champs principaux
+        document.querySelector("input[name='name']").value = data.name;
+        document.querySelector("input[name='base_price']").value = data.base_price;
+        document.querySelector("input[name='reference_date']").value = data.reference_date;
+
+        // 🧠 Met à jour le champ hidden structure_id
+        const idField = document.getElementById("structure-id-field");
+        if (idField) {
+          idField.value = structureId;
+          console.log("✅ structure-id-field mis à :", structureId);
+        } else {
+          console.error("❌ structure-id-field introuvable !");
+        }
+
+        // 🔄 Supprime les anciennes tranches
+        document.querySelectorAll("#formset-body tr").forEach(row => row.remove());
+
+        // 🔄 Réinitialise le compteur de formulaire
+        formIndex = 0;
+        document.getElementById("id_components-TOTAL_FORMS").value = "0";
+        document.getElementById("debug-total-forms").textContent = "0";
+
+        // ➕ Ajoute les nouvelles tranches
+        data.components.forEach(component => {
+          addTranche(component);
+        });
+
+        document.getElementById("id_components-TOTAL_FORMS").value = data.components.length;
+        document.getElementById("debug-total-forms").textContent = data.components.length;
+
+        // ✅ Ouvre le modal
+        openModal(true);  // 📌 signaler qu’on est en édition, donc NE PAS effacer structure_id
+
+      })
+      .catch(error => {
+        alert("Erreur : " + error.message);
+      });
+  }
+
+
+  
   let favoriteIndexOptions = null;
 
   window.addEventListener('load', () => {
@@ -236,9 +328,13 @@
     }
   });
 
-function openModal() {
-  document.getElementById("modal").style.display = "flex";
-}
+  function openModal(isEdit = false) {
+    document.getElementById("modal").style.display = "flex";
+    if (!isEdit) {
+      document.getElementById("structure-id-field").value = ""; // 🧹 reset ID uniquement en création
+    }
+  }
+
 function closeModal() {
   document.getElementById("modal").style.display = "none";
 }
@@ -248,59 +344,62 @@ function toggleDetails(id) {
 }
 
 let formIndex = {{ formset.total_form_count }};
-function addTranche() {
-  const tmpl = document.getElementById("form-empty-template").innerHTML;
-  const getWidget = (nameEndsWith) => {
-    const el = Array.from(document.querySelectorAll("#form-empty-source input, #form-empty-source select"))
-      .find(e => e.name.includes('__prefix__') && e.name.endsWith(nameEndsWith));
-    if (!el) return '';
+  
+  
+  function addTranche(data = null) {
+    const tmpl = document.getElementById("form-empty-template").innerHTML;
 
-    let html = el.outerHTML;
-    html = html.replace(/__prefix__/g, formIndex);
+    const getWidget = (nameEndsWith) => {
+      const el = Array.from(document.querySelectorAll("#form-empty-source input, #form-empty-source select"))
+        .find(e => e.name.includes('__prefix__') && e.name.endsWith(nameEndsWith));
+      if (!el) return '';
+      let html = el.outerHTML;
+      html = html.replace(/__prefix__/g, formIndex);
+      return html;
+    };
 
-    return html;
-  };
+    const newRowHtml = tmpl
+      .replace('__label__', getWidget('label'))
+      .replace('__type__', getWidget('component_type'))
+      .replace('__index__', `<select name="components-${formIndex}-index" id="id_components-${formIndex}-index">${favoriteIndexOptions}</select>`)
+      .replace('__percent__', getWidget('percentage'));
 
+    const row = document.createElement("tr");
+    row.innerHTML = newRowHtml;
 
-
-  const newRowHtml = tmpl
-    .replace('__label__', getWidget('label'))
-    .replace('__type__', getWidget('component_type'))
-    .replace('__index__', `<select name="components-${formIndex}-index" id="id_components-${formIndex}-index">${favoriteIndexOptions}</select>`)
-
-
-
-
-    .replace('__percent__', getWidget('percentage'));
-
-  const row = document.createElement("tr");
-  row.innerHTML = newRowHtml;
-  console.log(row.querySelector("select[name$='index']").innerHTML);
-  document.getElementById("formset-body").appendChild(row);
-  formIndex++;
-  document.getElementById("id_components-TOTAL_FORMS").value = formIndex;
-
-  document.getElementById("debug-total-forms").textContent = formIndex;
-
-}
-
-function deleteRow(btn) {
-  const row = btn.closest("tr");
-  row.remove();
-}
-  window.addEventListener("load", () => {
-    const errorBox = document.querySelector("div[style*='color: red']");
-    if (errorBox) {
-      console.log("❗ Erreur détectée — popup va s’ouvrir");
-      setTimeout(() => openModal(), 100);  // ⏱️ délai court pour fiabilité
+    if (data) {
+      row.querySelector(`[name='components-${formIndex}-label']`).value = data.label;
+      row.querySelector(`[name='components-${formIndex}-component_type']`).value = data.component_type;
+      row.querySelector(`[name='components-${formIndex}-index']`).value = data.index_id;
+      row.querySelector(`[name='components-${formIndex}-percentage']`).value = data.percentage;
     }
-    const totalFormsInput = document.getElementById("id_components-TOTAL_FORMS");
 
-    const debugSpan = document.getElementById("debug-total-forms");
-    if (totalFormsInput && debugSpan) {
-      debugSpan.textContent = totalFormsInput.value;
+    document.getElementById("formset-body").appendChild(row);
+    formIndex++;
+    document.getElementById("id_components-TOTAL_FORMS").value = formIndex;
+    document.getElementById("debug-total-forms").textContent = formIndex;
+  }
+
+
+  function deleteRow(btn) {
+    const row = btn.closest("tr");
+    const deleteInput = row.querySelector("input[type='checkbox'][name$='-DELETE']");
+
+    if (deleteInput) {
+      // ✅ Si champ DELETE existe (ligne générée par Django), on le coche et on masque la ligne
+      deleteInput.checked = true;
+      row.style.display = "none";
+    } else {
+      // 🆕 Si ligne ajoutée dynamiquement, on la supprime totalement
+      row.remove();
+      formIndex--;
+      document.getElementById("id_components-TOTAL_FORMS").value = formIndex;
     }
-  });
+
+    document.getElementById("debug-total-forms").textContent = formIndex;
+  }
+
+
 </script>
 {% endblock %}
-{% endblock %}
+
