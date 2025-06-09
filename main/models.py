@@ -12,9 +12,7 @@ class Index(models.Model):
 
 # Ce modèle représente une valeur d’un index à une certaine date
 class IndexValue(models.Model):
-    index = models.ForeignKey(Index,
-                              on_delete=models.CASCADE,
-                              related_name='values')
+    index = models.ForeignKey(Index, on_delete=models.CASCADE, related_name='values')
     date = models.DateField()
     value = models.FloatField()
 
@@ -32,21 +30,18 @@ class UserProfile(models.Model):
         ('pack_10', 'Pack 10 index'),
         ('premium', 'Premium'),
     ]
-    subscription_plan = models.CharField(max_length=20,
-                                         choices=PLAN_CHOICES,
-                                         default='free')
-
+    subscription_plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default='free')
     favorite_indexes = models.ManyToManyField(Index, blank=True)
 
-    # Champs pour gérer l’index principal
-    primary_index = models.ForeignKey(Index,
-                                      null=True,
-                                      blank=True,
-                                      on_delete=models.SET_NULL,
-                                      related_name='users_with_primary_index')
+    primary_index = models.ForeignKey(
+        Index,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='users_with_primary_index'
+    )
     primary_index_change_count = models.PositiveIntegerField(default=0)
 
-    # Méthodes utilitaires
     def index_limit(self):
         return {
             'free': 1,
@@ -70,16 +65,11 @@ class UserProfile(models.Model):
         return self.primary_index_change_count < self.change_limit()
 
 
-# models.py
-
-
+# Modèle pour les structures de coût
 class IndexedPriceStructure(models.Model):
-    user = models.ForeignKey(User,
-                             on_delete=models.CASCADE,
-                             related_name='price_structures')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='price_structures')
     name = models.CharField(max_length=100)
-    base_price = models.FloatField(
-        help_text="Prix de base à la date de référence")
+    base_price = models.FloatField(help_text="Prix de base à la date de référence")
     reference_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -88,31 +78,17 @@ class IndexedPriceStructure(models.Model):
 
 
 class StructureComponent(models.Model):
-    # Ajoute-le dans StructureComponent si ce n'est pas déjà fait
-    use_percentage = models.BooleanField(default=False)
+    structure = models.ForeignKey(IndexedPriceStructure, on_delete=models.CASCADE, related_name='components')
 
-    structure = models.ForeignKey(IndexedPriceStructure,
-                                  on_delete=models.CASCADE,
-                                  related_name='components')
+    COMPONENT_TYPE_CHOICES = [('fixed', 'Fixe (non indexé)'), ('indexed', 'Indexé')]
+    component_type = models.CharField(max_length=10, choices=COMPONENT_TYPE_CHOICES)
 
-    COMPONENT_TYPE_CHOICES = [('fixed', 'Fixe (non indexé)'),
-                              ('indexed', 'Indexé')]
-    component_type = models.CharField(max_length=10,
-                                      choices=COMPONENT_TYPE_CHOICES)
-
-    # Pourcentage ou montant fixe
     percentage = models.FloatField(null=True, blank=True)
     fixed_amount = models.FloatField(null=True, blank=True)
+    use_percentage = models.BooleanField(default=False)
 
-    # Si indexé, lien vers un index
-    index = models.ForeignKey(Index,
-                              on_delete=models.SET_NULL,
-                              null=True,
-                              blank=True)
-
-    label = models.CharField(
-        max_length=100,
-        help_text="Nom de la tranche (e.g. main d'œuvre, énergie)")
+    index = models.ForeignKey(Index, on_delete=models.SET_NULL, null=True, blank=True)
+    label = models.CharField(max_length=100, help_text="Nom de la tranche (e.g. main d'œuvre, énergie)")
 
     def __str__(self):
         return f"{self.label} ({self.structure.name})"

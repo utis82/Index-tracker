@@ -4,7 +4,87 @@
 
 {% block content %}
 <style>
-  
+  button.graph-toggle.active::after {
+    content: "✓";
+    margin-left: 6px;
+    font-size: 0.9rem;
+    color: white;
+  }
+  .page-layout.empty-state {
+    justify-content: center;
+    align-items: center;
+    height: 70vh;
+  }
+
+  .page-layout.empty-state .left-panel {
+    max-width: 100%;
+    width: 60%;
+  }
+
+  .page-layout.empty-state .right-panel {
+    display: none;
+  }
+
+
+  #structure-details-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  #structure-details-card {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    opacity: 0;
+    transform: translateY(10px);
+    max-height: none;
+    overflow-y: visible;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+ 
+
+  #structure-details {
+    background-color: #f9fafb;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+  #structure-details > div {
+    animation: fadeInUp 0.4s ease both;
+  }
+
+  #structure-details .structure-block {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0.5rem;
+  }
+
+  .structure-meta > div,
+  .structure-tranches > div {
+    margin-bottom: 4px;
+    font-size: 0.82rem;
+  }
+
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  button.graph-toggle.active {
+    background-color: #0369a1;
+    box-shadow: inset 0 0 0 2px #e0f2fe;
+  }
+
   input[name$='-DELETE'] {
     display: none;
   }
@@ -59,6 +139,65 @@
   button:hover {
     background-color: #0284c7;
   }
+  .page-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    margin-top: 1rem;
+  }
+
+  .page-layout.collapsed {
+    justify-content: center;
+  }
+
+  .page-layout.collapsed .left-panel {
+    max-width: 600px;
+    width: 100%;
+  }
+
+  .page-layout.collapsed .right-panel {
+    display: none;
+  }
+
+  .page-layout:not(.collapsed) .right-panel {
+    display: flex;
+  }
+
+  .left-panel {
+    flex: 1;
+    max-width: 33%;
+  }
+
+  .right-panel {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 1rem;
+    overflow: hidden;
+    max-height: calc(100vh - 120px); /* Limite douce */
+  }
+
+
+  #main-graph-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    padding: 1rem;
+    min-height: 350px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #main-graph {
+    flex: 1;
+    min-height: 300px;
+    width: 100%;
+
+  }
+
 </style>
 
 <!-- Bouton ouvrir le popup -->
@@ -85,6 +224,60 @@
           }
         }
       }, 500);
+
+      function selectStructure(id) {
+        const graphDiv = document.getElementById("main-graph");
+        const dataPoints = graphsData[id];
+        if (!dataPoints || dataPoints.length === 0) {
+          Plotly.purge(graphDiv);
+          graphDiv.innerHTML = "<p style='text-align:center;'>Aucune donnée pour cette structure.</p>";
+          return;
+        }
+
+        const dates = dataPoints.map(p => p.date);
+        const values = dataPoints.map(p => p.value);
+
+        const trace = {
+          x: dates,
+          y: values,
+          type: 'scatter',
+          mode: 'lines+markers',
+          line: { color: '#0ea5e9', width: 2 },
+          marker: { size: 5, color: '#0284c7' },
+        };
+
+        const layout = {
+          margin: { l: 40, r: 20, t: 20, b: 40 },
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          plot_bgcolor: 'rgba(0,0,0,0)',
+          xaxis: { title: 'Date' },
+          yaxis: { title: 'Prix (€)' },
+          font: { family: 'Manrope, sans-serif', color: '#1e2a36' },
+        };
+
+        Plotly.react(graphDiv, [trace], layout, { responsive: true });
+
+        const structure = graphsData[id];
+        const structureObj = structuresMeta[id];
+        if (!structureObj) return;
+
+        let html = `<p><strong>Nom :</strong> ${structureObj.name}</p>`;
+        html += `<p><strong>Date de référence :</strong> ${structureObj.reference_date}</p>`;
+        html += `<p><strong>Prix de base :</strong> ${structureObj.base_price} €</p>`;
+        html += `<p><strong>Tranches :</strong></p><ul>`;
+        structureObj.components.forEach(c => {
+          html += `<li><strong>${c.label}</strong> — ${c.component_type}`;
+          if (c.fixed_amount) html += ` : ${c.fixed_amount} €`;
+          if (c.percentage) html += ` : ${c.percentage} %`;
+          if (c.index_name) html += ` (${c.index_name})`;
+          html += `</li>`;
+        });
+        html += `</ul>`;
+
+        document.getElementById("structure-details").innerHTML = html;
+
+      }
+
     </script>
 
     <form method="post">
@@ -209,62 +402,74 @@
 </div>
 
 <!-- STRUCTURES EXISTANTES -->
-<h2>📦 Mes structures</h2>
-{% if structures %}
-  <div class="card">
-    <table class="form-table">
-      <thead>
-        <tr>
-          <th>Nom</th>
-          <th>Prix de base</th>
-          <th>Référence</th>
-          <th>Création</th>
-          <th>Nb tranches</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in structures %}
-        <tr onclick="toggleDetails('{{ s.id }}')" style="cursor: pointer;">
-          <td>{{ s.name }}</td>
-          <td>{{ s.base_price }}</td>
-          <td>{{ s.reference_date }}</td>
-          <td>{{ s.created_at|date:"Y-m-d" }}</td>
-          <td>{{ s.components.count }}</td>
-          <td onclick="event.stopPropagation();">
-            <button type="button" onclick="editStructure({{ s.id }})" title="Modifier">✏️</button>
-            <form method="post" action="{% url 'main:delete_structure' s.id %}" style="display:inline;">
-              {% csrf_token %}
-              <button type="submit" onclick="return confirm('Supprimer cette structure ?')" title="Supprimer">🗑️</button>
-            </form>
-          </td>
-        </tr>
-        <tr id="details-{{ s.id }}" style="display: none;">
-          <td colspan="6">
-            <ul>
-              {% for c in s.components.all %}
-              <li><strong>{{ c.label }}</strong> — {{ c.component_type }}
-                {% if c.fixed_amount %}: {{ c.fixed_amount }} €{% endif %}
-                {% if c.percentage %}: {{ c.percentage }} %{% endif %}
-                {% if c.index %} ({{ c.index.name }}){% endif %}
-              </li>
-              {% endfor %}
-            </ul>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<div class="page-layout collapsed" id="page-layout">
+
+
+  <!-- COLONNE GAUCHE -->
+  <div class="left-panel">
+    <h2>📦 Mes structures</h2>
+    {% if structures %}
+      <div class="card">
+        <table class="form-table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in structures %}
+            <tr>
+              <td>{{ s.name }}</td>
+              <td onclick="event.stopPropagation();">
+                <button type="button" class="graph-toggle" onclick="toggleStructure('{{ s.id }}', this)">📈</button>
+
+                <button type="button" onclick="editStructure({{ s.id }})">✏️</button>
+                <form method="post" action="{% url 'main:delete_structure' s.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" onclick="return confirm('Supprimer cette structure ?')">🗑️</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p>Aucune structure enregistrée.</p>
+    {% endif %}
   </div>
-{% else %}
-  <p>Aucune structure enregistrée.</p>
-{% endif %}
+
+  <!-- COLONNE DROITE -->
+  <div class="right-panel" id="right-panel">
+
+    <div id="main-graph-card">
+      <h4>📈 Structures sélectionnées</h4>
+      <div id="main-graph" style="height: 350px;"></div>
+    </div>
+
+    <div id="structure-details-card" class="card" style="margin-top: 1rem;">
+      <h4>Détails des structures sélectionnées</h4>
+      <div id="structure-details" style="font-size: 0.85rem;"></div>
+    </div>
+
+
+  </div>
+</div>
+
 
 {% endblock %}  
 
 {% block extra_scripts %}
+<!-- 📦 Chargement de Plotly AVANT tout -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
 <script>
+  const graphsData = {{ structure_graphs_json|safe }};
+  const structuresMeta = {{ structures_meta_json|safe }};
+
+
+
   function editStructure(structureId) {
     fetch(`/structure-data/${structureId}/`)
       .then(response => {
@@ -273,34 +478,21 @@
       })
       .then(data => {
         console.log("🧠 Données structure récupérées :", data);
-
-        // 🧹 Réinitialise le formulaire
         const form = document.querySelector("#modal form");
         form.reset();
-
-        // 🧠 Remplit les champs principaux
         document.querySelector("input[name='name']").value = data.name;
         document.querySelector("input[name='base_price']").value = data.base_price;
         document.querySelector("input[name='reference_date']").value = data.reference_date;
 
-        // 🧠 Met à jour le champ hidden structure_id
         const idField = document.getElementById("structure-id-field");
-        if (idField) {
-          idField.value = structureId;
-          console.log("✅ structure-id-field mis à :", structureId);
-        } else {
-          console.error("❌ structure-id-field introuvable !");
-        }
+        if (idField) idField.value = structureId;
 
-        // 🔄 Supprime les anciennes tranches
         document.querySelectorAll("#formset-body tr").forEach(row => row.remove());
 
-        // 🔄 Réinitialise le compteur de formulaire
         formIndex = 0;
         document.getElementById("id_components-TOTAL_FORMS").value = "0";
         document.getElementById("debug-total-forms").textContent = "0";
 
-        // ➕ Ajoute les nouvelles tranches
         data.components.forEach(component => {
           addTranche(component);
         });
@@ -308,17 +500,13 @@
         document.getElementById("id_components-TOTAL_FORMS").value = data.components.length;
         document.getElementById("debug-total-forms").textContent = data.components.length;
 
-        // ✅ Ouvre le modal
-        openModal(true);  // 📌 signaler qu’on est en édition, donc NE PAS effacer structure_id
-
+        openModal(true);
       })
       .catch(error => {
         alert("Erreur : " + error.message);
       });
   }
 
-
-  
   let favoriteIndexOptions = null;
 
   window.addEventListener('load', () => {
@@ -331,21 +519,16 @@
   function openModal(isEdit = false) {
     document.getElementById("modal").style.display = "flex";
     if (!isEdit) {
-      document.getElementById("structure-id-field").value = ""; // 🧹 reset ID uniquement en création
+      document.getElementById("structure-id-field").value = "";
     }
   }
 
-function closeModal() {
-  document.getElementById("modal").style.display = "none";
-}
-function toggleDetails(id) {
-  const row = document.getElementById("details-" + id);
-  row.style.display = row.style.display === "none" ? "table-row" : "none";
-}
+  function closeModal() {
+    document.getElementById("modal").style.display = "none";
+  }
 
-let formIndex = {{ formset.total_form_count }};
-  
-  
+  let formIndex = {{ formset.total_form_count }};
+
   function addTranche(data = null) {
     const tmpl = document.getElementById("form-empty-template").innerHTML;
 
@@ -380,17 +563,14 @@ let formIndex = {{ formset.total_form_count }};
     document.getElementById("debug-total-forms").textContent = formIndex;
   }
 
-
   function deleteRow(btn) {
     const row = btn.closest("tr");
     const deleteInput = row.querySelector("input[type='checkbox'][name$='-DELETE']");
 
     if (deleteInput) {
-      // ✅ Si champ DELETE existe (ligne générée par Django), on le coche et on masque la ligne
       deleteInput.checked = true;
       row.style.display = "none";
     } else {
-      // 🆕 Si ligne ajoutée dynamiquement, on la supprime totalement
       row.remove();
       formIndex--;
       document.getElementById("id_components-TOTAL_FORMS").value = formIndex;
@@ -398,8 +578,132 @@ let formIndex = {{ formset.total_form_count }};
 
     document.getElementById("debug-total-forms").textContent = formIndex;
   }
+  let activeGraphs = new Map();  // key = id, value = trace
+  const colors = ["#0ea5e9", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
+
+  function toggleStructure(id, btn) {
+    const graphDiv = document.getElementById("main-graph");
+    const detailsCard = document.getElementById("structure-details-card");
+    const structureDetailsContainer = document.getElementById("structure-details");
+
+    if (activeGraphs.has(id)) {
+      activeGraphs.delete(id);
+      btn.classList.remove("active");
+
+      if (activeGraphs.size === 0) {
+        Plotly.purge(graphDiv);
+        structureDetailsContainer.innerHTML = "";
+        detailsCard.classList.remove("visible");
+        detailsCard.style.display = "none";
+        document.getElementById("page-layout").classList.add("collapsed");
+
+        return;
+      }
+    } else {
+      const dataPoints = graphsData[id];
+      if (!dataPoints || dataPoints.length === 0) return;
+
+      const dates = dataPoints.map(p => p.date);
+      const values = dataPoints.map(p => p.value);
+      const color = colors[activeGraphs.size % colors.length];
+
+      const axisIndex = activeGraphs.size + 1;
+      const yaxisName = axisIndex === 1 ? "y" : `y${axisIndex}`;
+
+      const trace = {
+        x: dates,
+        y: values,
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: structuresMeta[id].name,
+        line: { color: color, width: 2 },
+        marker: { size: 5, color: color },
+        yaxis: yaxisName
+      };
+
+      activeGraphs.set(id, trace);
+      btn.classList.add("active");
+    }
+
+    // Construire le layout avec des axes multiples colorés
+    const layout = {
+      margin: { l: 40, r: 20, t: 20, b: 40 },
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      xaxis: { title: 'Date' },
+      font: { family: 'Manrope, sans-serif', color: '#1e2a36' },
+      legend: { orientation: "h", x: 0, y: -0.2 }
+    };
+
+    [...activeGraphs.keys()].forEach((graphId, i) => {
+      const axisName = i === 0 ? "yaxis" : `yaxis${i + 1}`;
+      const color = colors[i % colors.length];
+
+      layout[axisName] = {
+        title: i === 0 ? "Prix (€)" : `Prix ${structuresMeta[graphId].name}`,
+        overlaying: "y",
+        side: i % 2 === 0 ? "left" : "right",
+        showgrid: i === 0,
+        tickfont: { color: color },
+        titlefont: { color: color },
+      };
+    });
+
+    Plotly.react(graphDiv, Array.from(activeGraphs.values()), layout, {
+      responsive: true,
+      transition: {
+        duration: 500,
+        easing: "cubic-in-out"
+      },
+      frame: { duration: 400, redraw: false }
+    });
+
+    // Met à jour les détails de toutes les structures visibles
+    structureDetailsContainer.innerHTML = ""; // reset
+
+    activeGraphs.forEach((trace, structureId) => {
+      const structureObj = structuresMeta[structureId];
+      if (!structureObj) return;
+
+      let html = `<div class="structure-block">`;
+
+      html += `<div class="structure-meta">
+        <div><strong>Nom :</strong> ${structureObj.name}</div>
+        <div><strong>Réf :</strong> ${structureObj.reference_date}</div>
+        <div><strong>Base :</strong> ${structureObj.base_price} €</div>
+      </div>`;
+
+      html += `<div class="structure-tranches">`;
+      structureObj.components.forEach(c => {
+        html += `<div><strong>${c.label}</strong> — ${c.component_type}`;
+        if (c.fixed_amount) html += ` : ${c.fixed_amount} €`;
+        if (c.percentage) html += ` : ${c.percentage} %`;
+        if (c.index_name) html += ` (${c.index_name})`;
+        html += `</div>`;
+      });
+      html += `</div></div>`;
+
+      structureDetailsContainer.innerHTML += html;
+    });
+
+
+
+    // Animation d'affichage de la card
+    if (activeGraphs.size === 0) {
+      detailsCard.classList.remove("visible");
+      detailsCard.style.display = "none";
+    } else {
+      detailsCard.style.display = "block";
+      setTimeout(() => detailsCard.classList.add("visible"), 10);
+      document.getElementById("page-layout").classList.remove("collapsed");
+
+
+    }
+  }
+
 
 
 </script>
 {% endblock %}
+
 
