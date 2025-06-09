@@ -19,6 +19,7 @@
         <a href="{% url 'main:dashboard' %}"><i data-lucide="bar-chart-3"></i> Dashboard</a>
         <a href="{% url 'main:liste_index' %}"><i data-lucide="file-text"></i> Liste des Index</a>
         <a href="{% url 'main:prix_indexes' %}"><i data-lucide="layers"></i> Prix Indexés</a>
+        
 
         {% if user.is_authenticated %}
           {% with level=user.userprofile.subscription_level %}
