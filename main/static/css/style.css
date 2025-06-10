@@ -710,4 +710,52 @@
     }
   }
 
+.login-form label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #1e2a36;
+}
+
+.login-form .form-group {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.login-form .form-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  font-family: 'Manrope', sans-serif;
+  background-color: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  transition: border-color 0.2s ease;
+}
+
+.login-form .form-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+body.dark-mode .login-form .form-input {
+  background-color: #1e293b;
+  color: #e0f2fe;
+  border-color: #334155;
+}
+
+body.dark-mode .login-form label {
+  color: #e0f2fe;
+}
+.index-list .index-item:nth-child(odd) {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.index-list .index-item:nth-child(even) {
+  background-color: rgba(240, 248, 255, 0.4);
+}
+
+.index-list .index-item:hover {
+  background-color: rgba(224, 242, 254, 0.8) !important;
+}
 

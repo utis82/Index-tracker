@@ -2,11 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
-from main.models import IndexedPriceStructure
+from main.models import IndexedPriceStructure,StructureComponent, IndexValue
 from main.forms import IndexedPriceStructureForm, StructureComponentFormSet
 from main.utils import get_user_index_data
 import json
-
+from django.db.models import Avg,Q
+from datetime import datetime
 
 @login_required
 def prix_indexes_view(request):
