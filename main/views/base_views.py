@@ -32,18 +32,45 @@ def dashboard(request):
     favorites = user_profile.favorite_indexes.all()
 
     charts = []
+
     for index in favorites:
         values = IndexValue.objects.filter(index=index).order_by("date")
-        if values.exists():
-            dates = [v.date.strftime("%Y-%m-%d") for v in values]
-            val = [v.value for v in values]
 
-            charts.append({
-                "id": index.id,
-                "name": index.name,
-                "dates_json": json.dumps(dates),
-                "values_json": json.dumps(val),
-            })
+        if not values.exists():
+            continue
+
+        dates = [v.date for v in values]
+        val = [v.value for v in values]
+
+        latest_date = dates[-1]
+        current_price = val[-1]
+
+        def get_value_x_days_ago(days):
+            target = latest_date - pd.Timedelta(days=days)
+            margin = pd.Timedelta(days=7)
+            candidates = [v.value for v in values if abs(v.date - target) <= margin]
+            return candidates[0] if candidates else None
+
+        def variation(past_val):
+            return round(((current_price - past_val) / past_val) * 100, 2) if past_val else None
+
+        val_3m = get_value_x_days_ago(90)
+        val_1y = get_value_x_days_ago(365)
+        val_3y = get_value_x_days_ago(1095)
+
+        charts.append({
+            "id": index.id,
+            "name": index.name,
+            "price": round(current_price, 2),
+            "variation_3m": variation(val_3m),
+            "variation_1y": variation(val_1y),
+            "variation_3y": variation(val_3y),
+            "mini_dates": json.dumps([d.strftime("%Y-%m-%d") for d in dates[-30:]]),
+            "mini_values": json.dumps(val[-30:]),
+            "last_update": latest_date.strftime("%Y-%m-%d"),
+
+        })
+
 
     # ✅ Ajout nécessaire pour permettre l'affichage des étoiles dans le template
     favorite_ids = [index.id for index in favorites]

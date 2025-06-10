@@ -1,102 +1,108 @@
 {% extends "base.html" %}
-
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
 
-<style>
-  .card.clickable {
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .card.clickable:hover {
-    transform: scale(1.015);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  }
-
-  .card.clickable:active {
-    transform: scale(0.98);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-</style>
-
 <div class="dashboard-header with-badge">
-  <h2>Bienvenue {{ user.username }}, quel index allons-nous explorer aujourd’hui ?</h2>
+  <h2>Bienvenue {{ user.username }}, voici vos index favoris</h2>
   <div class="subscription-badge">🔐 {{ subscription|capfirst }}</div>
 </div>
 
 {% if charts %}
   <div class="section-title">
-    <span class="emoji">📊</span> Vos index favoris
+    <span class="emoji">⭐</span> Suivi de vos index
   </div>
-  <div class="dashboard-grid">
-    {% for item in charts %}
-      <div class="card fade-in clickable" onclick="window.location.href='{% url 'main:index_viewer' index_id=item.id %}'">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-          <h4 style="margin: 0;">{{ item.name }}</h4>
-          <button
-            class="favorite-btn {% if item.id in favorite_ids %}filled{% endif %}"
-            data-index-id="{{ item.id }}"
-            title="Ajouter ou retirer des favoris"
-            onclick="toggleFavorite(event, {{ item.id }})">
-            {% if item.id in favorite_ids %}★{% else %}☆{% endif %}
-          </button>
-        </div>
-        <div id="chart-{{ forloop.counter }}" class="chart-box"></div>
-        <script>
-          const dates_{{ forloop.counter }} = {{ item.dates_json|safe }};
-          const values_{{ forloop.counter }} = {{ item.values_json|safe }};
 
-          const layout_{{ forloop.counter }} = {
-            height: 220,
-            margin: { l: 30, r: 10, t: 30, b: 30 },
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            xaxis: { showgrid: false, zeroline: false, type: 'date' },
-            yaxis: { showgrid: true, zeroline: false, gridcolor: 'rgba(200,200,255,0.2)' },
-            font: { color: '#1e2a36' }
-          };
+<div class="card shadow-lg" style="border-radius: 16px; padding: 24px; background: white; margin-bottom: 2rem;">
+  <div class="table-responsive" style="overflow-x: auto;">
+    <table class="index-table" style="width: 100%; border-collapse: collapse;">
 
-          const trace_{{ forloop.counter }} = {
-            x: dates_{{ forloop.counter }},
-            y: values_{{ forloop.counter }},
-            mode: 'lines',
-            line: { shape: 'spline', color: '#60a5fa', width: 3 },
-            hoverinfo: 'skip',
-            type: 'scatter',
-            fill: 'tozeroy',
-            fillcolor: 'rgba(96, 165, 250, 0.15)'
-          };
+      <thead>
+        <tr style="text-align: left; font-weight: 600; background-color: rgba(240, 248, 255, 0.6);">
+          <th style="padding: 12px;">Index</th>
+          <th style="padding: 12px;">Prix actuel</th>
+          <th style="padding: 12px;">Δ 3 mois</th>
+          <th style="padding: 12px;">Δ 1 an</th>
+          <th style="padding: 12px;">Δ 3 ans</th>
+          <th style="padding: 12px;">Mini graphique</th>
+          <th style="padding: 12px;">Mise à jour</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in charts %}
+          <tr class="index-row" onclick="window.location.href='{% url 'main:index_viewer' item.id %}'" style="cursor: pointer;">
+            
+            <!-- Colonne 1 : étoile + nom -->
+            <td style="padding: 12px; display: flex; align-items: center; gap: 8px;">
+              <form method="post"
+                    action="{% url 'main:toggle_favorite' item.id %}"
+                    class="favorite-form"
+                    onsubmit="event.preventDefault(); toggleFavorite(event, {{ item.id }});">
+                {% csrf_token %}
+                <button type="submit"
+                        class="favorite-btn"
+                        data-index-id="{{ item.id }}"
+                        title="Ajouter ou retirer des favoris"
+                        style="font-size: 1.2rem; background: none; border: none; cursor: pointer;">
+                  {% if item.id in favorite_ids %}★{% else %}☆{% endif %}
+                </button>
+              </form>
+              <span style="font-weight: 600;">{{ item.name }}</span>
+            </td>
 
-          Plotly.newPlot('chart-{{ forloop.counter }}', [trace_{{ forloop.counter }}], layout_{{ forloop.counter }}, {
-            staticPlot: true,
-            responsive: true,
-            useResizeHandler: true
-          }).then(() => {
-            const chart = document.getElementById('chart-{{ forloop.counter }}');
-            const svgLine = chart.querySelector('.scatter .lines path');
-            const fill = chart.querySelector('.scatter .js-fill');
+            <!-- Prix -->
+            <td style="padding: 12px;">{{ item.price }} €</td>
 
-            if (svgLine) {
-              const length = svgLine.getTotalLength();
-              svgLine.style.strokeDasharray = length;
-              svgLine.style.strokeDashoffset = length;
-              svgLine.style.animation = 'drawLine 1s ease-out forwards';
-            }
+            <!-- Δ 3 mois -->
+            <td style="padding: 12px; color: {% if item.variation_3m and item.variation_3m > 0 %}green{% elif item.variation_3m and item.variation_3m < 0 %}red{% else %}inherit{% endif %};">
+              {% if item.variation_3m %}{{ item.variation_3m }} %{% else %}—{% endif %}
+            </td>
 
-            if (fill) fill.style.opacity = '0';
+            <!-- Δ 1 an -->
+            <td style="padding: 12px; color: {% if item.variation_1y and item.variation_1y > 0 %}green{% elif item.variation_1y and item.variation_1y < 0 %}red{% else %}inherit{% endif %};">
+              {% if item.variation_1y %}{{ item.variation_1y }} %{% else %}—{% endif %}
+            </td>
 
-            setTimeout(() => {
-              if (fill) {
-                fill.style.transition = 'opacity 0.6s ease';
-                fill.style.opacity = '0.8';
-              }
-            }, 1000);
-          });
-        </script>
-      </div>
-    {% endfor %}
+            <!-- Δ 3 ans -->
+            <td style="padding: 12px; color: {% if item.variation_3y and item.variation_3y > 0 %}green{% elif item.variation_3y and item.variation_3y < 0 %}red{% else %}inherit{% endif %};">
+              {% if item.variation_3y %}{{ item.variation_3y }} %{% else %}—{% endif %}
+            </td>
+
+            <!-- Mini graphique -->
+            <td style="padding: 12px; width: 120px;">
+              <div id="mini-chart-{{ forloop.counter }}" style="height: 40px;"></div>
+              <script>
+                Plotly.newPlot(
+                  'mini-chart-{{ forloop.counter }}',
+                  [{
+                    x: {{ item.mini_dates|safe }},
+                    y: {{ item.mini_values|safe }},
+                    mode: 'lines',
+                    line: { color: '#60a5fa', width: 2 },
+                    hoverinfo: 'skip',
+                    fill: 'tozeroy',
+                    fillcolor: 'rgba(96, 165, 250, 0.2)',
+                    type: 'scatter'
+                  }],
+                  {
+                    margin: { l: 0, r: 0, t: 0, b: 0 },
+                    xaxis: { visible: false },
+                    yaxis: { visible: false },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                  },
+                  { staticPlot: true, displayModeBar: false }
+                );
+              </script>
+            </td>
+
+            <!-- Dernière mise à jour -->
+            <td style="padding: 12px;">{{ item.last_update }}</td>
+
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 {% else %}
   <div class="no-favorites">
@@ -106,6 +112,7 @@
   </div>
 {% endif %}
 
+<!-- ✅ Script AJAX pour favoris -->
 <script>
   function toggleFavorite(event, indexId) {
     event.stopPropagation();
