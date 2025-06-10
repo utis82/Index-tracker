@@ -1,24 +1,36 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Connexion</title>
-</head>
-<body>
-    <h1>Connexion</h1>
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block content %}
+<div class="hero-container">
+  <div class="hero-content fade-in">
+    <h1 class="hero-title">Connexion à votre espace</h1>
+    <p class="hero-subtitle">Accédez à vos index, vos modèles et bien plus encore.</p>
 
     {% if error %}
-        <p style="color:red;">{{ error }}</p>
+      <p style="color:red; margin-bottom: 1rem;">{{ error }}</p>
     {% endif %}
 
-    <form method="POST">
-        {% csrf_token %}
-        <label for="username">Nom d'utilisateur :</label><br>
-        <input type="text" name="username" id="username" required><br><br>
+    <form method="POST" class="login-form card" style="max-width: 400px; margin: 0 auto;">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="username">Nom d'utilisateur</label>
+        <input type="text" name="username" id="username" required class="form-input">
+      </div>
 
-        <label for="password">Mot de passe :</label><br>
-        <input type="password" name="password" id="password" required><br><br>
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <input type="password" name="password" id="password" required class="form-input">
+      </div>
 
-        <button type="submit">Se connecter</button>
+      <button type="submit" class="cta-button" style="width: 100%;">Se connecter</button>
     </form>
-</body>
-</html>
+
+    <p style="text-align:center; margin-top: 1rem;">
+      Pas encore de compte ? <a href="{% url 'main:register' %}" style="color:#3b82f6; font-weight: 600;">Créer un compte</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

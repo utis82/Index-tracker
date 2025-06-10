@@ -4,6 +4,13 @@
 
 {% block content %}
 <style>
+  input[type="month"] {
+    padding: 4px 6px;
+    font-size: 0.85rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+
   button.graph-toggle.active::after {
     content: "✓";
     margin-left: 6px;
@@ -31,33 +38,34 @@
     transform: translateY(0);
   }
   #structure-details-card {
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transition: opacity 0.8s ease, transform 0.8s ease;
     opacity: 0;
     transform: translateY(10px);
     max-height: none;
+    min-height: 110px;
     overflow-y: visible;
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transition: opacity 0.8s ease, transform 0.8s ease;
   }
 
  
 
   #structure-details {
     background-color: #f9fafb;
-    padding: 1rem;
+    padding: 0.5rem;
     border-radius: 8px;
-    margin-top: 1rem;
-    font-size: 0.85rem;
-    line-height: 1.4;
+    margin-top: 0.2rem;
+    font-size: 0.7rem;
+    line-height: 1;
   }
   #structure-details > div {
-    animation: fadeInUp 0.4s ease both;
+    animation: fadeInUp 1s ease both;
   }
 
   #structure-details .structure-block {
     display: grid;
     grid-template-columns: 1fr 2fr;
-    gap: 1rem;
-    margin-bottom: 1rem;
+    gap: 0.2rem;
+    margin-bottom: 0.5rem;
     border-bottom: 1px solid #ccc;
     padding-bottom: 0.5rem;
   }
@@ -444,17 +452,40 @@
   <div class="right-panel" id="right-panel">
 
     <div id="main-graph-card">
-      <h4>📈 Structures sélectionnées</h4>
-      <div id="main-graph" style="height: 350px;"></div>
+      <div style="display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start;">
+
+        <!-- 📈 GRAPHIQUE -->
+        <div style="flex: 1;">
+          <div id="main-graph" style="height: 350px;"></div>
+        </div>
+
+        <!-- 📅 SÉLECTION DE PÉRIODES -->
+        <div style="flex: 0 0 220px; font-size: 0.85rem;">
+          <form id="periodForm" method="get" style="background: #f1f5f9; padding: 0.8rem; border-radius: 8px;">
+            <div>
+              <label><strong>Période A</strong></label><br>
+              <input type="date" name="start_a" value="{{ start_a|default:'' }}" style="width:100%; margin-bottom:4px;"><br>
+              <input type="date" name="end_a" value="{{ end_a|default:'' }}" style="width:100%; margin-bottom:8px;"><br>
+            </div>
+            <div>
+              <label><strong>Période B</strong></label><br>
+              <input type="date" name="start_b" value="{{ start_b|default:'' }}" style="width:100%; margin-bottom:4px;"><br>
+              <input type="date" name="end_b" value="{{ end_b|default:'' }}" style="width:100%; margin-bottom:8px;"><br>
+            </div>
+            <button type="submit" class="dropdown-validate" style="width: 100%;">📊 Calculer variation</button>
+          </form>
+        </div>
+      </div>
     </div>
 
+    <!-- 🧾 DÉTAILS DES STRUCTURES -->
     <div id="structure-details-card" class="card" style="margin-top: 1rem;">
       <h4>Détails des structures sélectionnées</h4>
       <div id="structure-details" style="font-size: 0.85rem;"></div>
     </div>
 
-
   </div>
+
 </div>
 
 
@@ -701,6 +732,55 @@
     }
   }
 
+  function updatePeriodAnalysis() {
+    const a = document.getElementById("periodeA").value;
+    const b = document.getElementById("periodeB").value;
+    if (!a || !b || activeGraphs.size === 0) return;
+
+    const [id] = activeGraphs.keys(); // une seule structure à la fois pour l’analyse
+    const data = graphsData[id];
+    if (!data) return;
+
+    const findValue = (month) => {
+      const point = data.find(d => d.date.slice(0, 7) === month);
+      return point ? point.value : null;
+    };
+
+    const vA = findValue(a);
+    const vB = findValue(b);
+
+    let result = "🔍 Aucune donnée pour ";
+    if (vA == null) result += `A (${a}) `;
+    if (vB == null) result += `B (${b})`;
+
+    if (vA != null && vB != null) {
+      const delta = ((vB - vA) / vA) * 100;
+      result = `📊 Variation entre ${a} → ${b} : <span style="color:${delta > 0 ? 'green' : 'red'}">${delta.toFixed(1)} %</span>`;
+    }
+
+    document.getElementById("variation-result").innerHTML = result;
+
+    // Mise à jour des surlignages
+    Plotly.restyle('main-graph', { shapes: [] }); // supprime anciennes formes
+
+    const shapes = [a, b].map((month, i) => {
+      const x0 = month + "-01";
+      const x1 = month + "-28"; // simplification
+      return {
+        type: "rect",
+        xref: "x",
+        yref: "paper",
+        x0,
+        x1,
+        y0: 0,
+        y1: 1,
+        fillcolor: i === 0 ? "rgba(14,165,233,0.2)" : "rgba(16,185,129,0.2)",
+        line: { width: 0 }
+      };
+    });
+
+    Plotly.relayout('main-graph', { shapes });
+  }
 
 
 </script>
