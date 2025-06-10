@@ -759,3 +759,36 @@ body.dark-mode .login-form label {
   background-color: rgba(224, 242, 254, 0.8) !important;
 }
 
+.index-row:hover {
+  background-color: rgba(224, 242, 254, 0.4);
+}
+
+.index-table th, .index-table td {
+  border-bottom: 1px solid rgba(200, 200, 255, 0.2);
+}
+
+.index-table td {
+  font-size: 0.95rem;
+}
+.card.shadow-lg {
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.3s ease;
+}
+.card.shadow-lg:hover {
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
+}
+.login-card {
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.login-form .form-input {
+  width: 100%;
+  box-sizing: border-box;
+}
