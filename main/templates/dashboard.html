@@ -23,7 +23,7 @@
           <th style="padding: 12px;">Prix actuel</th>
           <th style="padding: 12px;">Unité</th>
           <th style="padding: 12px;">Δ 1 mois</th>
-          <th style="padding: 12px;">Δ 3 mois</th>
+          <th style="padding: 12px;">Δ 6 mois</th>
           <th style="padding: 12px;">Δ 1 an</th>
           <th style="padding: 12px;">Mini graphique</th>
           <th style="padding: 12px;">Mise à jour</th>
@@ -72,17 +72,20 @@
             <td style="padding: 12px;">{{ item.unit }}</td>  <!-- ✅ Nouvelle cellule -->
 
             <!-- Δ 1 mois -->
-            <td style="padding: 12px; color: {% if item.variation_1m and item.variation_1m > 0 %}red{% elif item.variation_1m and item.variation_1m < 0 %}green{% else %}inherit{% endif %};">
+            <td style="padding: 12px; color: {% if item.variation_1m > 0 %}red{% elif item.variation_1m  < 0 %}green{% else %}inherit{% endif %};">
+              {% if item.variation_1m > 0 %}▲{% elif item.variation_1m  < 0 %}▼{% else %}inherit{% endif %}
               {% if item.variation_1m %}{{ item.variation_1m }} %{% else %}—{% endif %}
             </td>
 
             <!-- Δ 6 mois -->
-            <td style="padding: 12px; color: {% if item.variation_6m and item.variation_6m > 0 %}red{% elif item.variation_6m and item.variation_6m < 0 %}green{% else %}inherit{% endif %};">
+            <td style="padding: 12px; color: {% if item.variation_6m  > 0 %}red{% elif item.variation_6m  < 0 %}green{% else %}inherit{% endif %};">
+              {% if item.variation_6m > 0 %}▲{% elif item.variation_6m  < 0 %}▼{% else %}inherit{% endif %}
               {% if item.variation_6m %}{{ item.variation_6m }} %{% else %}—{% endif %}
             </td>
 
             <!-- Δ 1 an -->
-            <td style="padding: 12px; color: {% if item.variation_1y and item.variation_1y > 0 %}red{% elif item.variation_1y and item.variation_1y < 0 %}green{% else %}inherit{% endif %};">
+            <td style="padding: 12px; color: {% if item.variation_1y  > 0 %}red{% elif item.variation_1y  < 0 %}green{% else %}inherit{% endif %};">
+              {% if item.variation_1y > 0 %}▲{% elif item.variation_1y  < 0 %}▼{% else %}inherit{% endif %}
               {% if item.variation_1y %}{{ item.variation_1y }} %{% else %}—{% endif %}
             </td>
 
