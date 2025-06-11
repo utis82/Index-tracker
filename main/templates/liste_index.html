@@ -7,29 +7,45 @@
 
   <ul class="index-list">
     {% for index in index_list %}
-      <li class="index-item">
-        <div class="index-left">
-          <a href="{% url 'main:index_viewer' index.id %}" class="index-name">
-            {{ index.name }}
-          </a>
-        </div>
+    <li class="index-item">
+      <a href="{% url 'main:index_viewer' index.id %}" class="index-entry-link" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
         {% if user.is_authenticated %}
-          <div class="index-right">
-            <form method="post"
-                  action="{% url 'main:toggle_favorite' index.id %}"
-                  class="favorite-form">
-              {% csrf_token %}
-              <button type="submit" class="favorite-btn">
-                {% if index in user.userprofile.favorite_indexes.all %}
-                  ★
-                {% else %}
-                  ☆
-                {% endif %}
-              </button>
-            </form>
-          </div>
+          <form method="post"
+                action="{% url 'main:toggle_favorite' index.id %}"
+                class="favorite-form"
+                onsubmit="event.preventDefault(); event.stopPropagation(); toggleFavorite(event, {{ index.id }});">
+            {% csrf_token %}
+            <button type="submit" class="favorite-btn" data-index-id="{{ index.id }}">
+              {% if index in user.userprofile.favorite_indexes.all %}
+                ★
+              {% else %}
+                ☆
+              {% endif %}
+            </button>
+          </form>
         {% endif %}
-      </li>
+
+        <span class="index-name" style="display: flex; align-items: center; gap: 8px;">
+          {{ index.name }}
+
+          {% if index.category == "Raw material" %}
+            <i data-lucide="tree-deciduous" class="lucide-icon" title="Matière première"></i>
+          {% elif index.category == "Inflation" %}
+            <i data-lucide="trending-up" class="lucide-icon" title="Inflation"></i>
+          {% elif index.category == "Labour Cost" %}
+            <i data-lucide="user" class="lucide-icon" title="Coût du travail"></i>
+          {% elif index.category == "Energy" %}
+            <i data-lucide="zap" class="lucide-icon" title="Énergie"></i>
+          {% elif index.category == "Logistic" %}
+            <i data-lucide="truck" class="lucide-icon" title="Logistique"></i>
+          {% else %}
+            <i data-lucide="circle" class="lucide-icon" title="{{ index.category }}"></i>
+          {% endif %}
+        </span>
+      </a>
+    </li>
+
+
     {% endfor %}
   </ul>
 

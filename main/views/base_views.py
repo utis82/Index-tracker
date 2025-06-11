@@ -69,6 +69,8 @@ def dashboard(request):
             "mini_values": json.dumps(val[-30:]),
             "last_update": latest_date.strftime("%Y-%m-%d"),
              "unit": index.unit, 
+            "category": index.category,
+
 
         })
 

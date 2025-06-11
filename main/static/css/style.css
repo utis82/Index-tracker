@@ -792,3 +792,12 @@ body.dark-mode .login-form label {
   width: 100%;
   box-sizing: border-box;
 }
+
+  .lucide-icon {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2;
+    color: #4b5563;
+    opacity: 0.8;
+  }
+</style>
