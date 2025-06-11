@@ -10,6 +10,8 @@ from main.models import Index, IndexValue
 import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
+from django.utils.timezone import localtime
+from django.utils.dateformat import format as date_format
 
 
 @login_required
@@ -26,10 +28,13 @@ def import_excel_view(request):
             print("🔍 Colonnes détectées :", df.columns.tolist())
 
             if "Designation" not in df.columns:
-                return HttpResponse("❌ Colonne 'Designation' manquante dans l'Excel.")
+                return HttpResponse(
+                    "❌ Colonne 'Designation' manquante dans l'Excel.")
 
             # ✅ détecter les colonnes de dates (colonnes de type datetime)
-            date_columns = [col for col in df.columns if isinstance(col, datetime)]
+            date_columns = [
+                col for col in df.columns if isinstance(col, datetime)
+            ]
 
             for _, row in df.iterrows():
                 index_name = row["Designation"]
@@ -37,14 +42,20 @@ def import_excel_view(request):
                     continue
 
                 # ✅ Lire les champs associés
-                unit = row["Unit"] if "Unit" in df.columns and not pd.isna(row["Unit"]) else "€"
-                category = row["category"] if "category" in df.columns and not pd.isna(row["category"]) else "Autre"
+                unit = row["Unit"] if "Unit" in df.columns and not pd.isna(
+                    row["Unit"]) else "€"
+                category = row[
+                    "category"] if "category" in df.columns and not pd.isna(
+                        row["category"]) else "Autre"
 
                 # ✅ Crée ou met à jour l’index
-                index_obj, _ = Index.objects.update_or_create(
-                    name=index_name,
-                    defaults={"unit": unit, "category": category}
-                )
+                index_obj, _ = Index.objects.update_or_create(name=index_name,
+                                                              defaults={
+                                                                  "unit":
+                                                                  unit,
+                                                                  "category":
+                                                                  category
+                                                              })
 
                 for col in date_columns:
                     raw_value = row[col]
@@ -59,23 +70,45 @@ def import_excel_view(request):
                     IndexValue.objects.update_or_create(
                         index=index_obj,
                         date=col,
-                        defaults={"value": float_value}
-                    )
+                        defaults={"value": float_value})
 
             return HttpResponse("✅ Importation terminée avec succès.")
 
         except Exception as e:
-            return HttpResponse(f"❌ Erreur lors du traitement du fichier : {str(e)}")
+            return HttpResponse(
+                f"❌ Erreur lors du traitement du fichier : {str(e)}")
 
     return render(request, "admin/import_excel.html")
 
 
-
-@login_required
 def liste_index_view(request):
-    index_list = Index.objects.all().order_by("name")
-    return render(request, "liste_index.html", {
-        "index_list": index_list,     # pour la liste affichée
-        "all_indexes": index_list     # pour la barre de recherche
-    })
+    indexes = Index.objects.all()
+    enriched_indexes = []
 
+    for index in indexes:
+        values = IndexValue.objects.filter(index=index).order_by('-date')
+        if values.exists():
+            latest_value = values.first()
+            recent_values = list(values.order_by('date'))[-30:]
+            value_data = {
+                'date': latest_value.date.strftime("%d/%m/%Y"),
+                'value': latest_value.value,
+                'unit': index.unit,
+                'dates': [date_format(v.date, "Y-m-d") for v in recent_values],
+                'values': [v.value for v in recent_values],
+            }
+        else:
+            value_data = {
+                'date': "—",
+                'value': "—",
+                'unit': index.unit or "—",
+                'history': [],
+            }
+
+        enriched_indexes.append({'index': index, 'latest': value_data})
+
+    return render(
+        request, 'liste_index.html', {
+            'indexes': enriched_indexes,
+            'favorites': request.user.userprofile.favorite_indexes.all()
+        })
