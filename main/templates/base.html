@@ -2,6 +2,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
   <meta charset="UTF-8">
   <title>{% block title %}Ma plateforme Index{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -125,6 +127,10 @@
   </script>
 
 {% block extra_scripts %}{% endblock %}
+  <script>
+    lucide.createIcons();
+  </script>
+
 </body>
 
 </html>

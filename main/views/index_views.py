@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
 
+
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def import_excel_view(request):
@@ -27,26 +28,25 @@ def import_excel_view(request):
             if "Designation" not in df.columns:
                 return HttpResponse("❌ Colonne 'Designation' manquante dans l'Excel.")
 
+            # ✅ détecter les colonnes de dates (colonnes de type datetime)
+            date_columns = [col for col in df.columns if isinstance(col, datetime)]
+
             for _, row in df.iterrows():
                 index_name = row["Designation"]
                 if pd.isna(index_name):
                     continue
 
-                # ✅ Lire l’unité si présente
+                # ✅ Lire les champs associés
                 unit = row["Unit"] if "Unit" in df.columns and not pd.isna(row["Unit"]) else "€"
+                category = row["category"] if "category" in df.columns and not pd.isna(row["category"]) else "Autre"
 
-
-                # ✅ Crée ou met à jour l’index avec l’unité
+                # ✅ Crée ou met à jour l’index
                 index_obj, _ = Index.objects.update_or_create(
                     name=index_name,
-                    defaults={"unit": unit}
+                    defaults={"unit": unit, "category": category}
                 )
 
-                # 🔁 Parcours des colonnes de dates (tout sauf Designation et Unité)
-                date_columns = [col for col in df.columns if isinstance(col, datetime)]
                 for col in date_columns:
-
-
                     raw_value = row[col]
                     if pd.isna(raw_value) or str(raw_value).strip() == "-":
                         continue
@@ -54,27 +54,13 @@ def import_excel_view(request):
                     try:
                         float_value = float(raw_value)
                     except ValueError:
-                        print(f"⚠️ Valeur non convertible en float : {raw_value}")
                         continue
 
-                    # ✅ Gestion flexible des formats de date
-                    try:
-                        date_obj = datetime.strptime(str(col), "%m/%Y")
-                    except ValueError:
-                        try:
-                            date_obj = datetime.strptime(str(col).split()[0], "%Y-%m-%d")
-                        except ValueError:
-                            print(f"❌ Mauvais format de date : {col}")
-                            continue
-
-                    # ✅ Crée ou met à jour la valeur existante
                     IndexValue.objects.update_or_create(
                         index=index_obj,
-                        date=date_obj,
+                        date=col,
                         defaults={"value": float_value}
                     )
-
-                    print(f"💾 {index_name} | {date_obj.strftime('%Y-%m-%d')} → {float_value} ({unit})")
 
             return HttpResponse("✅ Importation terminée avec succès.")
 
@@ -82,7 +68,6 @@ def import_excel_view(request):
             return HttpResponse(f"❌ Erreur lors du traitement du fichier : {str(e)}")
 
     return render(request, "admin/import_excel.html")
-
 
 
 
