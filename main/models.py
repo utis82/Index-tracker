@@ -5,9 +5,11 @@ from django.contrib.auth.models import User
 # Ce modèle représente un index (exemple : "CUIVRE - LME", "ALUMINIUM - LME", etc.)
 class Index(models.Model):
     name = models.CharField(max_length=100)
+    unit = models.CharField(max_length=20, default="€/t")  # ✅ Ajout
 
     def __str__(self):
         return self.name
+
 
 
 # Ce modèle représente une valeur d’un index à une certaine date
