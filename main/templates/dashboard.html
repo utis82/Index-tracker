@@ -21,6 +21,7 @@
         <tr style="text-align: left; font-weight: 600; background-color: rgba(240, 248, 255, 0.6);">
           <th style="padding: 12px;">Index</th>
           <th style="padding: 12px;">Prix actuel</th>
+          <th style="padding: 12px;">Unité</th>
           <th style="padding: 12px;">Δ 3 mois</th>
           <th style="padding: 12px;">Δ 1 an</th>
           <th style="padding: 12px;">Δ 3 ans</th>
@@ -52,6 +53,7 @@
 
             <!-- Prix -->
             <td style="padding: 12px;">{{ item.price }} €</td>
+            <td style="padding: 12px;">{{ item.unit }}</td>  <!-- ✅ Nouvelle cellule -->
 
             <!-- Δ 3 mois -->
             <td style="padding: 12px; color: {% if item.variation_3m and item.variation_3m > 0 %}green{% elif item.variation_3m and item.variation_3m < 0 %}red{% else %}inherit{% endif %};">

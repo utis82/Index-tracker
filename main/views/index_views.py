@@ -21,63 +21,65 @@ def import_excel_view(request):
             return HttpResponse("❌ Aucun fichier n’a été envoyé.")
 
         try:
-            # Lire le fichier avec pandas
             df = pd.read_excel(BytesIO(excel_file.read()), sheet_name="1. BDD")
-
             print("🔍 Colonnes détectées :", df.columns.tolist())
 
             if "Designation" not in df.columns:
-                return HttpResponse(
-                    "❌ Colonne 'Designation' manquante dans l'Excel.")
+                return HttpResponse("❌ Colonne 'Designation' manquante dans l'Excel.")
 
-            # Pour chaque ligne
             for _, row in df.iterrows():
                 index_name = row["Designation"]
                 if pd.isna(index_name):
                     continue
 
-                index_obj, _ = Index.objects.get_or_create(name=index_name)
+                # ✅ Lire l’unité si présente
+                unit = row["Unit"] if "Unit" in df.columns and not pd.isna(row["Unit"]) else "€"
 
-                # Parcours des colonnes mois (toutes sauf la première colonne)
-                for col in df.columns[1:]:
+
+                # ✅ Crée ou met à jour l’index avec l’unité
+                index_obj, _ = Index.objects.update_or_create(
+                    name=index_name,
+                    defaults={"unit": unit}
+                )
+
+                # 🔁 Parcours des colonnes de dates (tout sauf Designation et Unité)
+                date_columns = [col for col in df.columns if isinstance(col, datetime)]
+                for col in date_columns:
+
+
                     raw_value = row[col]
-
-                    # On ignore les vides, les NaN, ou les tirets "-"
                     if pd.isna(raw_value) or str(raw_value).strip() == "-":
                         continue
 
                     try:
-                        # On s'assure que la valeur peut être convertie en float
                         float_value = float(raw_value)
                     except ValueError:
-                        print(
-                            f"⚠️ Valeur non convertible en float : {raw_value}"
-                        )
+                        print(f"⚠️ Valeur non convertible en float : {raw_value}")
                         continue
 
-                    # Traitement de la date
+                    # ✅ Gestion flexible des formats de date
                     try:
                         date_obj = datetime.strptime(str(col), "%m/%Y")
                     except ValueError:
                         try:
-                            date_obj = datetime.strptime(
-                                str(col).split()[0], "%Y-%m-%d")
+                            date_obj = datetime.strptime(str(col).split()[0], "%Y-%m-%d")
                         except ValueError:
                             print(f"❌ Mauvais format de date : {col}")
                             continue
 
-                    IndexValue.objects.create(index=index_obj,
-                                              date=date_obj,
-                                              value=raw_value)
-                    print(
-                        f"💾 Valeur enregistrée pour {index_name} le {date_obj} → {raw_value}"
+                    # ✅ Crée ou met à jour la valeur existante
+                    IndexValue.objects.update_or_create(
+                        index=index_obj,
+                        date=date_obj,
+                        defaults={"value": float_value}
                     )
+
+                    print(f"💾 {index_name} | {date_obj.strftime('%Y-%m-%d')} → {float_value} ({unit})")
 
             return HttpResponse("✅ Importation terminée avec succès.")
 
         except Exception as e:
-            return HttpResponse(
-                f"❌ Erreur lors du traitement du fichier : {str(e)}")
+            return HttpResponse(f"❌ Erreur lors du traitement du fichier : {str(e)}")
 
     return render(request, "admin/import_excel.html")
 
