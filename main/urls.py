@@ -22,6 +22,7 @@ urlpatterns = [
     path('logout/', logout_view, name='logout'),
     path('search-index/', search_index, name='search_index'),
     path('index-viewer/<int:index_id>/', index_viewer, name='index_viewer'),
+    path('index-viewer/', index_viewer, name='index_viewer_home'),
     path('toggle-favorite/<int:index_id>/',
          toggle_favorite,
          name='toggle_favorite'),
