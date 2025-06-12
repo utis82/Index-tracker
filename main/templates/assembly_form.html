@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Nouvelle Assemblée{% endblock %}
+{% block content %}
+<h2>Créer une assemblée</h2>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Enregistrer</button>
+</form>
+{% endblock %}

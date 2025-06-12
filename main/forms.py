@@ -2,28 +2,33 @@ from django import forms
 from django.forms.models import BaseInlineFormSet
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Row, Column, Div, HTML
-from .models import IndexedPriceStructure, StructureComponent
+from .models import IndexedPriceStructure, StructureComponent, Assembly
 
 
 class IndexedPriceStructureForm(forms.ModelForm):
 
     class Meta:
         model = IndexedPriceStructure
-        fields = ['name', 'base_price', 'reference_date']
+        fields = ['name', 'base_price', 'reference_date', 'assembly']
         widgets = {
             'reference_date': forms.DateInput(attrs={'type': 'date'}),
         }
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Row(
-                Column('name', css_class='col-md-4'),
-                Column('base_price', css_class='col-md-4'),
-                Column('reference_date', css_class='col-md-4'),
+                Column('name', css_class='col-md-3'),
+                Column('base_price', css_class='col-md-3'),
+                Column('reference_date', css_class='col-md-3'),
+                Column('assembly', css_class='col-md-3'),
             ))
+
+        if self.user:
+            self.fields['assembly'].queryset = Assembly.objects.filter(user=self.user)
 
 
 class StructureComponentForm(forms.ModelForm):
@@ -120,6 +125,18 @@ StructureComponentFormSet = forms.inlineformset_factory(
     formset=CustomStructureComponentFormSet,
     extra=1,
     can_delete=True)
+
+
+class AssemblyForm(forms.ModelForm):
+
+    class Meta:
+        model = Assembly
+        fields = ['name']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
 
 
 

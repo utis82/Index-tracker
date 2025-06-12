@@ -6,8 +6,7 @@ from main.views.base_views import (home, login_view, dashboard, register_view,
 from main.views.index_views import import_excel_view, liste_index_view
 from main.views.chart_views import index_viewer
 from main.views.user_views import toggle_favorite
-from main.views.prix_indexes_views import prix_indexes_view, delete_structure
-from main.views.prix_indexes_views import prix_indexes_view, delete_structure, get_structure_data
+from main.views.prix_indexes_views import prix_indexes_view, delete_structure, get_structure_data, create_assembly, delete_assembly
 
 app_name = 'main'
 
@@ -33,6 +32,8 @@ urlpatterns = [
     path('delete-structure/<int:pk>/',
          delete_structure,
          name='delete_structure'),
-     path('structure-data/<int:pk>/', get_structure_data, name='get_structure_data'),
+    path('structure-data/<int:pk>/', get_structure_data, name='get_structure_data'),
+    path('assembly/create/', create_assembly, name='create_assembly'),
+    path('assembly/delete/<int:pk>/', delete_assembly, name='delete_assembly'),
 
 ]

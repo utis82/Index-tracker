@@ -68,12 +68,21 @@ class UserProfile(models.Model):
         return self.primary_index_change_count < self.change_limit()
 
 
+class Assembly(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assemblies')
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.name} ({self.user.username})"
+
+
 # Modèle pour les structures de coût
 class IndexedPriceStructure(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='price_structures')
     name = models.CharField(max_length=100)
     base_price = models.FloatField(help_text="Prix de base à la date de référence")
     reference_date = models.DateField()
+    assembly = models.ForeignKey('Assembly', null=True, blank=True, on_delete=models.SET_NULL, related_name='structures')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

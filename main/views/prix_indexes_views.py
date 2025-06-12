@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
-from main.models import IndexedPriceStructure,StructureComponent, IndexValue
-from main.forms import IndexedPriceStructureForm, StructureComponentFormSet
+from main.models import IndexedPriceStructure, StructureComponent, IndexValue, Assembly
+from main.forms import IndexedPriceStructureForm, StructureComponentFormSet, AssemblyForm
 from main.utils import get_user_index_data
 import json
 from django.db.models import Avg,Q
@@ -20,13 +20,13 @@ def prix_indexes_view(request):
         if structure_id:
             try:
                 structure = IndexedPriceStructure.objects.get(id=structure_id, user=request.user)
-                form = IndexedPriceStructureForm(request.POST, instance=structure)
+                form = IndexedPriceStructureForm(request.POST, instance=structure, user=request.user)
             except IndexedPriceStructure.DoesNotExist:
                 structure = IndexedPriceStructure(user=request.user)
-                form = IndexedPriceStructureForm(request.POST)
+                form = IndexedPriceStructureForm(request.POST, user=request.user)
         else:
             structure = IndexedPriceStructure(user=request.user)
-            form = IndexedPriceStructureForm(request.POST)
+            form = IndexedPriceStructureForm(request.POST, user=request.user)
 
         if form.is_valid():
             if structure_id:
@@ -46,13 +46,14 @@ def prix_indexes_view(request):
             formset = StructureComponentFormSet(request.POST, instance=structure, user=request.user, prefix=prefix)
     else:
         structure = IndexedPriceStructure(user=request.user)
-        form = IndexedPriceStructureForm()
+        form = IndexedPriceStructureForm(user=request.user)
         formset = StructureComponentFormSet(user=request.user, instance=structure, prefix=prefix)
 
     formset.empty_form.user = request.user
     formset.empty_form.fields['index'].queryset = request.user.userprofile.favorite_indexes.all()
 
     structures = IndexedPriceStructure.objects.filter(user=request.user).order_by('-created_at')
+    assemblies = Assembly.objects.filter(user=request.user)
 
     # Graph data
     structure_graphs = {}
@@ -108,6 +109,7 @@ def prix_indexes_view(request):
         "structures": structures,
         "structure_graphs_json": json.dumps(structure_graphs),
         "structures_meta_json": json.dumps(structures_meta),
+        "assemblies": assemblies,
     }
 
     return render(request, "prix_indexes.html", context)
@@ -128,6 +130,7 @@ def get_structure_data(request, pk):
         "name": structure.name,
         "base_price": float(structure.base_price),
         "reference_date": structure.reference_date.strftime("%Y-%m-%d"),
+        "assembly_id": structure.assembly_id,
         "components": [
             {
                 "label": c.label,
@@ -141,3 +144,24 @@ def get_structure_data(request, pk):
     }
 
     return JsonResponse(data)
+
+
+@login_required
+def create_assembly(request):
+    if request.method == 'POST':
+        form = AssemblyForm(request.POST)
+        if form.is_valid():
+            assembly = form.save(commit=False)
+            assembly.user = request.user
+            assembly.save()
+            return redirect('main:prix_indexes')
+    else:
+        form = AssemblyForm()
+    return render(request, 'assembly_form.html', {'form': form})
+
+
+@login_required
+def delete_assembly(request, pk):
+    assembly = get_object_or_404(Assembly, pk=pk, user=request.user)
+    assembly.delete()
+    return redirect('main:prix_indexes')

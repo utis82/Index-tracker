@@ -206,6 +206,15 @@
 
   }
 
+  ul.tree, ul.tree ul {
+    list-style: none;
+    padding-left: 1rem;
+  }
+
+  ul.tree li {
+    margin: 4px 0;
+  }
+
 </style>
 
 <!-- Bouton ouvrir le popup -->
@@ -300,6 +309,7 @@
               <th>Nom</th>
               <th>Prix de base (€)</th>
               <th>Date de référence</th>
+              <th>Assemblée</th>
             </tr>
           </thead>
           <tbody>
@@ -307,6 +317,7 @@
               <td>{{ form.name }}</td>
               <td>{{ form.base_price }}</td>
               <td>{{ form.reference_date }}</td>
+              <td>{{ form.assembly }}</td>
             </tr>
           </tbody>
         </table>
@@ -415,37 +426,45 @@
 
   <!-- COLONNE GAUCHE -->
   <div class="left-panel">
-    <h2>📦 Mes structures</h2>
-    {% if structures %}
-      <div class="card">
-        <table class="form-table">
-          <thead>
-            <tr>
-              <th>Nom</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for s in structures %}
-            <tr>
-              <td>{{ s.name }}</td>
-              <td onclick="event.stopPropagation();">
-                <button type="button" class="graph-toggle" onclick="toggleStructure('{{ s.id }}', this)">📈</button>
-
-                <button type="button" onclick="editStructure({{ s.id }})">✏️</button>
-                <form method="post" action="{% url 'main:delete_structure' s.id %}" style="display:inline;">
-                  {% csrf_token %}
-                  <button type="submit" onclick="return confirm('Supprimer cette structure ?')">🗑️</button>
-                </form>
-              </td>
-            </tr>
+    <h2>📦 Assemblies</h2>
+    <div class="card">
+      <ul class="tree">
+        {% for assembly in assemblies %}
+        <li>
+          <span>{{ assembly.name }}</span>
+          <a href="{% url 'main:delete_assembly' assembly.id %}" onclick="return confirm('Supprimer cette assemblée ?')">🗑️</a>
+          <ul>
+            {% for s in assembly.structures.all %}
+            <li>
+              <input type="checkbox" onclick="toggleStructure('{{ s.id }}', this)">
+              {{ s.name }}
+              <button type="button" onclick="editStructure({{ s.id }})">✏️</button>
+              <form method="post" action="{% url 'main:delete_structure' s.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" onclick="return confirm('Supprimer cette structure ?')">🗑️</button>
+              </form>
+            </li>
             {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <p>Aucune structure enregistrée.</p>
-    {% endif %}
+          </ul>
+        </li>
+        {% endfor %}
+
+        {% for s in structures %}
+          {% if not s.assembly %}
+          <li>
+            <input type="checkbox" onclick="toggleStructure('{{ s.id }}', this)">
+            {{ s.name }}
+            <button type="button" onclick="editStructure({{ s.id }})">✏️</button>
+            <form method="post" action="{% url 'main:delete_structure' s.id %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" onclick="return confirm('Supprimer cette structure ?')">🗑️</button>
+            </form>
+          </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </div>
+    <a href="{% url 'main:create_assembly' %}" style="display:block; margin-top:8px;">➕ Nouvelle assemblée</a>
   </div>
 
   <!-- COLONNE DROITE -->
@@ -514,6 +533,8 @@
         document.querySelector("input[name='name']").value = data.name;
         document.querySelector("input[name='base_price']").value = data.base_price;
         document.querySelector("input[name='reference_date']").value = data.reference_date;
+        const assemblyField = document.querySelector("select[name='assembly']");
+        if (assemblyField) assemblyField.value = data.assembly_id || '';
 
         const idField = document.getElementById("structure-id-field");
         if (idField) idField.value = structureId;
@@ -619,8 +640,8 @@
 
     if (activeGraphs.has(id)) {
       activeGraphs.delete(id);
-      btn.classList.remove("active");
-
+      if (btn.tagName === 'INPUT') btn.checked = false;
+      
       if (activeGraphs.size === 0) {
         Plotly.purge(graphDiv);
         structureDetailsContainer.innerHTML = "";
@@ -653,7 +674,7 @@
       };
 
       activeGraphs.set(id, trace);
-      btn.classList.add("active");
+      if (btn.tagName === 'INPUT') btn.checked = true;
     }
 
     // Construire le layout avec des axes multiples colorés
