@@ -1,79 +1,104 @@
-from django.contrib import admin
-from django.http import HttpResponseRedirect
+from django.contrib import admin, messages
 from django.urls import path
-from django.shortcuts import render
-from django.contrib import messages
-from .models import UserProfile
-from .models import IndexedPriceStructure, StructureComponent
-
-import pandas as pd
-
-from .models import Index, IndexValue
-
-# Enregistrement des modèles dans l'admin classique
-admin.site.register(IndexValue)
+from django.shortcuts import redirect
+from main.models import Product, Part, Slice, Index, IndexValue, UserProfile
+import openpyxl  # pour lecture de fichiers Excel (.xlsx)
 
 
+# --- Inlines ---
+class PartInline(admin.TabularInline):
+    model = Part
+    extra = 0
+    fields = ("name",)
+
+
+class SliceInline(admin.TabularInline):
+    model = Slice
+    extra = 0
+    fields = ("label",)
+
+
+class IndexValueInline(admin.TabularInline):
+    model = IndexValue
+    extra = 0
+    fields = ("index", "value")
+
+
+# --- Admin Product ---
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ("name",)
+    search_fields = ("name",)
+    inlines = [PartInline]
+
+
+# --- Admin Part ---
+@admin.register(Part)
+class PartAdmin(admin.ModelAdmin):
+    list_display = ("name", "product")
+    search_fields = ("name", "product__name")
+    list_select_related = ("product",)
+    inlines = [SliceInline, IndexValueInline]
+
+
+# --- Admin Slice ---
+@admin.register(Slice)
+class SliceAdmin(admin.ModelAdmin):
+    list_display = ("label", "part")
+    search_fields = ("label", "part__name")
+    list_select_related = ("part",)
+
+
+# --- Admin Index avec bouton Import ---
 @admin.register(Index)
 class IndexAdmin(admin.ModelAdmin):
-    search_fields = ("name",)  # ✅ Ajoute cette ligne
-    change_list_template = "admin/index_changelist.html"
+    list_display = ("name",)
+    search_fields = ("name",)
+    change_list_template = "admin/index_changelist.html"  # surcharge du template admin pour bouton
+
+    actions = ["import_from_excel"]  # action dans le menu déroulant admin
 
     def get_urls(self):
-        # On ajoute une URL personnalisée qui sera utilisée pour uploader le fichier Excel
         urls = super().get_urls()
-        custom_urls = [path("import-excel/", self.import_excel_view)]
+        custom_urls = [
+            path(
+                'import-excel/',
+                self.admin_site.admin_view(self.redirect_to_import),
+                name='index_import_excel_admin'
+            )
+        ]
         return custom_urls + urls
 
-    def import_excel_view(self, request):
-        if request.method == "POST" and request.FILES.get("excel_file"):
-            excel_file = request.FILES["excel_file"]
+    def redirect_to_import(self, request):
+        # redirige vers la vue déjà existante de l'import
+        return redirect('main:index_import_excel')
 
-            try:
-                # Lecture du fichier Excel (onglet BDD)
-                df = pd.read_excel(excel_file, sheet_name="BDD")
+    def import_from_excel(self, request, queryset):
+        try:
+            workbook = openpyxl.load_workbook("import_data.xlsx")
+            sheet = workbook.active
+            for row in sheet.iter_rows(min_row=2, values_only=True):
+                index_name, part_id, value = row[0], row[1], row[2]
+                if not index_name or not part_id:
+                    continue
+                index_obj, _ = Index.objects.get_or_create(name=index_name)
+                try:
+                    part_obj = Part.objects.get(id=part_id)
+                except Part.DoesNotExist:
+                    continue
+                IndexValue.objects.update_or_create(
+                    part=part_obj, index=index_obj,
+                    defaults={"value": value}
+                )
+            self.message_user(request, "Données Excel importées avec succès !", messages.SUCCESS)
+        except Exception as e:
+            self.message_user(request, f"Erreur lors de l'importation : {e}", messages.ERROR)
 
-                # Parcours du dataframe pour insérer les données
-                for index, row in df.iterrows():
-                    index_name = row["Nom Index"]
-                    date = row["Date"]
-                    value = row["Valeur"]
-
-                    if pd.isna(index_name) or pd.isna(date) or pd.isna(value):
-                        continue  # Ignore les lignes incomplètes
-
-                    # Récupère ou crée l'index
-                    index_obj, _ = Index.objects.get_or_create(name=index_name)
-
-                    # Ajoute la valeur correspondante
-                    IndexValue.objects.create(index=index_obj,
-                                              date=date,
-                                              value=value)
-
-                messages.success(request, "Importation réussie ✔")
-            except Exception as e:
-                messages.error(request, f"Erreur lors de l'import : {e}")
-
-            return HttpResponseRedirect("../")
-
-        return render(request, "admin/import_excel.html")
+    import_from_excel.short_description = "Importer des données Excel"
 
 
+# --- Admin UserProfile ---
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'subscription_plan')
-
-class StructureComponentInline(admin.TabularInline):
-    model = StructureComponent
-    extra = 1  # Nombre de lignes vierges à afficher
-    fields = ("label", "component_type", "percentage", "fixed_amount", "index")
-    autocomplete_fields = ("index",)
-
-
-@admin.register(IndexedPriceStructure)
-class IndexedPriceStructureAdmin(admin.ModelAdmin):
-    list_display = ("name", "user", "base_price", "reference_date", "created_at")
-    list_filter = ("user", "reference_date")
-    search_fields = ("name", "user__username")
-    date_hierarchy = "created_at"
-    inlines = [StructureComponentInline]
+    list_display = ("user",)
+    search_fields = ("user__username", "user__email")

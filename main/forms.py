@@ -1,15 +1,18 @@
 from django import forms
-from django.forms.models import BaseInlineFormSet
+from django.forms import inlineformset_factory, BaseInlineFormSet
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Row, Column, Div, HTML
-from .models import IndexedPriceStructure, StructureComponent
+from crispy_forms.layout import Layout, Row, Column, Div
+from .models import Product, Part, Slice
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 
-
-class IndexedPriceStructureForm(forms.ModelForm):
-
+# ------------------------
+# 🔹 Product (Produit)
+# ------------------------
+class ProductForm(forms.ModelForm):
     class Meta:
-        model = IndexedPriceStructure
-        fields = ['name', 'base_price', 'reference_date']
+        model = Product
+        fields = ['name']
         widgets = {
             'reference_date': forms.DateInput(attrs={'type': 'date'}),
         }
@@ -20,30 +23,31 @@ class IndexedPriceStructureForm(forms.ModelForm):
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Row(
-                Column('name', css_class='col-md-4'),
-                Column('base_price', css_class='col-md-4'),
-                Column('reference_date', css_class='col-md-4'),
+                Column('name', css_class='col-md-6'),
+                Column('reference_date', css_class='col-md-6'),
             ))
 
-
-class StructureComponentForm(forms.ModelForm):
-
+# ------------------------
+# 🔹 Part (Partie)
+# ------------------------
+class PartForm(forms.ModelForm):
     class Meta:
-        model = StructureComponent
-        fields = [
-            'label', 'component_type', 'index', 'fixed_amount', 'percentage'
-        ]
+        model = Part
+        fields = ['name', 'reference_date']
         widgets = {
-            'fixed_amount':
-            forms.NumberInput(attrs={
-                'step': '0.01',
-                'class': 'fixed-field'
-            }),
-            'percentage':
-            forms.NumberInput(attrs={
-                'step': '0.01',
-                'class': 'percentage-field'
-            }),
+            'reference_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+# ------------------------
+# 🔹 Slice (Tranche)
+# ------------------------
+class SliceForm(forms.ModelForm):
+    class Meta:
+        model = Slice
+        fields = ['label', 'component_type', 'index', 'fixed_amount', 'percentage','reference_date']
+        widgets = {
+            'fixed_amount': forms.NumberInput(attrs={'step': '0.01', 'class': 'fixed-field'}),
+            'percentage': forms.NumberInput(attrs={'step': '0.01', 'class': 'percentage-field'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -51,9 +55,7 @@ class StructureComponentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if self.user:
-            self.fields[
-                'index'].queryset = self.user.userprofile.favorite_indexes.all(
-                )
+            self.fields['index'].queryset = self.user.userprofile.favorite_indexes.all()
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -62,12 +64,11 @@ class StructureComponentForm(forms.ModelForm):
                 Row(
                     Column('label', css_class='col-md-4'),
                     Column('component_type', css_class='col-md-4'),
-                    Column('index', css_class='col-md-4 index-wrapper'),
+                    Column('index', css_class='col-md-4'),
                 ),
                 Row(
-                    Column('fixed_amount', css_class='col-md-6 fixed-wrapper'),
-                    Column('percentage',
-                           css_class='col-md-6 percentage-wrapper'),
+                    Column('fixed_amount', css_class='col-md-6'),
+                    Column('percentage', css_class='col-md-6'),
                 ),
                 css_class='card p-3 mb-3 tranche-card position-relative',
             ))
@@ -78,14 +79,24 @@ class StructureComponentForm(forms.ModelForm):
         perc = cleaned_data.get("percentage")
 
         if fixed and perc:
-            raise forms.ValidationError(
-                "Remplissez soit un montant (€), soit un pourcentage (%), pas les deux."
-            )
+            raise forms.ValidationError("Remplissez soit un montant (€), soit un pourcentage (%), pas les deux.")
         return cleaned_data
 
+# ------------------------
+# 🔹 Custom Formsets
+# ------------------------
 
 class CustomStructureComponentFormSet(BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
 
+        if self.user:
+            for form in self.forms:
+                if 'index' in form.fields:
+                    form.fields['index'].queryset = self.user.userprofile.favorite_indexes.all()
+
+class CustomSliceFormSet(BaseInlineFormSet):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
@@ -98,28 +109,42 @@ class CustomStructureComponentFormSet(BaseInlineFormSet):
 
     def clean(self):
         super().clean()
-        print("🧪 Formset CLEAN called")
         total = 0
         for form in self.forms:
             if self.can_delete and self._should_delete_form(form):
                 continue
             if form.cleaned_data.get("percentage"):
                 total += form.cleaned_data["percentage"]
-
-        if total < 100:
-            raise forms.ValidationError(
-                "La somme des pourcentages doit être exactement 100%.")
         if total > 100:
             raise forms.ValidationError("La somme des pourcentages dépasse 100%.")
 
+# ------------------------
+# 🔹 Formsets
+# ------------------------
 
-StructureComponentFormSet = forms.inlineformset_factory(
-    IndexedPriceStructure,
-    StructureComponent,
-    form=StructureComponentForm,
+PartFormSet = inlineformset_factory(
+    Product,
+    Part,
+    form=PartForm,
     formset=CustomStructureComponentFormSet,
     extra=1,
-    can_delete=True)
+    can_delete=True
+)
 
+# ------------------------
+# 🔹 User Signup Form
+# ------------------------
 
+class CustomUserCreationForm(UserCreationForm):
+    email = forms.EmailField(required=True, label="Adresse email")
 
+    class Meta:
+        model = User
+        fields = ["username", "email", "password1", "password2"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in self.fields:
+            field = self.fields[field_name]
+            field.widget.attrs['class'] = 'form-input'
+            field.widget.attrs['placeholder'] = field.label
