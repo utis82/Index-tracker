@@ -5,7 +5,6 @@
 
 {% block content %}
 <style>
-
   .icon-button svg:hover {
     stroke: #1d4ed8; /* un beau bleu élégant */
   }
@@ -24,6 +23,11 @@
     background-color: #1d4ed8;
   }
 
+  .btn-primary:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+  }
+
   .btn-secondary {
     background-color: #f3f4f6;
     color: #1f2937;
@@ -38,7 +42,6 @@
     background-color: #e5e7eb;
   }
 
-  
   .modal-card h5, .modal-card h6 {
     font-weight: 600;
     color: #1e293b;
@@ -53,7 +56,7 @@
   .modal-overlay {
     display: flex;
     justify-content: center;
-    align-items: flex-start;
+    align-items: center;
     position: fixed;
     top: 0;
     left: 0;
@@ -61,22 +64,24 @@
     height: 100vh;
     background: rgba(0, 0, 0, 0.4);
     z-index: 1000;
-    padding-top: 5%;
+    padding: 2vh;
   }
 
   .modal-card {
     background: white;
     border-radius: 12px;
-    padding: 2rem;
+    padding: 1.0rem;
     min-width: 500px;
-    max-width: 600px;
+    max-width: 850px;
+    max-height: 80vh;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    overflow-y: auto;
+    width: 90%;
   }
 
   .hidden {
     display: none;
   }
-
 
   .page-layout {
     display: flex;
@@ -172,20 +177,12 @@
     transition: transform 0.3s ease;
     cursor: pointer;
     margin-right: 6px;
-  }
-
-  .toggle-icon {
-    display: inline-block;
-    transition: transform 0.3s ease;
-    cursor: pointer;
-    margin-right: 6px;
-    transform: rotate(0deg); /* position par défaut */
+    transform: rotate(0deg);
   }
 
   .collapsed .toggle-icon {
-    transform: rotate(-90deg); /* rotation au repli */
+    transform: rotate(-90deg);
   }
-
 
   .collapse-target {
     display: table-row-group;
@@ -214,10 +211,71 @@
     );
     border-radius: 8px;
   }
+
+  .form-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+  }
+
+  .form-table th,
+  .form-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #dbeafe;
+    text-align: left;
+  }
+
+  .form-table th {
+    width: 30%;
+    font-weight: 600;
+  }
+
+  .form-table input,
+  .form-table select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+  }
+
+  /* Styles pour la gestion des tranches */
+  .slice-row td {
+    padding: 0.5rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .slice-row input,
+  .slice-row select {
+    width: 100%;
+    padding: 0.4rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.85rem;
+  }
+
+  .slice-row select:disabled {
+    background-color: #f9fafb;
+    color: #9ca3af;
+  }
+
+  .delete-slice-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+  }
+
+  .delete-slice-btn:hover {
+    background-color: #fef2f2;
+  }
+
+  .delete-slice-btn svg {
+    stroke: #dc2626;
+  }
 </style>
 
 <div class="page-layout">
-
   <!-- 📦 Vos produits -->
   <div class="left-panel">
     <h3 class="section-title">
@@ -227,20 +285,16 @@
       Vos produits
     </h3>
 
-
     <div class="top-actions">
       <!-- Créer un produit -->
       <button class="icon-button" id="openProductModal" title="Créer un produit">
-
-        <!-- package-plus icon -->
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2">
           <path d="M12 17v-6m3 3h-6M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/>
         </svg>
       </button>
 
-      <!-- Créer une structure -->
-      <button class="icon-button" title="Créer une Pièce">
-        <!-- file-plus icon -->
+      <!-- Créer une pièce -->
+      <button class="icon-button" id="openPartModal" title="Créer une Pièce">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2">
           <path d="M12 18v-6m3 3h-6M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
           <path d="M14 2v6h6"/>
@@ -265,7 +319,6 @@
             </svg>
             {{ product.name }}
           </td>
-
           <td>{{ product.reference_date }}</td>
           <td>
             <div class="actions">
@@ -282,7 +335,6 @@
                 data-product-id="{{ product.id }}"
                 data-product-name="{{ product.name }}"
                 title="Modifier">
-
                 <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path d="M15 5 19 9M5 19l4-1 9-9a2.828 2.828 0 1 0-4-4l-9 9-1 4z"/>
                 </svg>
@@ -296,66 +348,54 @@
                   <path d="M10 13l4 4m0-4l-4 4"/>
                 </svg>
               </button>
-
             </div>
           </td>
-
         </tr>
 
-      {% for part in product.parts.all %}
-        <tr class="level-2 hidden" data-parent="product-{{ product.id }}" data-toggle="part-{{ part.id }}">
-          <td style="padding-left: 2.5rem;">
-            <span class="toggle-icon">▶</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <path d="M14 2v6h6"/>
-            </svg>
-            {{ part.name }}
-          </td>
-
-          <td>{{ part.reference_date }}</td>
-          <td>
-            <div class="actions">
-              <button class="icon-button" title="Afficher le graphique">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-line-chart" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path d="M3 3v18h18"/>
-                  <path d="M4 14.5 8 10l5 5 5-6"/>
+        {% for part in product.parts.all %}
+          <tr class="level-2 hidden" data-parent="product-{{ product.id }}">
+            <td style="padding-left: 2.5rem;">
+              {{ part.name }}
+            </td>
+            <td>{{ part.reference_date }}</td>
+            <td class="actions">
+              <!-- Bouton Modifier -->
+              <button class="icon-button edit-part-button"
+                      data-part-id="{{ part.id }}"
+                      title="Modifier la pièce">
+                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M15 5l4 4L7 21H3v-4L15 5z"/>
                 </svg>
               </button>
-              <button class="icon-button" title="Modifier">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path d="M15 5 19 9M5 19l4-1 9-9a2.828 2.828 0 1 0-4-4l-9 9-1 4z"/>
-                </svg>
-              </button>
-              <button class="icon-button" title="Supprimer">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-archive-x" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <!-- Bouton Supprimer -->
+              <button class="icon-button delete-part-button"
+                      data-part-id="{{ part.id }}"
+                      title="Supprimer la pièce">
+                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-archive-x" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <rect x="3" y="4" width="18" height="5" rx="1"/>
                   <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
                   <path d="M10 13l4 4m0-4l-4 4"/>
                 </svg>
               </button>
-            </div>
-          </td>
-
-        </tr>
-
-        {% for component in part.components.all %}
-          <tr class="level-3 hidden" data-parent="part-{{ part.id }}">
-            <td>🔸 {{ component.label }} {% if component.percentage %}({{ component.percentage }}%) {% endif %}</td>
-            <td></td>
-            <td>
-              <div class="actions">
-                <button class="icon-button" title="Modifier">[edit-icon]</button>
-                <button class="icon-button" title="Supprimer">[delete-icon]</button>
-              </div>
             </td>
           </tr>
+
+          {% for slice in part.slices.all %}
+            <tr class="level-3 hidden" data-parent="product-{{ product.id }}">
+              <td>
+                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pie-chart" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#6366f1" stroke-width="2" style="margin-right: 6px; vertical-align: middle;">
+                  <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+                  <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+                </svg>
+                {{ slice.label }} ({{ slice.percentage }}%)
+                {% if slice.index %} - {{ slice.index.name }}{% endif %}
+              </td>
+              <td></td>
+              <td class="actions"></td>
+            </tr>
+          {% endfor %}
         {% endfor %}
       {% endfor %}
-
-      {% endfor %}
-
-
     </table>
   </div>
 
@@ -368,21 +408,7 @@
   </div>
 </div>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll("tr[data-toggle]").forEach(row => {
-      row.addEventListener("click", function () {
-        const id = this.getAttribute("data-toggle");
-        const icon = this.querySelector(".toggle-icon");
-        document.querySelectorAll(`tr[data-parent='${id}']`).forEach(child => {
-          child.classList.toggle("hidden");
-        });
-        if (icon) icon.classList.toggle("collapsed");
-      });
-    });
-  });
-</script>
-
+<!-- MODAL Product -->
 <div id="productModal" class="modal-overlay hidden">
   <div class="modal-card">
     <form method="POST" id="productForm">
@@ -420,13 +446,13 @@
         </button>
       </div>
     </form>
-
   </div>
 </div>
-<!-- MODAL de création de Pièce -->
+
+<!-- MODAL Part ENHANCED avec gestion des tranches -->
 <div id="partModal" class="modal-overlay hidden">
-  <div class="modal-card">
-    <form method="POST" action="{% url 'main:create_part' %}">
+  <div class="modal-card" style="min-width: 700px; max-width: 800px;">
+    <form method="POST" action="{% url 'main:prix_indexes' %}" id="partForm">
       {% csrf_token %}
       <h5 style="font-weight:600; margin-bottom:1rem; display:flex; align-items:center; gap:8px;">
         <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-plus" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -437,110 +463,474 @@
         Nouvelle pièce
       </h5>
 
-      <table class="form-table">
-        <tr>
-          <th>Nom</th>
-          <td><input type="text" name="name" required style="width:100%;"/></td>
-        </tr>
-        <tr>
-          <th>Date de référence</th>
-          <td><input type="date" name="reference_date" required style="width:100%;"/></td>
-        </tr>
-        <tr>
-          <th>Produit associé</th>
-          <td>
-            <select name="product_id" required style="width:100%;">
-              {% for product in produits %}
-                <option value="{{ product.id }}">{{ product.name }}</option>
-              {% endfor %}
-            </select>
-          </td>
-        </tr>
-      </table>
+      <!-- Champ caché pour savoir si on est en mode édition -->
+      <input type="hidden" name="part_id" id="part-id-input" />
+
+      <!-- Informations de base de la pièce -->
+      <div style="background-color: #f8fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+        <h6 style="font-weight: 1200; margin-bottom: 1rem; color: #1e293b;">📋 Informations de base</h6>
+        <table class="form-table">
+          <tr>
+            <th>Nom</th>
+            <td><input type="text" name="name" required /></td>
+          </tr>
+          <tr>
+            <th>Date de référence</th>
+            <td><input type="date" name="reference_date" required /></td>
+          </tr>
+          <tr>
+            <th>Produit associé</th>
+            <td>
+              <select name="product_id" required>
+                {% for product in produits %}
+                  <option value="{{ product.id }}">{{ product.name }}</option>
+                {% endfor %}
+              </select>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Section Tranches -->
+      <div style="background-color: #f1f5f9; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h6 style="font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pie-chart" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+              <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+            </svg>
+            Répartition en tranches
+          </h6>
+          <button type="button" id="addSliceBtn" class="icon-button" title="Ajouter une tranche" style="background: #2563eb; border-radius: 6px; padding: 6px;">
+            <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-plus" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
+              <path d="M12 5v14m7-7H5"/>
+            </svg>
+          </button>
+        </div>
+
+        <div id="slicesContainer">
+          <table id="slicesTable" style="width: 100%; border-collapse: collapse; background: white; border-radius: 6px; overflow: hidden;">
+            <thead style="background-color: #f8fafc;">
+              <tr>
+                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Nom de la tranche</th>
+                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Type</th>
+                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Index</th>
+                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">% du prix</th>
+                <th style="padding: 0.75rem; text-align: center; font-weight: 600; border-bottom: 1px solid #e2e8f0; width: 60px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="slicesTableBody">
+              <!-- Les tranches seront ajoutées ici dynamiquement -->
+            </tbody>
+          </table>
+          
+          <div id="noSlicesMessage" style="text-align: center; padding: 2rem; color: #64748b; font-style: italic;">
+            Aucune tranche définie. Cliquez sur le bouton + pour ajouter une tranche.
+          </div>
+        </div>
+
+        <div style="margin-top: 1rem; padding: 0.75rem; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 500;">Total des pourcentages :</span>
+            <span id="totalPercentage" style="font-weight: 600; color: #dc2626;">0%</span>
+          </div>
+          <div id="percentageWarning" class="hidden" style="margin-top: 0.5rem; color: #dc2626; font-size: 0.9rem;">
+            ⚠️ La somme doit être égale à 100%
+          </div>
+        </div>
+      </div>
 
       <div class="text-end mt-4" style="display: flex; justify-content: flex-end; gap: 0.5rem;">
-        <button type="button" id="closePartModal" class="btn btn-secondary">Annuler</button>
-        <button type="submit" class="btn btn-primary">Créer</button>
+        <button type="button" id="closePartModal" class="btn btn-secondary">
+          <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-x-circle" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M15 9l-6 6M9 9l6 6"/>
+          </svg>
+          Annuler
+        </button>
+        <button type="submit" id="submitPartBtn" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-plus" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <path d="M14 2v6h6"/>
+            <path d="M12 18v-6m3 3h-6"/>
+          </svg>
+          Appliquer
+        </button>
       </div>
     </form>
   </div>
 </div>
 
 <script>
-document.getElementById("openProductModal").addEventListener("click", function () {
-  document.getElementById("productModal").classList.remove("hidden");
-});
+// Variables globales
+let sliceCounter = 0;
+const favoriteIndexes = {{ favorite_indexes_json|safe }};
 
-document.getElementById("closeProductModal").addEventListener("click", function () {
-  document.getElementById("productModal").classList.add("hidden");
-});
-  
-</script>
-
-<script>
-document.querySelector("button[title='Créer une Pièce']").addEventListener("click", function () {
-  document.getElementById("partModal").classList.remove("hidden");
-});
-
-document.getElementById("closePartModal").addEventListener("click", function () {
-  document.getElementById("partModal").classList.add("hidden");
-});
-</script>
-
-<script>
+// Script pour l'arbre (toggle) - GARDE TON CODE ORIGINAL
 document.addEventListener("DOMContentLoaded", function () {
-  document.querySelectorAll(".delete-product").forEach(button => {
-    button.addEventListener("click", function () {
-      const productId = this.getAttribute("data-product-id");
-      if (!confirm("Supprimer ce produit ?")) return;
+  document.querySelectorAll("tr[data-toggle]").forEach(row => {
+    row.addEventListener("click", function () {
+      const id = this.getAttribute("data-toggle");
+      const icon = this.querySelector(".toggle-icon");
+      document.querySelectorAll(`tr[data-parent='${id}']`).forEach(child => {
+        child.classList.toggle("hidden");
+      });
+      if (icon) icon.classList.toggle("collapsed");
+    });
+  });
+});
 
-      fetch(`/prix-indexes/delete/${productId}/`, {
+// Script pour les modals - GARDE TON CODE ORIGINAL + AJOUTE LES TRANCHES
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("✅ Script modals chargé");
+
+  function toIsoDate(str) {
+    const d = new Date(str);
+    if (isNaN(d)) return '';
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${mm}-${dd}`;
+  }
+
+  // === MODAL PRODUCT - TON CODE ORIGINAL ===
+  const productModal = document.getElementById("productModal");
+  const openProductBtn = document.getElementById("openProductModal");
+  const closeProductBtn = document.getElementById("closeProductModal");
+
+  if (openProductBtn && productModal) {
+    openProductBtn.addEventListener("click", () => {
+      productModal.querySelector("h5").innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-package-plus" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path d="M12 17v-6m3 3h-6M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/>
+        </svg>
+        Nouveau produit`;
+      productModal.querySelector("input[name='name']").value = '';
+      productModal.querySelector("input[name='structure_id']").value = '';
+      productModal.classList.remove("hidden");
+    });
+  }
+
+  if (closeProductBtn && productModal) {
+    closeProductBtn.addEventListener("click", () => {
+      productModal.classList.add("hidden");
+    });
+  }
+
+  // Modifier un produit - TON CODE ORIGINAL
+  document.querySelectorAll(".edit-product").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      console.log("✏️ Clic Edit-Product:", btn.dataset);
+      if (productModal) {
+        productModal.querySelector("input[name='name']").value = btn.dataset.productName;
+        productModal.querySelector("input[name='structure_id']").value = btn.dataset.productId;
+        productModal.querySelector("h5").innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path d="M15 5 19 9M5 19l4-1 9-9"/>
+          </svg>
+          Modifier le produit`;
+        productModal.classList.remove("hidden");
+      }
+    });
+  });
+
+  // Supprimer un produit - AJOUT
+  document.querySelectorAll(".delete-product").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      if (!confirm("Supprimer ce produit et toutes ses pièces ?")) return;
+      fetch("{% url 'main:prix_indexes' %}", {
         method: "POST",
-        headers: {
+        headers: { 
           "X-CSRFToken": "{{ csrf_token }}",
-        }
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({ 
+          product_id: btn.dataset.productId, 
+          delete_product: "1" 
+        })
       })
-      .then(response => {
-        if (response.ok) {
-          // Supprimer la ligne du tableau
-          const row = this.closest("tr");
-          const toggleId = row.getAttribute("data-toggle");
-          row.remove();
-          document.querySelectorAll(`[data-parent="${toggleId}"]`).forEach(child => child.remove());
+      .then(res => {
+        if (res.ok) {
+          location.reload();
         } else {
           alert("Erreur lors de la suppression");
         }
+      })
+      .catch(err => {
+        console.error("Erreur:", err);
+        alert("Erreur lors de la suppression");
       });
     });
   });
-});
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  document.querySelectorAll(".edit-product").forEach(button => {
-    button.addEventListener("click", function () {
-      const name = this.getAttribute("data-product-name");
-      const id = this.getAttribute("data-product-id");
 
-      // Remplit le champ du formulaire
-      document.querySelector("#productForm input[name='name']").value = name;
+  // === MODAL PART ENHANCED ===
+  const partModal = document.getElementById("partModal");
+  const openPartBtn = document.getElementById("openPartModal");
+  const closePartBtn = document.getElementById("closePartModal");
 
-      // Ajoute un champ caché pour l'ID du produit
-      let hiddenInput = document.querySelector("#productForm input[name='structure_id']");
-      if (!hiddenInput) {
-        hiddenInput = document.createElement("input");
-        hiddenInput.type = "hidden";
-        hiddenInput.name = "structure_id";
-        document.querySelector("#productForm").appendChild(hiddenInput);
+  if (openPartBtn && partModal) {
+    openPartBtn.addEventListener("click", () => {
+      resetPartModal();
+      partModal.classList.remove("hidden");
+    });
+  }
+
+  if (closePartBtn && partModal) {
+    closePartBtn.addEventListener("click", () => {
+      partModal.classList.add("hidden");
+    });
+  }
+
+  // Modifier une pièce - MODIFIÉ POUR CHARGER LES TRANCHES
+  document.querySelectorAll(".edit-part-button").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const partId = btn.dataset.partId;
+      loadPartData(partId);
+    });
+  });
+
+  // Supprimer une pièce - TON CODE ORIGINAL
+  document.querySelectorAll(".delete-part-button").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      if (!confirm("Supprimer cette pièce ?")) return;
+      console.log("🗑️ Clic Delete-Part:", btn.dataset.partId);
+      fetch("{% url 'main:prix_indexes' %}", {
+        method: "POST",
+        headers: { 
+          "X-CSRFToken": "{{ csrf_token }}",
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({ 
+          part_id: btn.dataset.partId, 
+          delete_part: "1" 
+        })
+      })
+      .then(res => {
+        if (res.ok) {
+          location.reload();
+        } else {
+          alert("Erreur lors de la suppression");
+        }
+      })
+      .catch(err => {
+        console.error("Erreur:", err);
+        alert("Erreur lors de la suppression");
+      });
+    });
+  });
+
+  // === NOUVELLES FONCTIONS POUR LES TRANCHES ===
+  
+  // Gestion des tranches
+  document.getElementById('addSliceBtn').addEventListener('click', addSliceRow);
+
+  // Soumission du formulaire avec AJAX
+  document.getElementById('partForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    fetch("{% url 'main:prix_indexes' %}", {
+      method: "POST",
+      headers: { 
+        "X-CSRFToken": "{{ csrf_token }}",
+      },
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'success') {
+        location.reload();
+      } else {
+        alert(data.message || 'Erreur lors de la sauvegarde');
       }
-      hiddenInput.value = id;
+    })
+    .catch(err => {
+      console.error("Erreur:", err);
+      alert("Erreur lors de la sauvegarde");
+    });
+  });
 
-      // Affiche le modal
-      document.getElementById("productModal").classList.remove("hidden");
+  function resetPartModal() {
+    partModal.querySelector("h5").innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-plus" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <path d="M14 2v6h6"/>
+        <path d="M12 18v-6m3 3h-6"/>
+      </svg>
+      Nouvelle pièce`;
+    partModal.querySelector("input[name='name']").value = '';
+    partModal.querySelector("input[name='reference_date']").value = '';
+    partModal.querySelector("select[name='product_id']").selectedIndex = 0;
+    partModal.querySelector("input[name='part_id']").value = '';
+    
+    // Réinitialiser les tranches
+    document.getElementById('slicesTableBody').innerHTML = '';
+    document.getElementById('noSlicesMessage').classList.remove('hidden');
+    updateTotalPercentage();
+    sliceCounter = 0;
+  }
+
+  function loadPartData(partId) {
+    fetch(`/get-part-data/${partId}/`, {
+      method: "POST",
+      headers: { 
+        "X-CSRFToken": "{{ csrf_token }}",
+        "Content-Type": "application/x-www-form-urlencoded"
+      }
+    })
+    .then(res => res.json())
+    .then(response => {
+      if (response.status === 'success') {
+        const data = response.data;
+        
+        // Remplir les champs de base
+        partModal.querySelector("input[name='name']").value = data.name;
+        partModal.querySelector("input[name='reference_date']").value = data.reference_date;
+        partModal.querySelector("select[name='product_id']").value = data.product_id;
+        partModal.querySelector("input[name='part_id']").value = partId;
+        
+        partModal.querySelector("h5").innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path d="M15 5 19 9M5 19l4-1 9-9"/>
+          </svg>
+          Modifier la pièce`;
+        
+        // Charger les tranches
+        document.getElementById('slicesTableBody').innerHTML = '';
+        sliceCounter = 0;
+        
+        if (data.slices && data.slices.length > 0) {
+          document.getElementById('noSlicesMessage').classList.add('hidden');
+          data.slices.forEach(slice => {
+            addSliceRow(slice);
+          });
+        } else {
+          document.getElementById('noSlicesMessage').classList.remove('hidden');
+        }
+        
+        partModal.classList.remove("hidden");
+        updateTotalPercentage();
+      }
+    })
+    .catch(err => {
+      console.error("Erreur:", err);
+      alert("Erreur lors du chargement des données");
+    });
+  }
+
+  function addSliceRow(sliceData = null) {
+    const tableBody = document.getElementById('slicesTableBody');
+    const noMessage = document.getElementById('noSlicesMessage');
+    
+    noMessage.classList.add('hidden');
+    
+    const row = document.createElement('tr');
+    row.classList.add('slice-row');
+    row.dataset.sliceId = sliceCounter;
+    
+    const indexOptions = favoriteIndexes.map(index => 
+      `<option value="${index.id}" ${sliceData?.index_id === index.id ? 'selected' : ''}>${index.name} (${index.unit})</option>`
+    ).join('');
+    
+    row.innerHTML = `
+      <td>
+        <input type="text" name="slice_label_${sliceCounter}" placeholder="Ex: Énergie, Transport..." value="${sliceData?.label || ''}" required>
+      </td>
+      <td>
+        <select name="slice_type_${sliceCounter}" onchange="toggleIndexSelect(this, ${sliceCounter})" required>
+          <option value="">-- Choisir --</option>
+          <option value="fixed" ${sliceData?.component_type === 'fixed' ? 'selected' : ''}>Fixe</option>
+          <option value="indexed" ${sliceData?.component_type === 'indexed' ? 'selected' : ''}>Indexé</option>
+        </select>
+      </td>
+      <td>
+        <select name="slice_index_${sliceCounter}" ${sliceData?.component_type !== 'indexed' ? 'disabled' : ''}>
+          <option value="">-- Sélectionner un index --</option>
+          ${indexOptions}
+        </select>
+      </td>
+      <td>
+        <input type="number" name="slice_percentage_${sliceCounter}" step="0.01" min="0" max="100" placeholder="0.00" value="${sliceData?.percentage || ''}" onchange="updateTotalPercentage()" required>
+      </td>
+      <td style="text-align: center;">
+        <button type="button" class="delete-slice-btn" onclick="removeSliceRow(this)" title="Supprimer la tranche">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="5" rx="1"/>
+            <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
+            <path d="M10 13l4 4m0-4l-4 4"/>
+          </svg>
+        </button>
+      </td>
+    `;
+    
+    tableBody.appendChild(row);
+    sliceCounter++;
+    updateTotalPercentage();
+  }
+
+  window.removeSliceRow = function(button) {
+    const row = button.closest('tr');
+    row.remove();
+    
+    const tableBody = document.getElementById('slicesTableBody');
+    const noMessage = document.getElementById('noSlicesMessage');
+    if (tableBody.children.length === 0) {
+      noMessage.classList.remove('hidden');
+    }
+    
+    updateTotalPercentage();
+  };
+
+  window.toggleIndexSelect = function(typeSelect, sliceId) {
+    const indexSelect = document.querySelector(`select[name="slice_index_${sliceId}"]`);
+    if (typeSelect.value === 'indexed') {
+      indexSelect.disabled = false;
+    } else {
+      indexSelect.disabled = true;
+      indexSelect.value = '';
+    }
+  };
+
+  window.updateTotalPercentage = function() {
+    const percentageInputs = document.querySelectorAll('input[name^="slice_percentage_"]');
+    let total = 0;
+    
+    percentageInputs.forEach(input => {
+      const value = parseFloat(input.value) || 0;
+      total += value;
+    });
+    
+    const totalElement = document.getElementById('totalPercentage');
+    const warningElement = document.getElementById('percentageWarning');
+    const submitBtn = document.getElementById('submitPartBtn');
+    
+    totalElement.textContent = total.toFixed(1) + '%';
+    
+    if (Math.abs(total - 100) < 0.1) {
+      totalElement.style.color = '#059669';
+      warningElement.classList.add('hidden');
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('opacity-50');
+    } else {
+      totalElement.style.color = '#dc2626';
+      warningElement.classList.remove('hidden');
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-50');
+    }
+  };
+
+  // Fermer les modals en cliquant sur l'overlay - TON CODE ORIGINAL
+  document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
+      }
     });
   });
 });
 </script>
-
 
 {% endblock %}
