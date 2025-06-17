@@ -1,10 +1,17 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
+{% load dict_extras %}
 
 {% block title %}Prix Indexés{% endblock %}
 
 {% block content %}
 <style>
+  /* 🎛️ PARAMÈTRE PRINCIPAL - Modifiez cette valeur pour changer la hauteur des lignes */
+  :root {
+    --row-height: 20px;  /* Changez cette valeur (ex: 40px, 56px, 60px...) */
+    --header-height: calc(var(--row-height) - 4px);
+  }
+
   .icon-button svg:hover {
     stroke: #1d4ed8; /* un beau bleu élégant */
   }
@@ -70,10 +77,10 @@
   .modal-card {
     background: white;
     border-radius: 12px;
-    padding: 1.0rem;
+    padding: 1.5rem;
     min-width: 500px;
-    max-width: 850px;
-    max-height: 80vh;
+    max-width: 800px;
+    max-height: 95vh;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     overflow-y: auto;
     width: 90%;
@@ -85,14 +92,16 @@
 
   .page-layout {
     display: flex;
-    gap: 2rem;
+    gap: 1.5rem; /* Gap réduit */
     margin-top: 1rem;
     height: calc(100vh - 100px);
+    max-width: 100vw; /* Empêche le débordement */
+    overflow-x: hidden; /* Cache le débordement horizontal */
   }
 
   .left-panel {
-    flex: 1;
-    max-width: 50%;
+    flex: 0 0 60%; /* 60% pour l'arborescence (au lieu de 66%) */
+    max-width: 60%;
     background: white;
     padding: 1rem 1.5rem;
     border-radius: 12px;
@@ -102,7 +111,8 @@
   }
 
   .right-panel {
-    flex: 1;
+    flex: 1; /* 40% pour le graphique */
+    min-width: 0; /* Permet la compression si nécessaire */
     display: flex;
     flex-direction: column;
   }
@@ -113,6 +123,8 @@
     border-radius: 12px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.05);
     height: 100%;
+    min-width: 0; /* Permet la compression */
+    overflow: hidden; /* Empêche le débordement */
   }
 
   .icon-button {
@@ -128,43 +140,161 @@
     stroke: #0ea5e9;
   }
 
-  .icon-button svg:hover {
-    stroke: #0284c7;
+  .icon-button.graph-active {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    color: white;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: scale(0.95);
+  }
+
+  .icon-button.graph-active svg {
+    stroke: white;
+  }
+
+  .icon-button.graph-active:hover {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   }
 
   table.arbo-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.9rem;
+    font-size: 0.8rem; /* Police réduite */
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    table-layout: fixed; /* CRUCIAL - Force les hauteurs fixes */
   }
 
   table.arbo-table th,
   table.arbo-table td {
-    padding: 8px;
-    border-bottom: 1px solid #e5e7eb;
+    padding: 10px 12px; /* Padding réduit */
+    border: none;
     text-align: left;
+    height: var(--row-height); /* Utilise la variable CSS */
+    vertical-align: middle;
   }
 
   table.arbo-table th {
-    background-color: #f8fafc;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     font-weight: 600;
+    color: #334155;
+    font-size: 0.75rem; /* Police encore plus petite pour les headers */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    height: var(--header-height); /* En-tête légèrement plus petit */
+  }
+
+  .level-1 {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-left: 4px solid #0ea5e9;
   }
 
   .level-1 td {
     font-weight: 600;
-    background-color: #f1f5f9;
+    color: #0284c7;
+    padding: 10px 12px; /* Padding réduit */
+    padding-left: 16px; /* Niveau 1 : indentation de base */
+    height: var(--row-height) !important; /* Force la hauteur */
+    max-height: var(--row-height) !important;
+    overflow: hidden;
+    font-size: 0.85rem; /* Police légèrement plus petite */
+  }
+
+  .level-1:hover {
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    transform: translateX(2px);
+    transition: all 0.2s ease;
+  }
+
+  .level-2 {
+    background: #ffffff;
+    border-left: 3px solid #e2e8f0;
   }
 
   .level-2 td {
-    padding-left: 3rem;
-    background-color: #ffffff;
+    font-weight: 500;
+    color: #475569;
+    padding: 10px 12px; /* Padding réduit */
+    padding-left: 44px !important; /* Niveau 2 : indentation plus marquée (+28px par rapport au niveau 1) */
+    height: var(--row-height) !important; /* Force la hauteur */
+    max-height: var(--row-height) !important;
+    overflow: hidden;
+    font-size: 0.8rem; /* Police plus petite */
+  }
+
+  .level-2:hover {
+    background: #f0f9ff;
+    border-left: 3px solid #0ea5e9;
+    transition: all 0.2s ease;
+  }
+
+  .level-3 {
+    background: #f8fafc;
+    border-left: 2px solid #cbd5e1;
   }
 
   .level-3 td {
-    padding-left: 5rem;
-    font-size: 0.85rem;
-    color: #555;
-    background-color: #fafafa;
+    font-size: 0.75rem; /* Police encore plus petite */
+    color: #64748b;
+    padding: 3px 12px !important; /* Padding très réduit */
+    padding-left: 72px !important; /* Niveau 3 : indentation encore plus marquée (+28px par rapport au niveau 2) */
+    font-weight: 400;
+    height: 22px !important; /* Hauteur très compacte */
+    max-height: 22px !important;
+    vertical-align: middle;
+    line-height: 1.1;
+    overflow: hidden;
+  }
+
+  .level-3:hover {
+    background: #f0f9ff;
+    border-left: 2px solid #0ea5e9;
+    transition: all 0.2s ease;
+  }
+
+  /* Style pour les badges des slices - ultra compact */
+  .slice-badge {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    padding: 1px 4px; /* Padding minimal */
+    border-radius: 3px;
+    border: 1px solid #e2e8f0;
+    height: 16px !important; /* Hauteur très réduite */
+    max-height: 16px !important;
+    line-height: 1;
+    font-size: 0.65rem; /* Police encore plus petite */
+    white-space: nowrap; /* Empêche le retour à la ligne */
+    position: relative;
+    z-index: 10; /* Au-dessus des autres éléments */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Ombre très légère */
+  }
+
+  .slice-badge svg {
+    margin-right: 2px;
+    flex-shrink: 0;
+    width: 8px !important;
+    height: 8px !important;
+  }
+
+  .slice-badge span {
+    white-space: nowrap;
+    line-height: 1;
+    display: inline-block;
+  }
+
+  /* Conteneur des badges avec débordement autorisé */
+  .slice-badge-container {
+    position: relative;
+    overflow: visible !important; /* Autorise le débordement */
+    z-index: 10;
+  }
+
+  /* La cellule contenant les badges peut déborder */
+  .level-3 td:first-child {
+    position: relative;
+    overflow: visible !important;
+    z-index: 10;
   }
 
   .actions {
@@ -173,16 +303,34 @@
   }
 
   .toggle-icon {
-    display: inline-block;
-    transition: transform 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
     cursor: pointer;
-    margin-right: 6px;
-    transform: rotate(0deg);
+    margin-right: 8px;
+    color: #64748b;
+    font-size: 0.8rem;
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    background: #e2e8f0;
+    transform: rotate(0deg); /* Flèche horizontale par défaut */
   }
 
-  .collapsed .toggle-icon {
-    transform: rotate(-90deg);
+  .toggle-icon:hover {
+    background: #cbd5e1;
+    color: #475569;
   }
+
+  /* Flèche vers le bas quand déplié */
+  .expanded .toggle-icon {
+    transform: rotate(90deg);
+    background: #0ea5e9;
+    color: white;
+  }
+
+  /* Ancien style collapsed supprimé car remplacé par expanded */
 
   .collapse-target {
     display: table-row-group;
@@ -210,6 +358,16 @@
       #f1f5f9 20px
     );
     border-radius: 8px;
+  }
+
+  /* Animation pour le graphique */
+  @keyframes drawLine {
+    from {
+      stroke-dashoffset: 1000;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
   }
 
   .form-table {
@@ -273,6 +431,10 @@
   .delete-slice-btn svg {
     stroke: #dc2626;
   }
+
+  .opacity-50 {
+    opacity: 0.5;
+  }
 </style>
 
 <div class="page-layout">
@@ -307,24 +469,52 @@
         <tr>
           <th>Élément</th>
           <th>Date réf.</th>
+          <th>Prix référence</th>
+          <th>Prix actuel</th>
           <th>Actions</th>
         </tr>
       </thead>
       {% for product in produits %}
         <tr class="level-1" data-toggle="product-{{ product.id }}">
           <td>
-            <span class="toggle-icon">▶</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-hexagon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" stroke-width="2" style="margin-right: 6px; vertical-align: middle;">
+            <span class="toggle-icon">›</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-hexagon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="margin-right: 10px; vertical-align: middle;">
               <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73z"/>
             </svg>
-            {{ product.name }}
+            <span>{{ product.name }}</span>
           </td>
-          <td>{{ product.reference_date }}</td>
+          <td>
+            <span style="color: #0284c7; font-weight: 500; font-size: 0.85rem;">{{ product.reference_date }}</span>
+          </td>
+          <td>
+            {% with current_prices|lookup:product.id as product_prices %}
+              <span style="color: #059669; font-weight: 600; font-size: 0.9rem;">
+                {{ product_prices.reference|floatformat:0 }}€
+              </span>
+            {% endwith %}
+          </td>
+          <td>
+            {% with current_prices|lookup:product.id as product_prices %}
+              <span style="color: {% if product_prices.current > product_prices.reference %}#dc2626{% elif product_prices.current < product_prices.reference %}#059669{% else %}#6b7280{% endif %}; font-weight: 600; font-size: 0.9rem;">
+                {{ product_prices.current|floatformat:0 }}€
+              </span>
+              {% with product_prices.current|sub:product_prices.reference as price_diff %}
+                {% if price_diff != 0 %}
+                  <span style="font-size: 0.75rem; color: {% if price_diff > 0 %}#dc2626{% else %}#059669{% endif %}; margin-left: 4px;">
+                    ({% if price_diff > 0 %}+{% endif %}{{ price_diff|floatformat:0 }}€)
+                  </span>
+                {% endif %}
+              {% endwith %}
+            {% endwith %}
+          </td>
           <td>
             <div class="actions">
               <!-- 📈 Graph -->
-              <button class="icon-button" title="Afficher le graphique">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-line-chart" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <button class="icon-button view-graph-btn" 
+                      data-product-id="{{ product.id }}"
+                      data-product-name="{{ product.name }}"
+                      title="Afficher le graphique">
+                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-line-chart" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                   <path d="M3 3v18h18"/>
                   <path d="M4 14.5 8 10l5 5 5-6"/>
                 </svg>
@@ -335,14 +525,14 @@
                 data-product-id="{{ product.id }}"
                 data-product-name="{{ product.name }}"
                 title="Modifier">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                   <path d="M15 5 19 9M5 19l4-1 9-9a2.828 2.828 0 1 0-4-4l-9 9-1 4z"/>
                 </svg>
               </button>
 
               <!-- 🗑️ Supprimer -->
               <button class="icon-button delete-product" data-product-id="{{ product.id }}" title="Supprimer">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-archive-x" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-archive-x" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                   <rect x="3" y="4" width="18" height="5" rx="1"/>
                   <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
                   <path d="M10 13l4 4m0-4l-4 4"/>
@@ -353,17 +543,58 @@
         </tr>
 
         {% for part in product.parts.all %}
-          <tr class="level-2 hidden" data-parent="product-{{ product.id }}">
-            <td style="padding-left: 2.5rem;">
-              {{ part.name }}
+          <tr class="level-2 hidden" data-parent="product-{{ product.id }}" data-toggle="part-{{ part.id }}">
+            <td>
+              {% if part.slices.all %}
+                <span class="toggle-icon">›</span>
+              {% else %}
+                <span style="width: 20px; display: inline-block;"></span>
+              {% endif %}
+              <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-text" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#64748b" stroke-width="1.5" style="margin-right: 8px; vertical-align: middle;">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <path d="M14 2v6h6"/>
+              </svg>
+              <span>{{ part.name }}</span>
             </td>
-            <td>{{ part.reference_date }}</td>
+            <td>
+              <span style="color: #64748b; font-size: 0.85rem;">{{ part.reference_date }}</span>
+            </td>
+            <td>
+              <span style="color: #059669; font-weight: 500; font-size: 0.85rem;">
+                {{ part.reference_price|floatformat:0 }}€
+              </span>
+            </td>
+            <td>
+              {% with current_prices|lookup:product.id as product_prices %}
+                {% with product_prices.parts|lookup:part.id as part_prices %}
+                  <span style="color: {% if part_prices.current > part_prices.reference %}#dc2626{% elif part_prices.current < part_prices.reference %}#059669{% else %}#6b7280{% endif %}; font-weight: 500; font-size: 0.85rem;">
+                    {{ part_prices.current|floatformat:0 }}€
+                  </span>
+                  {% with part_prices.current|sub:part_prices.reference as part_diff %}
+                    {% if part_diff != 0 %}
+                      <span style="font-size: 0.7rem; color: {% if part_diff > 0 %}#dc2626{% else %}#059669{% endif %}; margin-left: 4px;">
+                        ({% if part_diff > 0 %}+{% endif %}{{ part_diff|floatformat:0 }}€)
+                      </span>
+                    {% endif %}
+                  {% endwith %}
+                {% endwith %}
+              {% endwith %}
+            </td>
             <td class="actions">
+              <!-- Bouton Graphique Pièce -->
+              <button class="icon-button view-part-graph-btn"
+                      data-part-id="{{ part.id }}"
+                      data-part-name="{{ part.name }}"
+                      title="Afficher le graphique de la pièce">
+                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-activity" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+              </button>
               <!-- Bouton Modifier -->
               <button class="icon-button edit-part-button"
                       data-part-id="{{ part.id }}"
                       title="Modifier la pièce">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path d="M15 5l4 4L7 21H3v-4L15 5z"/>
                 </svg>
               </button>
@@ -371,7 +602,7 @@
               <button class="icon-button delete-part-button"
                       data-part-id="{{ part.id }}"
                       title="Supprimer la pièce">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-archive-x" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-archive-x" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <rect x="3" y="4" width="18" height="5" rx="1"/>
                   <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
                   <path d="M10 13l4 4m0-4l-4 4"/>
@@ -381,17 +612,27 @@
           </tr>
 
           {% for slice in part.slices.all %}
-            <tr class="level-3 hidden" data-parent="product-{{ product.id }}">
+            <tr class="level-3 hidden" data-parent="part-{{ part.id }}">
               <td>
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pie-chart" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#6366f1" stroke-width="2" style="margin-right: 6px; vertical-align: middle;">
-                  <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
-                  <path d="M22 12A10 10 0 0 0 12 2v10z"/>
-                </svg>
-                {{ slice.label }} ({{ slice.percentage }}%)
-                {% if slice.index %} - {{ slice.index.name }}{% endif %}
+                <span style="width: 48px; display: inline-block;"></span>
+                <div class="slice-badge-container">
+                  <div class="slice-badge">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pie-chart" fill="none" viewBox="0 0 24 24" stroke="#6366f1" stroke-width="2">
+                      <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+                      <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+                    </svg>
+                    <span>{{ slice.label }}</span>
+                    <span style="color: #6366f1; font-weight: 600; margin-left: 2px;">{{ slice.percentage }}%</span>
+                    {% if slice.index %}
+                      <span style="color: #94a3b8; margin-left: 3px; font-style: italic;">{{ slice.index.name }}</span>
+                    {% endif %}
+                  </div>
+                </div>
               </td>
               <td></td>
-              <td class="actions"></td>
+              <td></td>
+              <td></td>
+              <td></td>
             </tr>
           {% endfor %}
         {% endfor %}
@@ -402,8 +643,29 @@
   <!-- 📈 Colonne droite — Graphique -->
   <div class="right-panel">
     <div class="card">
-      <h4>📈 Évolution du prix</h4>
-      <div class="graph-placeholder"></div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h4 style="margin: 0; color: #0284c7; display: flex; align-items: center; gap: 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-line-chart" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path d="M3 3v18h18"/>
+            <path d="M4 14.5 8 10l5 5 5-6"/>
+          </svg>
+          Évolution des prix
+        </h4>
+        <div id="selectedProductsInfo" style="font-size: 0.85rem; color: #64748b; text-align: right;">
+          <div id="selectedCount">0 élément sélectionné</div>
+          <div id="baseMode" style="font-size: 0.75rem; color: #94a3b8;"></div>
+        </div>
+      </div>
+      <div id="priceChart" style="height: 450px; width: 100%; border-radius: 8px; background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%); display: flex; align-items: center; justify-content: center; color: #94a3b8;">
+        <div style="text-align: center;" id="emptyState">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-bottom: 1rem;">
+            <path d="M3 3v18h18"/>
+            <path d="M4 14.5 8 10l5 5 5-6"/>
+          </svg>
+          <p>Cliquez sur les boutons 📈 dans l'arborescence<br>pour afficher les courbes de prix</p>
+          <p style="font-size: 0.8rem; margin-top: 1rem; color: #cbd5e1;">Maximum 3 courbes simultanées</p>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -426,6 +688,10 @@
         <tr style="border-bottom: 1px solid #dbeafe;">
           <td style="width:30%; padding:0.75rem;"><label for="{{ form.name.id_for_label }}">Nom</label></td>
           <td style="padding:0.75rem;">{{ form.name }}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #dbeafe;">
+          <td style="width:30%; padding:0.75rem;"><label for="{{ form.reference_date.id_for_label }}">Date de référence</label></td>
+          <td style="padding:0.75rem;">{{ form.reference_date }}</td>
         </tr>
       </table>
 
@@ -468,7 +734,7 @@
 
       <!-- Informations de base de la pièce -->
       <div style="background-color: #f8fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-        <h6 style="font-weight: 1200; margin-bottom: 1rem; color: #1e293b;">📋 Informations de base</h6>
+        <h6 style="font-weight: 600; margin-bottom: 1rem; color: #1e293b;">📋 Informations de base</h6>
         <table class="form-table">
           <tr>
             <th>Nom</th>
@@ -477,6 +743,10 @@
           <tr>
             <th>Date de référence</th>
             <td><input type="date" name="reference_date" required /></td>
+          </tr>
+          <tr>
+            <th>Prix de référence (€)</th>
+            <td><input type="number" name="reference_price" step="0.01" min="0" placeholder="0.00" required /></td>
           </tr>
           <tr>
             <th>Produit associé</th>
@@ -561,38 +831,60 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
 <script>
 // Variables globales
 let sliceCounter = 0;
 const favoriteIndexes = {{ favorite_indexes_json|safe }};
+const structureGraphs = {{ structure_graphs_json|safe }};
+const partGraphs = {{ part_graphs_json|safe }};
+const structuresMeta = {{ structures_meta_json|safe }};
+let activeItems = new Map();
+const maxCurves = 3;
 
-// Script pour l'arbre (toggle) - GARDE TON CODE ORIGINAL
+// Script pour l'arbre (toggle) avec fermeture en cascade
 document.addEventListener("DOMContentLoaded", function () {
   document.querySelectorAll("tr[data-toggle]").forEach(row => {
-    row.addEventListener("click", function () {
+    row.addEventListener("click", function (e) {
+      if (e.target.closest('.actions')) return;
+      
       const id = this.getAttribute("data-toggle");
       const icon = this.querySelector(".toggle-icon");
-      document.querySelectorAll(`tr[data-parent='${id}']`).forEach(child => {
-        child.classList.toggle("hidden");
-      });
-      if (icon) icon.classList.toggle("collapsed");
+      const childRows = document.querySelectorAll(`tr[data-parent='${id}']`);
+      
+      // Toggle des enfants directs
+      const isExpanded = this.classList.contains('expanded');
+      
+      if (isExpanded) {
+        // Fermeture : replier aussi tous les sous-éléments
+        this.classList.remove('expanded');
+        childRows.forEach(child => {
+          child.classList.add("hidden");
+          // Si l'enfant était aussi déplié, le replier
+          if (child.classList.contains('expanded')) {
+            child.classList.remove('expanded');
+            const childId = child.getAttribute("data-toggle");
+            if (childId) {
+              document.querySelectorAll(`tr[data-parent='${childId}']`).forEach(grandChild => {
+                grandChild.classList.add("hidden");
+              });
+            }
+          }
+        });
+      } else {
+        // Ouverture : déplier seulement les enfants directs
+        this.classList.add('expanded');
+        childRows.forEach(child => {
+          child.classList.remove("hidden");
+        });
+      }
     });
   });
 });
 
-// Script pour les modals - GARDE TON CODE ORIGINAL + AJOUTE LES TRANCHES
+// Script principal
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ Script modals chargé");
-
-  function toIsoDate(str) {
-    const d = new Date(str);
-    if (isNaN(d)) return '';
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${d.getFullYear()}-${mm}-${dd}`;
-  }
-
-  // === MODAL PRODUCT - TON CODE ORIGINAL ===
+  // === MODAL PRODUCT ===
   const productModal = document.getElementById("productModal");
   const openProductBtn = document.getElementById("openProductModal");
   const closeProductBtn = document.getElementById("closeProductModal");
@@ -616,11 +908,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Modifier un produit - TON CODE ORIGINAL
+  // Modifier un produit
   document.querySelectorAll(".edit-product").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
-      console.log("✏️ Clic Edit-Product:", btn.dataset);
       if (productModal) {
         productModal.querySelector("input[name='name']").value = btn.dataset.productName;
         productModal.querySelector("input[name='structure_id']").value = btn.dataset.productId;
@@ -634,7 +925,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Supprimer un produit - AJOUT
+  // Supprimer un produit
   document.querySelectorAll(".delete-product").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
@@ -651,20 +942,235 @@ document.addEventListener("DOMContentLoaded", () => {
         })
       })
       .then(res => {
-        if (res.ok) {
-          location.reload();
-        } else {
-          alert("Erreur lors de la suppression");
-        }
+        if (res.ok) location.reload();
+        else alert("Erreur lors de la suppression");
       })
-      .catch(err => {
-        console.error("Erreur:", err);
-        alert("Erreur lors de la suppression");
-      });
+      .catch(() => alert("Erreur lors de la suppression"));
     });
   });
 
-  // === MODAL PART ENHANCED ===
+  // === GESTION DES GRAPHIQUES ===
+  document.querySelectorAll(".view-graph-btn").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const productId = btn.dataset.productId;
+      const productName = btn.dataset.productName;
+      toggleGraph(btn, `product_${productId}`, productName, 'product');
+    });
+  });
+
+  document.querySelectorAll(".view-part-graph-btn").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const partId = btn.dataset.partId;
+      const partName = btn.dataset.partName;
+      toggleGraph(btn, `part_${partId}`, partName, 'part');
+    });
+  });
+
+  function toggleGraph(button, itemId, itemName, itemType) {
+    const isActive = button.classList.contains('graph-active');
+    
+    if (isActive) {
+      button.classList.remove('graph-active');
+      activeItems.delete(itemId);
+    } else {
+      if (activeItems.size >= maxCurves) {
+        alert(`Maximum ${maxCurves} courbes simultanées autorisées`);
+        return;
+      }
+      
+      button.classList.add('graph-active');
+      activeItems.set(itemId, {
+        name: itemName,
+        type: itemType,
+        id: itemId
+      });
+    }
+    
+    updateChart();
+  }
+
+  function updateChart() {
+    const chartContainer = document.getElementById('priceChart');
+    let emptyState = document.getElementById('emptyState');
+    const selectedCountEl = document.getElementById('selectedCount');
+    const baseModeEl = document.getElementById('baseMode');
+    
+    const count = activeItems.size;
+    selectedCountEl.textContent = `${count} élément${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}`;
+    
+    if (count === 0) {
+      chartContainer.style.transition = 'opacity 0.3s ease';
+      chartContainer.style.opacity = '0';
+      
+      setTimeout(() => {
+        chartContainer.innerHTML = '';
+        chartContainer.style.display = 'flex';
+        chartContainer.style.alignItems = 'center';
+        chartContainer.style.justifyContent = 'center';
+        chartContainer.style.background = 'linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%)';
+        
+        if (!emptyState) {
+          emptyState = document.createElement('div');
+          emptyState.id = 'emptyState';
+          emptyState.style.textAlign = 'center';
+          emptyState.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-bottom: 1rem;">
+              <path d="M3 3v18h18"/>
+              <path d="M4 14.5 8 10l5 5 5-6"/>
+            </svg>
+            <p>Cliquez sur les boutons 📈 dans l'arborescence<br>pour afficher les courbes de prix</p>
+            <p style="font-size: 0.8rem; margin-top: 1rem; color: #cbd5e1;">Maximum 3 courbes simultanées</p>
+          `;
+        }
+        
+        chartContainer.appendChild(emptyState);
+        chartContainer.style.opacity = '1';
+        baseModeEl.textContent = '';
+      }, 300);
+      return;
+    }
+
+    emptyState = document.getElementById('emptyState');
+    if (emptyState && emptyState.parentNode) {
+      emptyState.remove();
+    }
+    
+    chartContainer.style.removeProperty('display');
+    chartContainer.style.removeProperty('align-items');
+    chartContainer.style.removeProperty('justify-content');
+    chartContainer.style.removeProperty('background');
+    
+    const useBase100 = count > 1;
+    baseModeEl.textContent = useBase100 ? 'Mode Base 100' : '';
+    
+    const traces = [];
+    const colors = ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+    let colorIndex = 0;
+    
+    for (const [itemId, itemData] of activeItems) {
+      let graphData = null;
+      
+      if (itemData.type === 'product') {
+        const productId = itemId.replace('product_', '');
+        graphData = structureGraphs[productId];
+      } else if (itemData.type === 'part') {
+        const partId = itemId.replace('part_', '');
+        graphData = partGraphs[partId];
+      }
+      
+      if (!graphData || graphData.length === 0) continue;
+      
+      let dates = graphData.map(point => point.date);
+      let values = graphData.map(point => point.value);
+      
+      if (useBase100 && values.length > 0) {
+        const baseValue = values[0];
+        if (baseValue !== 0) {
+          values = values.map(v => (v / baseValue) * 100);
+        }
+      }
+      
+      const trace = {
+        x: dates,
+        y: values,
+        mode: 'lines+markers',
+        name: itemData.name,
+        line: { 
+          shape: 'spline', 
+          color: colors[colorIndex % colors.length], 
+          width: 3 
+        },
+        marker: { 
+          size: 5, 
+          color: colors[colorIndex % colors.length], 
+          line: { color: 'white', width: 1.5 } 
+        },
+        hovertemplate: '%{x}<br><b>%{y}</b><extra></extra>',
+        type: 'scatter'
+      };
+      
+      traces.push(trace);
+      colorIndex++;
+    }
+    
+    if (traces.length === 0) {
+      updateChart();
+      return;
+    }
+    
+    const layout = {
+      height: 430,
+      margin: { l: 60, r: 30, t: 20, b: 50 },
+      hovermode: 'closest',
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      xaxis: { 
+        showgrid: false, 
+        zeroline: false, 
+        type: 'date',
+        tickfont: { color: '#64748b', size: 11 }
+      },
+      yaxis: { 
+        showgrid: true, 
+        zeroline: false, 
+        gridcolor: 'rgba(14, 165, 233, 0.1)',
+        tickfont: { color: '#64748b', size: 11 },
+        title: { 
+          text: useBase100 ? 'Base 100' : 'Prix (€)', 
+          font: { color: '#64748b', size: 12 } 
+        }
+      },
+      font: { color: '#475569' },
+      showlegend: count > 1,
+      legend: {
+        x: 0.02,
+        y: 0.98,
+        bgcolor: 'rgba(255, 255, 255, 0.8)',
+        bordercolor: '#e2e8f0',
+        borderwidth: 1
+      }
+    };
+
+    const config = {
+      responsive: true,
+      displayModeBar: false
+    };
+
+    chartContainer.style.transition = 'opacity 0.3s ease';
+    chartContainer.style.opacity = '0';
+    
+    setTimeout(() => {
+      Plotly.newPlot('priceChart', traces, layout, config).then(() => {
+        chartContainer.style.opacity = '1';
+        
+        const chart = document.getElementById('priceChart');
+        const lines = chart.querySelectorAll('.scatter .lines path');
+        const markers = chart.querySelectorAll('.scatter .points path');
+
+        lines.forEach(line => {
+          if (line) {
+            const length = line.getTotalLength();
+            line.style.strokeDasharray = length;
+            line.style.strokeDashoffset = length;
+            line.style.animation = 'drawLine 1.5s ease-out forwards';
+          }
+        });
+
+        markers.forEach(m => m.style.opacity = '0');
+
+        setTimeout(() => {
+          markers.forEach(m => {
+            m.style.transition = 'opacity 0.4s ease';
+            m.style.opacity = '1';
+          });
+        }, 1500);
+      });
+    }, 300);
+  }
+
+  // === MODAL PART ===
   const partModal = document.getElementById("partModal");
   const openPartBtn = document.getElementById("openPartModal");
   const closePartBtn = document.getElementById("closePartModal");
@@ -682,7 +1188,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Modifier une pièce - MODIFIÉ POUR CHARGER LES TRANCHES
   document.querySelectorAll(".edit-part-button").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
@@ -691,12 +1196,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Supprimer une pièce - TON CODE ORIGINAL
   document.querySelectorAll(".delete-part-button").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
       if (!confirm("Supprimer cette pièce ?")) return;
-      console.log("🗑️ Clic Delete-Part:", btn.dataset.partId);
       fetch("{% url 'main:prix_indexes' %}", {
         method: "POST",
         headers: { 
@@ -709,25 +1212,15 @@ document.addEventListener("DOMContentLoaded", () => {
         })
       })
       .then(res => {
-        if (res.ok) {
-          location.reload();
-        } else {
-          alert("Erreur lors de la suppression");
-        }
+        if (res.ok) location.reload();
+        else alert("Erreur lors de la suppression");
       })
-      .catch(err => {
-        console.error("Erreur:", err);
-        alert("Erreur lors de la suppression");
-      });
+      .catch(() => alert("Erreur lors de la suppression"));
     });
   });
 
-  // === NOUVELLES FONCTIONS POUR LES TRANCHES ===
-  
-  // Gestion des tranches
   document.getElementById('addSliceBtn').addEventListener('click', addSliceRow);
 
-  // Soumission du formulaire avec AJAX
   document.getElementById('partForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);
@@ -747,10 +1240,7 @@ document.addEventListener("DOMContentLoaded", () => {
         alert(data.message || 'Erreur lors de la sauvegarde');
       }
     })
-    .catch(err => {
-      console.error("Erreur:", err);
-      alert("Erreur lors de la sauvegarde");
-    });
+    .catch(() => alert("Erreur lors de la sauvegarde"));
   });
 
   function resetPartModal() {
@@ -763,10 +1253,10 @@ document.addEventListener("DOMContentLoaded", () => {
       Nouvelle pièce`;
     partModal.querySelector("input[name='name']").value = '';
     partModal.querySelector("input[name='reference_date']").value = '';
+    partModal.querySelector("input[name='reference_price']").value = '';
     partModal.querySelector("select[name='product_id']").selectedIndex = 0;
     partModal.querySelector("input[name='part_id']").value = '';
     
-    // Réinitialiser les tranches
     document.getElementById('slicesTableBody').innerHTML = '';
     document.getElementById('noSlicesMessage').classList.remove('hidden');
     updateTotalPercentage();
@@ -786,9 +1276,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (response.status === 'success') {
         const data = response.data;
         
-        // Remplir les champs de base
         partModal.querySelector("input[name='name']").value = data.name;
         partModal.querySelector("input[name='reference_date']").value = data.reference_date;
+        partModal.querySelector("input[name='reference_price']").value = data.reference_price;
         partModal.querySelector("select[name='product_id']").value = data.product_id;
         partModal.querySelector("input[name='part_id']").value = partId;
         
@@ -798,7 +1288,6 @@ document.addEventListener("DOMContentLoaded", () => {
           </svg>
           Modifier la pièce`;
         
-        // Charger les tranches
         document.getElementById('slicesTableBody').innerHTML = '';
         sliceCounter = 0;
         
@@ -815,10 +1304,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateTotalPercentage();
       }
     })
-    .catch(err => {
-      console.error("Erreur:", err);
-      alert("Erreur lors du chargement des données");
-    });
+    .catch(() => alert("Erreur lors du chargement des données"));
   }
 
   function addSliceRow(sliceData = null) {
@@ -922,7 +1408,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Fermer les modals en cliquant sur l'overlay - TON CODE ORIGINAL
+  // Fermer les modals en cliquant sur l'overlay
   document.querySelectorAll('.modal-overlay').forEach(modal => {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {

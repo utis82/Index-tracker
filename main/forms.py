@@ -12,7 +12,7 @@ from django.contrib.auth.models import User
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['name']
+        fields = ['name', 'reference_date']  # ← Ajouter reference_date
         widgets = {
             'reference_date': forms.DateInput(attrs={'type': 'date'}),
         }
