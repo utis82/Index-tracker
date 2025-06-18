@@ -1,42 +1,248 @@
 {% extends "base.html" %}
-
 {% block title %}Accueil{% endblock %}
-
 {% block content %}
 
+<style>
+/* Animation fade in/fade out des messages */
+.messages-container {
+  position: relative;
+  height: 2.5rem;
+  margin-bottom: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fade-message {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2.5rem;
+  line-height: 2.5rem;
+  font-size: 1.2rem;
+  font-weight: 500;
+  text-align: center;
+  color: #1e2a36;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  opacity: 0;
+  animation: fadeInOut 12s ease-in-out infinite;
+}
+
+.fade-message:nth-child(1) { animation-delay: 0s; }
+.fade-message:nth-child(2) { animation-delay: 3s; }
+.fade-message:nth-child(3) { animation-delay: 6s; }
+.fade-message:nth-child(4) { animation-delay: 9s; }
+
+.message-icon {
+  width: 20px;
+  height: 20px;
+  color: #0ea5e9;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(10px); }
+  8% { opacity: 1; transform: translateY(0); }
+  25% { opacity: 1; transform: translateY(0); }
+  33% { opacity: 0; transform: translateY(-10px); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+
+/* Animation de fond avec courbes d'index 3D */
+.chart-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+  opacity: 0.25;
+}
+
+.chart-layer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.chart-path {
+  fill: none;
+  stroke-width: 3;
+  opacity: 0.8;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+}
+
+.chart-1 { stroke: #0ea5e9; animation: drawChart 8s ease-in-out infinite; }
+.chart-2 { stroke: #3b82f6; animation: drawChart 10s ease-in-out infinite 2s; }
+.chart-3 { stroke: #06b6d4; animation: drawChart 12s ease-in-out infinite 4s; }
+
+.chart-area {
+  opacity: 0.06;
+  animation: pulseArea 6s ease-in-out infinite;
+}
+
+.area-1 { fill: url(#gradient1); animation-delay: 0s; }
+.area-2 { fill: url(#gradient2); animation-delay: 2s; }
+.area-3 { fill: url(#gradient3); animation-delay: 4s; }
+
+@keyframes drawChart {
+  0% { 
+    stroke-dasharray: 1000; 
+    stroke-dashoffset: 1000; 
+    opacity: 0;
+  }
+  15% { 
+    stroke-dashoffset: 0; 
+    opacity: 0.8;
+  }
+  85% { 
+    stroke-dashoffset: 0; 
+    opacity: 0.8;
+  }
+  100% { 
+    stroke-dasharray: 1000; 
+    stroke-dashoffset: -1000; 
+    opacity: 0;
+  }
+}
+
+@keyframes pulseArea {
+  0%, 100% { opacity: 0; transform: scaleY(1); }
+  50% { opacity: 0.08; transform: scaleY(1.15); }
+}
+
+.floating-elements {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  pointer-events: none;
+}
+
+.floating-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(59, 130, 246, 0.04));
+  backdrop-filter: blur(2px);
+  animation: floatUpDown 12s ease-in-out infinite;
+}
+
+.circle-1 {
+  width: 120px;
+  height: 120px;
+  top: 15%;
+  left: 8%;
+  animation-delay: 0s;
+}
+
+.circle-2 {
+  width: 80px;
+  height: 80px;
+  top: 65%;
+  right: 12%;
+  animation-delay: 4s;
+}
+
+.circle-3 {
+  width: 60px;
+  height: 60px;
+  top: 35%;
+  right: 35%;
+  animation-delay: 8s;
+}
+
+@keyframes floatUpDown {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg) scale(1); 
+    opacity: 0.8;
+  }
+  50% { 
+    transform: translateY(-30px) rotate(180deg) scale(1.1); 
+    opacity: 0.4;
+  }
+}
+</style>
+
 <div class="hero-container">
-  <svg class="animated-wave" viewBox="0 0 1440 320" preserveAspectRatio="none">
-    <path fill="#60a5fa" fill-opacity="0.3">
-      <animate attributeName="d" dur="10s" repeatCount="indefinite"
-        values="
-          M0,160 C360,80 1080,240 1440,160 L1440,320 L0,320 Z;
-          M0,120 C360,200 1080,40 1440,120 L1440,320 L0,320 Z;
-          M0,160 C360,80 1080,240 1440,160 L1440,320 L0,320 Z;
-        "
-      />
-    </path>
-  </svg>
+  <!-- Animation de fond avec courbes d'index 3D -->
+  <div class="chart-background">
+    <svg class="chart-layer" viewBox="0 0 800 400" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="gradient1" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#0ea5e9;stop-opacity:0.2" />
+          <stop offset="100%" style="stop-color:#0ea5e9;stop-opacity:0" />
+        </linearGradient>
+        <linearGradient id="gradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.15" />
+          <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0" />
+        </linearGradient>
+        <linearGradient id="gradient3" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:0.1" />
+          <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:0" />
+        </linearGradient>
+      </defs>
+      
+      <!-- Courbe d'index 1 (croissante) -->
+      <path class="chart-area area-1" d="M0,350 Q200,320 400,280 T800,200 L800,400 L0,400 Z" />
+      <path class="chart-path chart-1" d="M0,350 Q200,320 400,280 T800,200" />
+      
+      <!-- Courbe d'index 2 (volatile) -->
+      <path class="chart-area area-2" d="M0,300 Q150,250 300,270 Q450,290 600,240 T800,220 L800,400 L0,400 Z" />
+      <path class="chart-path chart-2" d="M0,300 Q150,250 300,270 Q450,290 600,240 T800,220" />
+      
+      <!-- Courbe d'index 3 (stable) -->
+      <path class="chart-area area-3" d="M0,320 Q200,310 400,315 Q600,320 800,310 L800,400 L0,400 Z" />
+      <path class="chart-path chart-3" d="M0,320 Q200,310 400,315 Q600,320 800,310" />
+    </svg>
+  </div>
+
+  <!-- Éléments flottants modernisés -->
+  <div class="floating-elements">
+    <div class="floating-circle circle-1"></div>
+    <div class="floating-circle circle-2"></div>
+    <div class="floating-circle circle-3"></div>
+  </div>
 
   <div class="hero-content">
     <h1 class="hero-title">Centraliser, Analyser, Performer.</h1>
     <p class="hero-subtitle">Tous vos index, enfin réunis au même endroit.</p>
-
-    <div class="rotating-wrapper">
-      <div class="rotating-track">
-        <div class="message">📊 Visualisez tous vos index dans votre tableau de bord</div>
-        <div class="message">📤 Exportez les données dont vous avez besoin</div>
-        <div class="message">🧠 Créez vos propres modèles avec vos données</div>
-
-        <!-- 👇 Duplicates -->
-        <div class="message">📊 Visualisez tous vos index dans votre tableau de bord</div>
-        <div class="message">📤 Exportez les données dont vous avez besoin</div>
-        <div class="message">🧠 Créez vos propres modèles avec vos données</div>
+    
+    <div class="messages-container">
+      <div class="fade-message">
+        <i data-lucide="bar-chart-3" class="message-icon"></i>
+        Visualisez tous vos index dans votre tableau de bord
+      </div>
+      <div class="fade-message">
+        <i data-lucide="download" class="message-icon"></i>
+        Exportez les données dont vous avez besoin
+      </div>
+      <div class="fade-message">
+        <i data-lucide="brain" class="message-icon"></i>
+        Créez vos propres modèles avec vos données
+      </div>
+      <div class="fade-message">
+        <i data-lucide="trending-up" class="message-icon"></i>
+        Suivez l'évolution en temps réel
       </div>
     </div>
-
-
+    
     <a href="{% url 'main:register' %}" class="cta-button">Créer un compte</a>
   </div>
+</div>
 
+<script>
+// Initialiser les icônes Lucide après le chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
+});
+</script>
 
 {% endblock %}
