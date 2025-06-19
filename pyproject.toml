@@ -3,10 +3,15 @@ authors = ["Your Name <you@example.com>"]
 description = ""
 name = "django-template"
 version = "0.1.0"
+
 [tool.poetry.dependencies]
 Django = "^5.0"
 python = "^3.10"
 plotly = "5.24.1"
+pandas = ">=1.5.0,<2.1.0"
+numpy = ">=1.24.0,<2.0.0"
+openpyxl = "^3.1.5"
+
 [tool.poetry.dev-dependencies]
 
 [tool.pyright]

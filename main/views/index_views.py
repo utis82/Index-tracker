@@ -4,11 +4,12 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.admin.views.decorators import staff_member_required
-import pandas as pd
+# import pandas as pd  # ← Remplacé par openpyxl
+import openpyxl  # ← Alternative légère à pandas pour Excel
 from datetime import datetime
 from main.models import Index, IndexValue
-import matplotlib.pyplot as plt
-import base64
+
+
 from io import BytesIO
 from django.utils.timezone import localtime
 from django.utils.dateformat import format as date_format
@@ -21,62 +22,108 @@ def import_excel_view(request):
         excel_file = request.FILES.get("excel_file")
 
         if not excel_file:
-            return HttpResponse("❌ Aucun fichier n’a été envoyé.")
+            return HttpResponse("❌ Aucun fichier n'a été envoyé.")
 
         try:
-            df = pd.read_excel(BytesIO(excel_file.read()), sheet_name="1. BDD")
-            print("🔍 Colonnes détectées :", df.columns.tolist())
+            # ✅ Utiliser openpyxl au lieu de pandas
+            workbook = openpyxl.load_workbook(BytesIO(excel_file.read()))
 
-            if "Designation" not in df.columns:
-                return HttpResponse(
-                    "❌ Colonne 'Designation' manquante dans l'Excel.")
+            # Vérifier si la feuille "1. BDD" existe
+            if "1. BDD" not in workbook.sheetnames:
+                return HttpResponse("❌ Feuille '1. BDD' non trouvée dans l'Excel.")
 
-            # ✅ détecter les colonnes de dates (colonnes de type datetime)
-            date_columns = [
-                col for col in df.columns if isinstance(col, datetime)
-            ]
+            worksheet = workbook["1. BDD"]
 
-            for _, row in df.iterrows():
-                index_name = row["Designation"]
-                if pd.isna(index_name):
+            # Lire la première ligne pour les en-têtes
+            headers = []
+            for cell in worksheet[1]:
+                if cell.value:
+                    headers.append(cell.value)
+                else:
+                    headers.append("")
+
+            print("🔍 Colonnes détectées :", headers)
+
+            if "Designation" not in headers:
+                return HttpResponse("❌ Colonne 'Designation' manquante dans l'Excel.")
+
+            # Trouver les indices des colonnes importantes
+            designation_col = headers.index("Designation")
+            unit_col = headers.index("Unit") if "Unit" in headers else None
+            category_col = headers.index("category") if "category" in headers else None
+
+            # Identifier les colonnes de dates (à partir de la colonne 3 généralement)
+            date_columns = []
+            for i, header in enumerate(headers):
+                if isinstance(header, datetime) or (isinstance(header, str) and len(header) > 8):
+                    try:
+                        # Essayer de parser comme date
+                        if isinstance(header, str):
+                            parsed_date = datetime.strptime(header, "%Y-%m-%d")
+                        else:
+                            parsed_date = header
+                        date_columns.append((i, parsed_date))
+                    except:
+                        continue
+
+            # Traiter chaque ligne (à partir de la ligne 2)
+            for row_num in range(2, worksheet.max_row + 1):
+                row = list(worksheet[row_num])
+
+                # Lire le nom de l'index
+                if designation_col < len(row) and row[designation_col].value:
+                    index_name = str(row[designation_col].value).strip()
+                else:
                     continue
 
-                # ✅ Lire les champs associés
-                unit = row["Unit"] if "Unit" in df.columns and not pd.isna(
-                    row["Unit"]) else "€"
-                category = row[
-                    "category"] if "category" in df.columns and not pd.isna(
-                        row["category"]) else "Autre"
+                if not index_name:
+                    continue
 
-                # ✅ Crée ou met à jour l’index
-                index_obj, _ = Index.objects.update_or_create(name=index_name,
-                                                              defaults={
-                                                                  "unit":
-                                                                  unit,
-                                                                  "category":
-                                                                  category
-                                                              })
+                # Lire les champs associés
+                unit = "€"  # Valeur par défaut
+                if unit_col is not None and unit_col < len(row) and row[unit_col].value:
+                    unit = str(row[unit_col].value)
 
-                for col in date_columns:
-                    raw_value = row[col]
-                    if pd.isna(raw_value) or str(raw_value).strip() == "-":
-                        continue
+                category = "Autre"  # Valeur par défaut
+                if category_col is not None and category_col < len(row) and row[category_col].value:
+                    category = str(row[category_col].value)
 
-                    try:
-                        float_value = float(raw_value)
-                    except ValueError:
-                        continue
+                # ✅ Créer ou mettre à jour l'index
+                index_obj, created = Index.objects.update_or_create(
+                    name=index_name,
+                    defaults={
+                        "unit": unit,
+                        "category": category
+                    }
+                )
 
-                    IndexValue.objects.update_or_create(
-                        index=index_obj,
-                        date=col,
-                        defaults={"value": float_value})
+                # Traiter les valeurs pour chaque date
+                for col_index, date_value in date_columns:
+                    if col_index < len(row) and row[col_index].value is not None:
+                        raw_value = row[col_index].value
+
+                        # Ignorer les cellules vides ou avec "-"
+                        if raw_value is None or str(raw_value).strip() in ["", "-"]:
+                            continue
+
+                        try:
+                            float_value = float(raw_value)
+                        except (ValueError, TypeError):
+                            continue
+
+                        # Créer ou mettre à jour la valeur
+                        IndexValue.objects.update_or_create(
+                            index=index_obj,
+                            date=date_value.date(),
+                            defaults={"value": float_value}
+                        )
 
             return HttpResponse("✅ Importation terminée avec succès.")
 
+        except openpyxl.utils.exceptions.InvalidFileException:
+            return HttpResponse("❌ Fichier Excel invalide ou corrompu.")
         except Exception as e:
-            return HttpResponse(
-                f"❌ Erreur lors du traitement du fichier : {str(e)}")
+            return HttpResponse(f"❌ Erreur lors du traitement du fichier : {str(e)}")
 
     return render(request, "admin/import_excel.html")
 

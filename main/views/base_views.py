@@ -4,11 +4,11 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.admin.views.decorators import staff_member_required
-import pandas as pd
-from datetime import datetime
+# import pandas as pd  # ← Commenté temporairement
+from datetime import datetime, timedelta  # ← Ajout de timedelta
 from main.models import Index, IndexValue
 import json
-from main.forms import CustomUserCreationForm  #
+from main.forms import CustomUserCreationForm
 
 
 def login_view(request):
@@ -47,8 +47,8 @@ def dashboard(request):
         current_price = val[-1]
 
         def get_value_x_days_ago(days):
-            target = latest_date - pd.Timedelta(days=days)
-            margin = pd.Timedelta(days=7)
+            target = latest_date - timedelta(days=days)  # ← Remplacé pd.Timedelta par timedelta
+            margin = timedelta(days=7)  # ← Remplacé pd.Timedelta par timedelta
             candidates = [v.value for v in values if abs(v.date - target) <= margin]
             return candidates[0] if candidates else None
 
@@ -69,12 +69,9 @@ def dashboard(request):
             "mini_dates": json.dumps([d.strftime("%Y-%m-%d") for d in dates[-30:]]),
             "mini_values": json.dumps(val[-30:]),
             "last_update": latest_date.strftime("%Y-%m-%d"),
-             "unit": index.unit, 
+            "unit": index.unit, 
             "category": index.category,
-
-
         })
-
 
     # ✅ Ajout nécessaire pour permettre l'affichage des étoiles dans le template
     favorite_ids = [index.id for index in favorites]
@@ -86,7 +83,6 @@ def dashboard(request):
     })
 
 
-
 def is_admin(user):
     return user.is_superuser
 
@@ -94,7 +90,7 @@ def is_admin(user):
 @user_passes_test(is_admin)
 def upload_excel(request):
     return HttpResponse(
-        "<h2>Upload Excel</h2><p>Formulaire d’upload de fichier Excel réservé à l’administrateur.</p>"
+        "<h2>Upload Excel</h2><p>Formulaire d'upload de fichier Excel réservé à l'administrateur.</p>"
     )
 
 
@@ -108,7 +104,6 @@ def register_view(request):
     else:
         form = CustomUserCreationForm()
     return render(request, "register.html", {"form": form})
-
 
 
 def home(request):
