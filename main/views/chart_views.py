@@ -89,7 +89,8 @@ def index_viewer(request, index_id=None):
                             "min_b": min(values_b),
                             "max_b": max(values_b),
                             "mean_b": round(mean_b, 2),
-                            "delta": round(mean_b - mean_a, 2),  # Ajout du calcul du delta
+                            "delta": round(mean_b - mean_a, 2),  # ✅ Delta déjà présent
+                            "unit": idx.unit or "",  # ✨ Ajout de l'unité de l'index
                             "variation": round(variation, 2),
                             "count_a": len(values_a),
                             "count_b": len(values_b)
