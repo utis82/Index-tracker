@@ -2,18 +2,18 @@
 {% load crispy_forms_tags %}
 {% load dict_extras %}
 
-{% block title %}Prix Indexés{% endblock %}
+{% block title %}Price Indexes{% endblock %}
 
 {% block content %}
 <style>
-  /* 🎛️ PARAMÈTRE PRINCIPAL - Modifiez cette valeur pour changer la hauteur des lignes */
+  /* 🎛️ MAIN PARAMETER - Modify this value to change row height */
   :root {
-    --row-height: 20px;  /* Changez cette valeur (ex: 40px, 56px, 60px...) */
+    --row-height: 20px;  /* Change this value (e.g.: 40px, 56px, 60px...) */
     --header-height: calc(var(--row-height) - 4px);
   }
 
   .icon-button svg:hover {
-    stroke: #1d4ed8; /* un beau bleu élégant */
+    stroke: #1d4ed8; /* beautiful elegant blue */
   }
 
   .btn-primary {
@@ -92,15 +92,15 @@
 
   .page-layout {
     display: flex;
-    gap: 1.5rem; /* Gap réduit */
+    gap: 1.5rem; /* Reduced gap */
     margin-top: 1rem;
     height: calc(100vh - 100px);
-    max-width: 100vw; /* Empêche le débordement */
-    overflow-x: hidden; /* Cache le débordement horizontal */
+    max-width: 100vw; /* Prevents overflow */
+    overflow-x: hidden; /* Hides horizontal overflow */
   }
 
   .left-panel {
-    flex: 0 0 55%; /* 60% pour l'arborescence (au lieu de 66%) */
+    flex: 0 0 55%; /* 60% for tree structure (instead of 66%) */
     max-width: 60%;
     background: white;
     padding: 1rem 1.5rem;
@@ -111,8 +111,8 @@
   }
 
   .right-panel {
-    flex: 1; /* 40% pour le graphique */
-    min-width: 0; /* Permet la compression si nécessaire */
+    flex: 1; /* 40% for chart */
+    min-width: 0; /* Allows compression if needed */
     display: flex;
     flex-direction: column;
   }
@@ -123,8 +123,8 @@
     border-radius: 12px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.05);
     height: 100%;
-    min-width: 0; /* Permet la compression */
-    overflow: hidden; /* Empêche le débordement */
+    min-width: 0; /* Allows compression */
+    overflow: hidden; /* Prevents overflow */
   }
 
   .icon-button {
@@ -158,19 +158,19 @@
   table.arbo-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.8rem; /* Police réduite */
+    font-size: 0.8rem; /* Reduced font size */
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    table-layout: fixed; /* CRUCIAL - Force les hauteurs fixes */
+    table-layout: fixed; /* CRUCIAL - Forces fixed heights */
   }
 
   table.arbo-table th,
   table.arbo-table td {
-    padding: 10px 12px; /* Padding réduit */
+    padding: 10px 12px; /* Reduced padding */
     border: none;
     text-align: left;
-    height: var(--row-height); /* Utilise la variable CSS */
+    height: var(--row-height); /* Uses CSS variable */
     vertical-align: middle;
   }
 
@@ -178,10 +178,10 @@
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     font-weight: 600;
     color: #334155;
-    font-size: 0.75rem; /* Police encore plus petite pour les headers */
+    font-size: 0.75rem; /* Even smaller font for headers */
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    height: var(--header-height); /* En-tête légèrement plus petit */
+    height: var(--header-height); /* Header slightly smaller */
   }
 
   .level-1 {
@@ -192,12 +192,12 @@
   .level-1 td {
     font-weight: 600;
     color: #0284c7;
-    padding: 10px 12px; /* Padding réduit */
-    padding-left: 16px; /* Niveau 1 : indentation de base */
-    height: var(--row-height) !important; /* Force la hauteur */
+    padding: 10px 12px; /* Reduced padding */
+    padding-left: 16px; /* Level 1: base indentation */
+    height: var(--row-height) !important; /* Forces height */
     max-height: var(--row-height) !important;
     overflow: hidden;
-    font-size: 0.85rem; /* Police légèrement plus petite */
+    font-size: 0.85rem; /* Slightly smaller font */
   }
 
   .level-1:hover {
@@ -214,12 +214,12 @@
   .level-2 td {
     font-weight: 500;
     color: #475569;
-    padding: 10px 12px; /* Padding réduit */
-    padding-left: 44px !important; /* Niveau 2 : indentation plus marquée (+28px par rapport au niveau 1) */
-    height: var(--row-height) !important; /* Force la hauteur */
+    padding: 10px 12px; /* Reduced padding */
+    padding-left: 44px !important; /* Level 2: more pronounced indentation (+28px from level 1) */
+    height: var(--row-height) !important; /* Forces height */
     max-height: var(--row-height) !important;
     overflow: hidden;
-    font-size: 0.8rem; /* Police plus petite */
+    font-size: 0.8rem; /* Smaller font */
   }
 
   .level-2:hover {
@@ -234,12 +234,12 @@
   }
 
   .level-3 td {
-    font-size: 0.75rem; /* Police encore plus petite */
+    font-size: 0.75rem; /* Even smaller font */
     color: #64748b;
-    padding: 3px 12px !important; /* Padding très réduit */
-    padding-left: 72px !important; /* Niveau 3 : indentation encore plus marquée (+28px par rapport au niveau 2) */
+    padding: 3px 12px !important; /* Very reduced padding */
+    padding-left: 72px !important; /* Level 3: even more pronounced indentation (+28px from level 2) */
     font-weight: 400;
-    height: 22px !important; /* Hauteur très compacte */
+    height: 22px !important; /* Very compact height */
     max-height: 22px !important;
     vertical-align: middle;
     line-height: 1.1;
@@ -252,22 +252,22 @@
     transition: all 0.2s ease;
   }
 
-  /* Style pour les badges des slices - ultra compact */
+  /* Style for slice badges - ultra compact */
   .slice-badge {
     display: inline-flex;
     align-items: center;
     background: #f1f5f9;
-    padding: 1px 4px; /* Padding minimal */
+    padding: 1px 4px; /* Minimal padding */
     border-radius: 3px;
     border: 1px solid #e2e8f0;
-    height: 16px !important; /* Hauteur très réduite */
+    height: 16px !important; /* Very reduced height */
     max-height: 16px !important;
     line-height: 1;
-    font-size: 0.65rem; /* Police encore plus petite */
-    white-space: nowrap; /* Empêche le retour à la ligne */
+    font-size: 0.65rem; /* Even smaller font */
+    white-space: nowrap; /* Prevents line wrapping */
     position: relative;
-    z-index: 10; /* Au-dessus des autres éléments */
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Ombre très légère */
+    z-index: 10; /* Above other elements */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Very light shadow */
   }
 
   .slice-badge svg {
@@ -283,14 +283,14 @@
     display: inline-block;
   }
 
-  /* Conteneur des badges avec débordement autorisé */
+  /* Badge container with allowed overflow */
   .slice-badge-container {
     position: relative;
-    overflow: visible !important; /* Autorise le débordement */
+    overflow: visible !important; /* Allows overflow */
     z-index: 10;
   }
 
-  /* La cellule contenant les badges peut déborder */
+  /* Cell containing badges can overflow */
   .level-3 td:first-child {
     position: relative;
     overflow: visible !important;
@@ -315,7 +315,7 @@
     height: 14px;
     border-radius: 2px;
     background: #e2e8f0;
-    transform: rotate(0deg); /* Flèche horizontale par défaut */
+    transform: rotate(0deg); /* Horizontal arrow by default */
   }
 
   .toggle-icon:hover {
@@ -323,14 +323,14 @@
     color: #475569;
   }
 
-  /* Flèche vers le bas quand déplié */
+  /* Down arrow when expanded */
   .expanded .toggle-icon {
     transform: rotate(90deg);
     background: #0ea5e9;
     color: white;
   }
 
-  /* Ancien style collapsed supprimé car remplacé par expanded */
+  /* Old collapsed style removed as replaced by expanded */
 
   .collapse-target {
     display: table-row-group;
@@ -360,7 +360,7 @@
     border-radius: 8px;
   }
 
-  /* Animation pour le graphique */
+  /* Animation for chart */
   @keyframes drawLine {
     from {
       stroke-dashoffset: 1000;
@@ -396,7 +396,7 @@
     border-radius: 4px;
   }
 
-  /* Styles pour la gestion des tranches */
+  /* Styles for slice management */
   .slice-row td {
     padding: 0.5rem;
     border-bottom: 1px solid #f1f5f9;
@@ -438,25 +438,25 @@
 </style>
 
 <div class="page-layout">
-  <!-- 📦 Vos produits -->
+  <!-- 📦 Your products -->
   <div class="left-panel">
     <h3 class="section-title">
       <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-hexagon" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73z"/>
       </svg>
-      Vos produits
+      Your products
     </h3>
 
     <div class="top-actions">
-      <!-- Créer un produit -->
-      <button class="icon-button" id="openProductModal" title="Créer un produit">
+      <!-- Create a product -->
+      <button class="icon-button" id="openProductModal" title="Create a product">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2">
           <path d="M12 17v-6m3 3h-6M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/>
         </svg>
       </button>
 
-      <!-- Créer une pièce -->
-      <button class="icon-button" id="openPartModal" title="Créer une Pièce">
+      <!-- Create a part -->
+      <button class="icon-button" id="openPartModal" title="Create a Part">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2">
           <path d="M12 18v-6m3 3h-6M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
           <path d="M14 2v6h6"/>
@@ -467,10 +467,10 @@
     <table class="arbo-table">
       <thead>
         <tr>
-          <th>Élément</th>
-          <th>Date réf.</th>
-          <th>Prix référence</th>
-          <th>Prix actuel</th>
+          <th>Element</th>
+          <th>Ref. date</th>
+          <th>Reference price</th>
+          <th>Current price</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -489,19 +489,19 @@
           <td>
             {% with current_prices|lookup:product.id as product_prices %}
               <span style="color: #059669; font-weight: 600; font-size: 0.9rem;">
-                {{ product_prices.reference|floatformat:0 }}€
+                €{{ product_prices.reference|floatformat:0 }}
               </span>
             {% endwith %}
           </td>
           <td>
             {% with current_prices|lookup:product.id as product_prices %}
               <span style="color: {% if product_prices.current > product_prices.reference %}#dc2626{% elif product_prices.current < product_prices.reference %}#059669{% else %}#6b7280{% endif %}; font-weight: 600; font-size: 0.9rem;">
-                {{ product_prices.current|floatformat:0 }}€
+                €{{ product_prices.current|floatformat:0 }}
               </span>
               {% with product_prices.current|sub:product_prices.reference as price_diff %}
                 {% if price_diff != 0 %}
                   <span style="font-size: 0.75rem; color: {% if price_diff > 0 %}#dc2626{% else %}#059669{% endif %}; margin-left: 4px;">
-                    ({% if price_diff > 0 %}+{% endif %}{{ price_diff|floatformat:0 }}€)
+                    ({% if price_diff > 0 %}+{% endif %}€{{ price_diff|floatformat:0 }})
                   </span>
                 {% endif %}
               {% endwith %}
@@ -509,29 +509,29 @@
           </td>
           <td>
             <div class="actions">
-              <!-- 📈 Graph -->
+              <!-- 📈 Chart -->
               <button class="icon-button view-graph-btn" 
                       data-product-id="{{ product.id }}"
                       data-product-name="{{ product.name }}"
-                      title="Afficher le graphique">
+                      title="Show chart">
                 <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-line-chart" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                   <path d="M3 3v18h18"/>
                   <path d="M4 14.5 8 10l5 5 5-6"/>
                 </svg>
               </button>
 
-              <!-- ✏️ Modifier -->
+              <!-- ✏️ Edit -->
               <button class="icon-button edit-product"
                 data-product-id="{{ product.id }}"
                 data-product-name="{{ product.name }}"
-                title="Modifier">
+                title="Edit">
                 <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                   <path d="M15 5 19 9M5 19l4-1 9-9a2.828 2.828 0 1 0-4-4l-9 9-1 4z"/>
                 </svg>
               </button>
 
-              <!-- 🗑️ Supprimer -->
-              <button class="icon-button delete-product" data-product-id="{{ product.id }}" title="Supprimer">
+              <!-- 🗑️ Delete -->
+              <button class="icon-button delete-product" data-product-id="{{ product.id }}" title="Delete">
                 <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-archive-x" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                   <rect x="3" y="4" width="18" height="5" rx="1"/>
                   <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
@@ -561,19 +561,19 @@
             </td>
             <td>
               <span style="color: #059669; font-weight: 500; font-size: 0.85rem;">
-                {{ part.reference_price|floatformat:0 }}€
+                €{{ part.reference_price|floatformat:0 }}
               </span>
             </td>
             <td>
               {% with current_prices|lookup:product.id as product_prices %}
                 {% with product_prices.parts|lookup:part.id as part_prices %}
                   <span style="color: {% if part_prices.current > part_prices.reference %}#dc2626{% elif part_prices.current < part_prices.reference %}#059669{% else %}#6b7280{% endif %}; font-weight: 500; font-size: 0.85rem;">
-                    {{ part_prices.current|floatformat:0 }}€
+                    €{{ part_prices.current|floatformat:0 }}
                   </span>
                   {% with part_prices.current|sub:part_prices.reference as part_diff %}
                     {% if part_diff != 0 %}
                       <span style="font-size: 0.7rem; color: {% if part_diff > 0 %}#dc2626{% else %}#059669{% endif %}; margin-left: 4px;">
-                        ({% if part_diff > 0 %}+{% endif %}{{ part_diff|floatformat:0 }}€)
+                        ({% if part_diff > 0 %}+{% endif %}€{{ part_diff|floatformat:0 }})
                       </span>
                     {% endif %}
                   {% endwith %}
@@ -581,27 +581,27 @@
               {% endwith %}
             </td>
             <td class="actions">
-              <!-- Bouton Graphique Pièce -->
+              <!-- Part Chart Button -->
               <button class="icon-button view-part-graph-btn"
                       data-part-id="{{ part.id }}"
                       data-part-name="{{ part.name }}"
-                      title="Afficher le graphique de la pièce">
+                      title="Show part chart">
                 <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-activity" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                   <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                 </svg>
               </button>
-              <!-- Bouton Modifier -->
+              <!-- Edit Button -->
               <button class="icon-button edit-part-button"
                       data-part-id="{{ part.id }}"
-                      title="Modifier la pièce">
+                      title="Edit part">
                 <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path d="M15 5l4 4L7 21H3v-4L15 5z"/>
                 </svg>
               </button>
-              <!-- Bouton Supprimer -->
+              <!-- Delete Button -->
               <button class="icon-button delete-part-button"
                       data-part-id="{{ part.id }}"
-                      title="Supprimer la pièce">
+                      title="Delete part">
                 <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-archive-x" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <rect x="3" y="4" width="18" height="5" rx="1"/>
                   <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
@@ -640,7 +640,7 @@
     </table>
   </div>
 
-  <!-- 📈 Colonne droite — Graphique -->
+  <!-- 📈 Right column — Chart -->
   <div class="right-panel">
     <div class="card">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -649,10 +649,10 @@
             <path d="M3 3v18h18"/>
             <path d="M4 14.5 8 10l5 5 5-6"/>
           </svg>
-          Évolution des prix
+          Price evolution
         </h4>
         <div id="selectedProductsInfo" style="font-size: 0.85rem; color: #64748b; text-align: right;">
-          <div id="selectedCount">0 élément sélectionné</div>
+          <div id="selectedCount">0 element selected</div>
           <div id="baseMode" style="font-size: 0.75rem; color: #94a3b8;"></div>
         </div>
       </div>
@@ -662,15 +662,15 @@
             <path d="M3 3v18h18"/>
             <path d="M4 14.5 8 10l5 5 5-6"/>
           </svg>
-          <p>Cliquez sur les boutons 📈 dans l'arborescence<br>pour afficher les courbes de prix</p>
-          <p style="font-size: 0.8rem; margin-top: 1rem; color: #cbd5e1;">Maximum 3 courbes simultanées</p>
+          <p>Click on the 📈 buttons in the tree<br>to display price curves</p>
+          <p style="font-size: 0.8rem; margin-top: 1rem; color: #cbd5e1;">Maximum 3 simultaneous curves</p>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- MODAL Product -->
+<!-- PRODUCT MODAL -->
 <div id="productModal" class="modal-overlay hidden">
   <div class="modal-card">
     <form method="POST" id="productForm">
@@ -681,16 +681,16 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-package-plus" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path d="M12 17v-6m3 3h-6M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/>
         </svg>
-        Nouveau produit
+        New product
       </h5>
 
       <table style="width:100%; font-size:0.95rem; border-collapse: collapse;">
         <tr style="border-bottom: 1px solid #dbeafe;">
-          <td style="width:30%; padding:0.75rem;"><label for="{{ form.name.id_for_label }}">Nom</label></td>
+          <td style="width:30%; padding:0.75rem;"><label for="{{ form.name.id_for_label }}">Name</label></td>
           <td style="padding:0.75rem;">{{ form.name }}</td>
         </tr>
         <tr style="border-bottom: 1px solid #dbeafe;">
-          <td style="width:30%; padding:0.75rem;"><label for="{{ form.reference_date.id_for_label }}">Date de référence</label></td>
+          <td style="width:30%; padding:0.75rem;"><label for="{{ form.reference_date.id_for_label }}">Reference date</label></td>
           <td style="padding:0.75rem;">{{ form.reference_date }}</td>
         </tr>
       </table>
@@ -701,21 +701,21 @@
             <circle cx="12" cy="12" r="10"/>
             <path d="M15 9l-6 6M9 9l6 6"/>
           </svg>
-          Annuler
+          Cancel
         </button>
 
         <button type="submit" class="btn btn-primary" style="display:flex; align-items:center; gap:6px;">
           <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-package-plus" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
             <path d="M12 17v-6m3 3h-6M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/>
           </svg>
-          Appliquer
+          Apply
         </button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- MODAL Part ENHANCED avec gestion des tranches -->
+<!-- PART MODAL ENHANCED with slice management -->
 <div id="partModal" class="modal-overlay hidden">
   <div class="modal-card" style="min-width: 700px; max-width: 800px;">
     <form method="POST" action="{% url 'main:prix_indexes' %}" id="partForm">
@@ -726,30 +726,30 @@
           <path d="M14 2v6h6"/>
           <path d="M12 18v-6m3 3h-6"/>
         </svg>
-        Nouvelle pièce
+        New part
       </h5>
 
-      <!-- Champ caché pour savoir si on est en mode édition -->
+      <!-- Hidden field to know if we're in edit mode -->
       <input type="hidden" name="part_id" id="part-id-input" />
 
-      <!-- Informations de base de la pièce -->
+      <!-- Basic part information -->
       <div style="background-color: #f8fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-        <h6 style="font-weight: 600; margin-bottom: 1rem; color: #1e293b;">📋 Informations de base</h6>
+        <h6 style="font-weight: 600; margin-bottom: 1rem; color: #1e293b;">📋 Basic information</h6>
         <table class="form-table">
           <tr>
-            <th>Nom</th>
+            <th>Name</th>
             <td><input type="text" name="name" required /></td>
           </tr>
           <tr>
-            <th>Date de référence</th>
+            <th>Reference date</th>
             <td><input type="date" name="reference_date" required /></td>
           </tr>
           <tr>
-            <th>Prix de référence (€)</th>
+            <th>Reference price (€)</th>
             <td><input type="number" name="reference_price" step="0.01" min="0" placeholder="0.00" required /></td>
           </tr>
           <tr>
-            <th>Produit associé</th>
+            <th>Associated product</th>
             <td>
               <select name="product_id" required>
                 {% for product in produits %}
@@ -761,7 +761,7 @@
         </table>
       </div>
 
-      <!-- Section Tranches -->
+      <!-- Slices Section -->
       <div style="background-color: #f1f5f9; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
           <h6 style="font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 8px;">
@@ -769,9 +769,9 @@
               <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
               <path d="M22 12A10 10 0 0 0 12 2v10z"/>
             </svg>
-            Répartition en tranches
+            Slice distribution
           </h6>
-          <button type="button" id="addSliceBtn" class="icon-button" title="Ajouter une tranche" style="background: #2563eb; border-radius: 6px; padding: 6px;">
+          <button type="button" id="addSliceBtn" class="icon-button" title="Add a slice" style="background: #2563eb; border-radius: 6px; padding: 6px;">
             <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-plus" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
               <path d="M12 5v14m7-7H5"/>
             </svg>
@@ -782,30 +782,30 @@
           <table id="slicesTable" style="width: 100%; border-collapse: collapse; background: white; border-radius: 6px; overflow: hidden;">
             <thead style="background-color: #f8fafc;">
               <tr>
-                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Nom de la tranche</th>
+                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Slice name</th>
                 <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Type</th>
                 <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Index</th>
-                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">% du prix</th>
+                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">% of price</th>
                 <th style="padding: 0.75rem; text-align: center; font-weight: 600; border-bottom: 1px solid #e2e8f0; width: 60px;">Actions</th>
               </tr>
             </thead>
             <tbody id="slicesTableBody">
-              <!-- Les tranches seront ajoutées ici dynamiquement -->
+              <!-- Slices will be added here dynamically -->
             </tbody>
           </table>
           
           <div id="noSlicesMessage" style="text-align: center; padding: 2rem; color: #64748b; font-style: italic;">
-            Aucune tranche définie. Cliquez sur le bouton + pour ajouter une tranche.
+            No slices defined. Click the + button to add a slice.
           </div>
         </div>
 
         <div style="margin-top: 1rem; padding: 0.75rem; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-weight: 500;">Total des pourcentages :</span>
+            <span style="font-weight: 500;">Total percentages:</span>
             <span id="totalPercentage" style="font-weight: 600; color: #dc2626;">0%</span>
           </div>
           <div id="percentageWarning" class="hidden" style="margin-top: 0.5rem; color: #dc2626; font-size: 0.9rem;">
-            ⚠️ La somme doit être égale à 100%
+            ⚠️ The sum must equal 100%
           </div>
         </div>
       </div>
@@ -816,7 +816,7 @@
             <circle cx="12" cy="12" r="10"/>
             <path d="M15 9l-6 6M9 9l6 6"/>
           </svg>
-          Annuler
+          Cancel
         </button>
         <button type="submit" id="submitPartBtn" class="btn btn-primary">
           <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-plus" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
@@ -824,7 +824,7 @@
             <path d="M14 2v6h6"/>
             <path d="M12 18v-6m3 3h-6"/>
           </svg>
-          Appliquer
+          Apply
         </button>
       </div>
     </form>
@@ -833,7 +833,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
 <script>
-// Variables globales
+// Global variables
 let sliceCounter = 0;
 const favoriteIndexes = {{ favorite_indexes_json|safe }};
 const structureGraphs = {{ structure_graphs_json|safe }};
@@ -842,7 +842,7 @@ const structuresMeta = {{ structures_meta_json|safe }};
 let activeItems = new Map();
 const maxCurves = 3;
 
-// Script pour l'arbre (toggle) avec fermeture en cascade
+// Script for tree (toggle) with cascading closure
 document.addEventListener("DOMContentLoaded", function () {
   document.querySelectorAll("tr[data-toggle]").forEach(row => {
     row.addEventListener("click", function (e) {
@@ -852,15 +852,15 @@ document.addEventListener("DOMContentLoaded", function () {
       const icon = this.querySelector(".toggle-icon");
       const childRows = document.querySelectorAll(`tr[data-parent='${id}']`);
       
-      // Toggle des enfants directs
+      // Toggle direct children
       const isExpanded = this.classList.contains('expanded');
       
       if (isExpanded) {
-        // Fermeture : replier aussi tous les sous-éléments
+        // Closing: also collapse all sub-elements
         this.classList.remove('expanded');
         childRows.forEach(child => {
           child.classList.add("hidden");
-          // Si l'enfant était aussi déplié, le replier
+          // If child was also expanded, collapse it
           if (child.classList.contains('expanded')) {
             child.classList.remove('expanded');
             const childId = child.getAttribute("data-toggle");
@@ -872,7 +872,7 @@ document.addEventListener("DOMContentLoaded", function () {
           }
         });
       } else {
-        // Ouverture : déplier seulement les enfants directs
+        // Opening: expand only direct children
         this.classList.add('expanded');
         childRows.forEach(child => {
           child.classList.remove("hidden");
@@ -882,9 +882,9 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-// Script principal
+// Main script
 document.addEventListener("DOMContentLoaded", () => {
-  // === MODAL PRODUCT ===
+  // === PRODUCT MODAL ===
   const productModal = document.getElementById("productModal");
   const openProductBtn = document.getElementById("openProductModal");
   const closeProductBtn = document.getElementById("closeProductModal");
@@ -895,7 +895,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-package-plus" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path d="M12 17v-6m3 3h-6M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/>
         </svg>
-        Nouveau produit`;
+        New product`;
       productModal.querySelector("input[name='name']").value = '';
       productModal.querySelector("input[name='structure_id']").value = '';
       productModal.classList.remove("hidden");
@@ -908,7 +908,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Modifier un produit
+  // Edit a product
   document.querySelectorAll(".edit-product").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
@@ -919,17 +919,17 @@ document.addEventListener("DOMContentLoaded", () => {
           <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path d="M15 5 19 9M5 19l4-1 9-9"/>
           </svg>
-          Modifier le produit`;
+          Edit product`;
         productModal.classList.remove("hidden");
       }
     });
   });
 
-  // Supprimer un produit
+  // Delete a product
   document.querySelectorAll(".delete-product").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
-      if (!confirm("Supprimer ce produit et toutes ses pièces ?")) return;
+      if (!confirm("Delete this product and all its parts?")) return;
       fetch("{% url 'main:prix_indexes' %}", {
         method: "POST",
         headers: { 
@@ -943,13 +943,13 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .then(res => {
         if (res.ok) location.reload();
-        else alert("Erreur lors de la suppression");
+        else alert("Error deleting");
       })
-      .catch(() => alert("Erreur lors de la suppression"));
+      .catch(() => alert("Error deleting"));
     });
   });
 
-  // === GESTION DES GRAPHIQUES ===
+  // === CHART MANAGEMENT ===
   document.querySelectorAll(".view-graph-btn").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
@@ -976,7 +976,7 @@ document.addEventListener("DOMContentLoaded", () => {
       activeItems.delete(itemId);
     } else {
       if (activeItems.size >= maxCurves) {
-        alert(`Maximum ${maxCurves} courbes simultanées autorisées`);
+        alert(`Maximum ${maxCurves} simultaneous curves allowed`);
         return;
       }
       
@@ -998,7 +998,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const baseModeEl = document.getElementById('baseMode');
     
     const count = activeItems.size;
-    selectedCountEl.textContent = `${count} élément${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}`;
+    selectedCountEl.textContent = `${count} element${count > 1 ? 's' : ''} selected`;
     
     if (count === 0) {
       chartContainer.style.transition = 'opacity 0.3s ease';
@@ -1020,8 +1020,8 @@ document.addEventListener("DOMContentLoaded", () => {
               <path d="M3 3v18h18"/>
               <path d="M4 14.5 8 10l5 5 5-6"/>
             </svg>
-            <p>Cliquez sur les boutons 📈 dans l'arborescence<br>pour afficher les courbes de prix</p>
-            <p style="font-size: 0.8rem; margin-top: 1rem; color: #cbd5e1;">Maximum 3 courbes simultanées</p>
+            <p>Click on the 📈 buttons in the tree<br>to display price curves</p>
+            <p style="font-size: 0.8rem; margin-top: 1rem; color: #cbd5e1;">Maximum 3 simultaneous curves</p>
           `;
         }
         
@@ -1043,7 +1043,7 @@ document.addEventListener("DOMContentLoaded", () => {
     chartContainer.style.removeProperty('background');
     
     const useBase100 = count > 1;
-    baseModeEl.textContent = useBase100 ? 'Mode Base 100' : '';
+    baseModeEl.textContent = useBase100 ? 'Base 100 Mode' : '';
     
     const traces = [];
     const colors = ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
@@ -1118,7 +1118,7 @@ document.addEventListener("DOMContentLoaded", () => {
         gridcolor: 'rgba(14, 165, 233, 0.1)',
         tickfont: { color: '#64748b', size: 11 },
         title: { 
-          text: useBase100 ? 'Base 100' : 'Prix (€)', 
+          text: useBase100 ? 'Base 100' : 'Price (€)', 
           font: { color: '#64748b', size: 12 } 
         }
       },
@@ -1170,7 +1170,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 300);
   }
 
-  // === MODAL PART ===
+  // === PART MODAL ===
   const partModal = document.getElementById("partModal");
   const openPartBtn = document.getElementById("openPartModal");
   const closePartBtn = document.getElementById("closePartModal");
@@ -1199,7 +1199,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".delete-part-button").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
-      if (!confirm("Supprimer cette pièce ?")) return;
+      if (!confirm("Delete this part?")) return;
       fetch("{% url 'main:prix_indexes' %}", {
         method: "POST",
         headers: { 
@@ -1213,9 +1213,9 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .then(res => {
         if (res.ok) location.reload();
-        else alert("Erreur lors de la suppression");
+        else alert("Error deleting");
       })
-      .catch(() => alert("Erreur lors de la suppression"));
+      .catch(() => alert("Error deleting"));
     });
   });
 
@@ -1237,10 +1237,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (data.status === 'success') {
         location.reload();
       } else {
-        alert(data.message || 'Erreur lors de la sauvegarde');
+        alert(data.message || 'Error saving');
       }
     })
-    .catch(() => alert("Erreur lors de la sauvegarde"));
+    .catch(() => alert("Error saving"));
   });
 
   function resetPartModal() {
@@ -1250,7 +1250,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <path d="M14 2v6h6"/>
         <path d="M12 18v-6m3 3h-6"/>
       </svg>
-      Nouvelle pièce`;
+      New part`;
     partModal.querySelector("input[name='name']").value = '';
     partModal.querySelector("input[name='reference_date']").value = '';
     partModal.querySelector("input[name='reference_price']").value = '';
@@ -1286,7 +1286,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path d="M15 5 19 9M5 19l4-1 9-9"/>
           </svg>
-          Modifier la pièce`;
+          Edit part`;
         
         document.getElementById('slicesTableBody').innerHTML = '';
         sliceCounter = 0;
@@ -1304,7 +1304,7 @@ document.addEventListener("DOMContentLoaded", () => {
         updateTotalPercentage();
       }
     })
-    .catch(() => alert("Erreur lors du chargement des données"));
+    .catch(() => alert("Error loading data"));
   }
 
   function addSliceRow(sliceData = null) {
@@ -1323,18 +1323,18 @@ document.addEventListener("DOMContentLoaded", () => {
     
     row.innerHTML = `
       <td>
-        <input type="text" name="slice_label_${sliceCounter}" placeholder="Ex: Énergie, Transport..." value="${sliceData?.label || ''}" required>
+        <input type="text" name="slice_label_${sliceCounter}" placeholder="Ex: Energy, Transport..." value="${sliceData?.label || ''}" required>
       </td>
       <td>
         <select name="slice_type_${sliceCounter}" onchange="toggleIndexSelect(this, ${sliceCounter})" required>
-          <option value="">-- Choisir --</option>
-          <option value="fixed" ${sliceData?.component_type === 'fixed' ? 'selected' : ''}>Fixe</option>
-          <option value="indexed" ${sliceData?.component_type === 'indexed' ? 'selected' : ''}>Indexé</option>
+          <option value="">-- Choose --</option>
+          <option value="fixed" ${sliceData?.component_type === 'fixed' ? 'selected' : ''}>Fixed</option>
+          <option value="indexed" ${sliceData?.component_type === 'indexed' ? 'selected' : ''}>Indexed</option>
         </select>
       </td>
       <td>
         <select name="slice_index_${sliceCounter}" ${sliceData?.component_type !== 'indexed' ? 'disabled' : ''}>
-          <option value="">-- Sélectionner un index --</option>
+          <option value="">-- Select an index --</option>
           ${indexOptions}
         </select>
       </td>
@@ -1342,7 +1342,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <input type="number" name="slice_percentage_${sliceCounter}" step="0.01" min="0" max="100" placeholder="0.00" value="${sliceData?.percentage || ''}" onchange="updateTotalPercentage()" required>
       </td>
       <td style="text-align: center;">
-        <button type="button" class="delete-slice-btn" onclick="removeSliceRow(this)" title="Supprimer la tranche">
+        <button type="button" class="delete-slice-btn" onclick="removeSliceRow(this)" title="Delete slice">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <rect x="3" y="4" width="18" height="5" rx="1"/>
             <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
@@ -1408,7 +1408,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Fermer les modals en cliquant sur l'overlay
+  // Close modals by clicking on overlay
   document.querySelectorAll('.modal-overlay').forEach(modal => {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
