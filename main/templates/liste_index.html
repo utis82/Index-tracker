@@ -1,26 +1,28 @@
 {% extends "base.html" %}
-{% block title %}Liste des Index{% endblock %}
+{% block title %}Index List{% endblock %}
 
 {% block content %}
 <div class="page-container">
-  <h1 class="section-title"><span class="emoji">📄</span> Tous les index</h1>
+  <h1 class="section-title"><span class="emoji">📄</span> All Indexes</h1>
 
-  <div class="card shadow-lg" style="border-radius: 16px; padding: 24px; background: white; margin-bottom: 2rem;">
+  <div class="card shadow-lg" style="border-radius: 16px; padding: 24px; margin-bottom: 2rem;">
     <div class="table-responsive" style="overflow-x: auto;">
       <table class="index-table" style="width: 100%; border-collapse: collapse;">
         <thead>
-          <tr style="text-align: left; font-weight: 600; background-color: rgba(240, 248, 255, 0.6);">
+          <tr style="text-align: left; font-weight: 600;">
             <th style="padding: 12px;">Index</th>
-            <th style="padding: 12px;">Prix actuel</th>
-            <th style="padding: 12px;">Unité</th>
-            <th style="padding: 12px;">Mini graphique</th>
-            <th style="padding: 12px;">Mise à jour</th>
+            <th style="padding: 12px;">Current Price</th>
+            <th style="padding: 12px;">Unit</th>
+            <th style="padding: 12px;">Mini Chart</th>
+            <th style="padding: 12px;">Last Update</th>
           </tr>
         </thead>
         <tbody>
           {% for entry in indexes %}
             {% with index=entry.index latest=entry.latest %}
-            <tr class="index-row" data-url="{% url 'main:index_viewer' index.id %}">
+            <tr class="index-row transition-colors duration-200" 
+                data-url="{% url 'main:index_viewer' index.id %}"
+                style="border-bottom: 1px solid rgba(229, 231, 235, 0.5);">
               <td style="padding: 12px; display: flex; align-items: center; gap: 8px;">
                 <form method="post"
                       action="{% url 'main:toggle_favorite' index.id %}"
@@ -28,28 +30,30 @@
                       onsubmit="event.preventDefault(); toggleFavorite(event, {{ index.id }});">
                   {% csrf_token %}
                   <button type="submit"
-                          class="favorite-btn no-redirect"
+                          class="favorite-btn no-redirect text-yellow-500 hover:text-yellow-400 transition-colors duration-200"
                           data-index-id="{{ index.id }}"
-                          title="Favori"
-                          style="background: none; border: none; cursor: pointer;">
+                          title="Favorite"
+                          style="background: none; border: none; cursor: pointer; font-size: 16px;">
                     {% if index in favorites %}★{% else %}☆{% endif %}
                   </button>
                 </form>
-                <span style="font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                
+                {% if index.category == "Raw material" %}
+                  <i data-lucide="tree-deciduous" class="lucide-icon text-green-600" title="Raw Material" style="width: 16px; height: 16px;"></i>
+                {% elif index.category == "Inflation" %}
+                  <i data-lucide="trending-up" class="lucide-icon text-red-600" title="Inflation" style="width: 16px; height: 16px;"></i>
+                {% elif index.category == "Labour Cost" %}
+                  <i data-lucide="user" class="lucide-icon text-blue-600" title="Labor Cost" style="width: 16px; height: 16px;"></i>
+                {% elif index.category == "Energy" %}
+                  <i data-lucide="zap" class="lucide-icon text-yellow-600" title="Energy" style="width: 16px; height: 16px;"></i>
+                {% elif index.category == "Logistic" %}
+                  <i data-lucide="truck" class="lucide-icon text-purple-600" title="Logistics" style="width: 16px; height: 16px;"></i>
+                {% else %}
+                  <i data-lucide="circle" class="lucide-icon text-gray-600" title="{{ index.category }}" style="width: 16px; height: 16px;"></i>
+                {% endif %}
+                
+                <span style="font-weight: 600;">
                   {{ index.name }}
-                  {% if index.category == "Raw material" %}
-                    <i data-lucide="tree-deciduous" class="lucide-icon" title="Matière première"></i>
-                  {% elif index.category == "Inflation" %}
-                    <i data-lucide="trending-up" class="lucide-icon" title="Inflation"></i>
-                  {% elif index.category == "Labour Cost" %}
-                    <i data-lucide="user" class="lucide-icon" title="Coût du travail"></i>
-                  {% elif index.category == "Energy" %}
-                    <i data-lucide="zap" class="lucide-icon" title="Énergie"></i>
-                  {% elif index.category == "Logistic" %}
-                    <i data-lucide="truck" class="lucide-icon" title="Logistique"></i>
-                  {% else %}
-                    <i data-lucide="circle" class="lucide-icon" title="{{ index.category }}"></i>
-                  {% endif %}
                 </span>
               </td>
               <td style="padding: 12px;">{{ latest.value }}</td>
@@ -57,27 +61,46 @@
               <td style="padding: 12px; width: 120px;">
                 <div id="mini-chart-{{ forloop.counter }}" style="height: 40px;"></div>
                 <script>
-                  Plotly.newPlot(
-                    'mini-chart-{{ forloop.counter }}',
-                    [{
-                      x: {{ latest.dates|safe }},
-                      y: {{ latest.values|safe }},
-                      mode: 'lines',
-                      line: { color: '#60a5fa', width: 2 },
-                      hoverinfo: 'skip',
-                      fill: 'tozeroy',
-                      fillcolor: 'rgba(96, 165, 250, 0.2)',
-                      type: 'scatter'
-                    }],
-                    {
-                      margin: { l: 0, r: 0, t: 0, b: 0 },
-                      xaxis: { visible: false },
-                      yaxis: { visible: false },
-                      paper_bgcolor: 'rgba(0,0,0,0)',
-                      plot_bgcolor: 'rgba(0,0,0,0)'
-                    },
-                    { staticPlot: true, displayModeBar: false }
-                  );
+                  // Wait for DOM to be ready and Plotly to load
+                  document.addEventListener('DOMContentLoaded', function() {
+                    // Small delay to ensure Plotly is fully loaded
+                    setTimeout(function() {
+                      // Detect dark mode using the body class
+                      const isDarkMode = document.body.classList.contains('dark-mode');
+                      
+                      const chartDiv = document.getElementById('mini-chart-{{ forloop.counter }}');
+                      if (chartDiv && typeof Plotly !== 'undefined') {
+                        Plotly.newPlot(
+                          'mini-chart-{{ forloop.counter }}',
+                          [{
+                            x: {{ latest.dates|safe }},
+                            y: {{ latest.values|safe }},
+                            mode: 'lines',
+                            line: { 
+                              color: isDarkMode ? '#60a5fa' : '#3b82f6', 
+                              width: 2 
+                            },
+                            hoverinfo: 'skip',
+                            fill: 'tozeroy',
+                            fillcolor: isDarkMode ? 'rgba(96, 165, 250, 0.25)' : 'rgba(59, 130, 246, 0.2)',
+                            type: 'scatter'
+                          }],
+                          {
+                            margin: { l: 0, r: 0, t: 0, b: 0 },
+                            xaxis: { visible: false },
+                            yaxis: { visible: false },
+                            paper_bgcolor: 'rgba(0,0,0,0)',
+                            plot_bgcolor: 'rgba(0,0,0,0)'
+                          },
+                          { 
+                            staticPlot: true, 
+                            displayModeBar: false,
+                            responsive: true
+                          }
+                        );
+                      }
+                    }, 100);
+                  });
                 </script>
               </td>
               <td style="padding: 12px;">{{ latest.date }}</td>
@@ -89,6 +112,116 @@
     </div>
   </div>
 </div>
+
+<!-- Custom styles for dark mode -->
+<style>
+  /* Base card styling */
+  .card {
+    background: white;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .card:hover {
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
+  }
+  
+  /* Table header styling */
+  .index-table thead tr {
+    background-color: rgba(240, 248, 255, 0.6);
+  }
+  
+  .index-table th {
+    color: #1e293b;
+    font-weight: 600;
+  }
+  
+  .index-table td {
+    color: #374151;
+  }
+  
+  /* Dark mode overrides */
+  body.dark-mode .card {
+    background: rgb(17, 24, 39) !important;
+    border: 1px solid rgba(75, 85, 99, 0.5) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+  }
+  
+  body.dark-mode .index-table thead tr {
+    background-color: rgba(15, 23, 42, 0.8) !important;
+  }
+  
+  body.dark-mode .index-table th {
+    background-color: rgba(15, 23, 42, 0.8) !important;
+    color: rgb(243, 244, 246) !important;
+  }
+  
+  body.dark-mode .index-table td {
+    color: rgb(229, 231, 235) !important;
+  }
+  
+  body.dark-mode .index-table tr {
+    border-bottom: 1px solid rgba(75, 85, 99, 0.5) !important;
+  }
+  
+  body.dark-mode .section-title {
+    background: linear-gradient(90deg, rgba(30, 41, 59, 0.9), rgba(51, 65, 85, 0.9)) !important;
+    color: rgb(243, 244, 246) !important;
+    border: 1px solid rgba(75, 85, 99, 0.5) !important;
+  }
+  
+  /* Row hover effects */
+  .index-row {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .index-row:hover {
+    background-color: rgba(249, 250, 251, 0.8) !important;
+  }
+  
+  body.dark-mode .index-row:hover {
+    background-color: rgba(55, 65, 81, 0.5) !important;
+  }
+  
+  /* Icon colors in dark mode */
+  body.dark-mode .lucide-icon.text-green-600 {
+    color: #10b981 !important;
+  }
+  
+  body.dark-mode .lucide-icon.text-red-600 {
+    color: #f87171 !important;
+  }
+  
+  body.dark-mode .lucide-icon.text-blue-600 {
+    color: #60a5fa !important;
+  }
+  
+  body.dark-mode .lucide-icon.text-yellow-600 {
+    color: #fbbf24 !important;
+  }
+  
+  body.dark-mode .lucide-icon.text-purple-600 {
+    color: #c084fc !important;
+  }
+  
+  body.dark-mode .lucide-icon.text-gray-600 {
+    color: #9ca3af !important;
+  }
+  
+  /* Button styling */
+  .favorite-btn {
+    transition: all 0.2s ease;
+  }
+  
+  .favorite-btn:hover {
+    transform: scale(1.1);
+  }
+  
+  .lucide-icon {
+    flex-shrink: 0;
+  }
+</style>
 
 <!-- JS global -->
 <script>
@@ -118,9 +251,43 @@
       button.textContent = data.is_favorite ? "★" : "☆";
     })
     .catch(error => {
-      console.error('Erreur:', error);
+      console.error('Error:', error);
     });
   }
+  
+  // Update charts when dark mode changes
+  function updateChartsForTheme() {
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    
+    // Re-render all charts with new theme
+    document.querySelectorAll('[id^="mini-chart-"]').forEach(chartDiv => {
+      if (typeof Plotly !== 'undefined' && chartDiv._fullLayout) {
+        const update = {
+          'line.color': isDarkMode ? '#60a5fa' : '#3b82f6',
+          'fillcolor': isDarkMode ? 'rgba(96, 165, 250, 0.25)' : 'rgba(59, 130, 246, 0.2)'
+        };
+        try {
+          Plotly.restyle(chartDiv, update, 0);
+        } catch (e) {
+          console.log('Chart update skipped:', e);
+        }
+      }
+    });
+  }
+  
+  // Listen for theme changes on body class
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.attributeName === 'class' && mutation.target === document.body) {
+        updateChartsForTheme();
+      }
+    });
+  });
+  
+  observer.observe(document.body, {
+    attributes: true,
+    attributeFilter: ['class']
+  });
 </script>
 
 <!-- Plotly -->
