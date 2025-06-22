@@ -4,6 +4,34 @@
 
 {% block content %}
 <style>
+    /* 🌙 Dark mode CSS variables - Compatible avec le système existant */
+    :root {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8fafc;
+        --bg-tertiary: #f1f5f9;
+        --border-primary: #e2e8f0;
+        --border-secondary: #cbd5e1;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-tertiary: #94a3b8;
+        --shadow-light: rgba(0, 0, 0, 0.1);
+        --shadow-medium: rgba(0, 0, 0, 0.15);
+    }
+
+    /* 🌙 Dark mode variables quand body.dark-mode est actif */
+    body.dark-mode {
+        --bg-primary: #1e293b;
+        --bg-secondary: #334155;
+        --bg-tertiary: #475569;
+        --border-primary: #475569;
+        --border-secondary: #64748b;
+        --text-primary: #f1f5f9;
+        --text-secondary: #cbd5e1;
+        --text-tertiary: #94a3b8;
+        --shadow-light: rgba(0, 0, 0, 0.3);
+        --shadow-medium: rgba(0, 0, 0, 0.4);
+    }
+
     .analysis-container {
         max-width: 100vw;
         margin: 0;
@@ -12,12 +40,12 @@
     }
 
     .control-section {
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        border: 1px solid #e2e8f0;
+        background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        border: 1px solid var(--border-primary);
         border-radius: 12px;
         padding: 16px;
         margin-bottom: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 6px -1px var(--shadow-light);
     }
 
     .selection-row {
@@ -42,14 +70,14 @@
 
     .custom-dropdown {
         position: relative;
-        border: 2px solid #e2e8f0;
+        border: 2px solid var(--border-primary);
         border-radius: 12px;
-        background: white;
+        background: var(--bg-primary);
         transition: all 0.2s ease;
     }
 
     .custom-dropdown:hover {
-        border-color: #cbd5e1;
+        border-color: var(--border-secondary);
     }
 
     .dropdown-button {
@@ -63,12 +91,12 @@
         justify-content: space-between;
         align-items: center;
         font-size: 0.95em;
-        color: #64748b;
+        color: var(--text-secondary);
         font-weight: 500;
     }
 
     .dropdown-button:hover {
-        color: #1e293b;
+        color: var(--text-primary);
     }
 
     .dropdown-content {
@@ -76,15 +104,15 @@
         top: 100%;
         left: 0;
         right: 0;
-        background: white;
-        border: 2px solid #e2e8f0;
+        background: var(--bg-primary);
+        border: 2px solid var(--border-primary);
         border-top: none;
         border-radius: 0 0 12px 12px;
         max-height: 300px;
         overflow-y: auto;
         z-index: 1000;
         display: none;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 10px 15px -3px var(--shadow-medium);
     }
 
     .dropdown-content.open {
@@ -92,12 +120,12 @@
     }
 
     .dropdown-category {
-        background: #f8fafc;
+        background: var(--bg-secondary);
         padding: 10px 16px;
         font-weight: 600;
-        color: #475569;
+        color: var(--text-secondary);
         font-size: 0.85em;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid var(--border-primary);
         display: flex;
         align-items: center;
         gap: 8px;
@@ -108,22 +136,22 @@
         align-items: center;
         padding: 12px 16px;
         cursor: pointer;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid var(--border-primary);
         transition: background 0.15s ease;
     }
 
     .dropdown-item:hover {
-        background: #f8fafc;
+        background: var(--bg-secondary);
     }
 
     .dropdown-item.selected {
-        background: #eff6ff;
+        background: var(--bg-tertiary);
     }
 
     .dropdown-item.disabled {
         opacity: 0.5;
         cursor: not-allowed;
-        background: #f8fafc;
+        background: var(--bg-secondary);
     }
 
     .dropdown-item input[type="checkbox"] {
@@ -135,13 +163,13 @@
 
     .item-name {
         font-weight: 500;
-        color: #1e293b;
+        color: var(--text-primary);
         flex: 1;
     }
 
     .item-type {
         font-size: 0.8em;
-        color: #64748b;
+        color: var(--text-secondary);
         margin-left: 8px;
     }
 
@@ -245,24 +273,24 @@
     }
 
     .period-group {
-        background: #f8fafc;
-        border: 2px solid #e2e8f0;
+        background: var(--bg-secondary);
+        border: 2px solid var(--border-primary);
         border-radius: 12px;
         padding: 10px;
         transition: all 0.2s ease;
         width: 92%;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 4px var(--shadow-light);
     }
 
     .period-group:hover {
-        border-color: #cbd5e1;
-        background: #f1f5f9;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-color: var(--border-secondary);
+        background: var(--bg-tertiary);
+        box-shadow: 0 4px 8px var(--shadow-medium);
     }
 
     .period-title {
         font-weight: 600;
-        color: #1e293b;
+        color: var(--text-primary);
         margin-bottom: 12px;
         display: flex;
         align-items: center;
@@ -297,7 +325,7 @@
 
     .input-group label {
         font-size: 0.8em;
-        color: #64748b;
+        color: var(--text-secondary);
         margin-bottom: 6px;
         display: block;
         font-weight: 500;
@@ -306,11 +334,12 @@
     .input-group input {
         width: 80%;
         padding: 8px 10px;
-        border: 2px solid #e2e8f0;
+        border: 2px solid var(--border-primary);
         border-radius: 8px;
         font-size: 0.85em;
         transition: all 0.2s ease;
-        background: white;
+        background: var(--bg-primary);
+        color: var(--text-primary);
     }
 
     .input-group input:focus {
@@ -328,11 +357,11 @@
     }
 
     .chart-container {
-        background: white;
-        border: 1px solid #e2e8f0;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
         border-radius: 16px;
         padding: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 6px -1px var(--shadow-light);
         min-height: 500px;
         display: flex;
         flex-direction: column;
@@ -342,7 +371,7 @@
     .chart-title {
         font-size: 1.1em;
         font-weight: 600;
-        color: #1e293b;
+        color: var(--text-primary);
         margin-bottom: 16px;
         display: flex;
         align-items: center;
@@ -372,11 +401,11 @@
     }
 
     .metric-card {
-        background: white;
-        border: 1px solid #e2e8f0;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
         border-radius: 12px;
         padding: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 6px -1px var(--shadow-light);
         height: calc((100% - 16px) / 3); /* (Total height - 2 gaps) / 3 */
         display: flex;
         flex-direction: column;
@@ -393,20 +422,20 @@
 
     /* Empty card for unselected inputs */
     .metric-card.empty {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border: 2px dashed #cbd5e1;
+        background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+        border: 2px dashed var(--border-secondary);
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #64748b;
+        color: var(--text-secondary);
         transition: all 0.3s ease;
     }
 
     .metric-card.empty:hover {
-        border-color: #94a3b8;
-        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        border-color: var(--text-tertiary);
+        background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--border-primary) 100%);
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 8px 25px -5px var(--shadow-medium);
     }
 
     .empty-card-content {
@@ -418,21 +447,21 @@
         width: 32px;
         height: 32px;
         margin: 0 auto 12px;
-        color: #94a3b8;
+        color: var(--text-tertiary);
         opacity: 0.7;
     }
 
     .empty-card-title {
         font-size: 1.1em;
         font-weight: 700;
-        color: #374151;
+        color: var(--text-primary);
         margin-bottom: 8px;
         letter-spacing: -0.025em;
     }
 
     .empty-card-subtitle {
         font-size: 0.85em;
-        color: #6b7280;
+        color: var(--text-secondary);
         line-height: 1.5;
         font-weight: 400;
     }
@@ -446,11 +475,11 @@
 
     .metric-header {
         font-weight: 600;
-        color: #1e293b;
+        color: var(--text-primary);
         margin-bottom: 2px;
         font-size: 0.8em;
         padding-bottom: 2px;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid var(--border-primary);
         flex-shrink: 0;
         line-height: 1;
         overflow: hidden;
@@ -468,7 +497,7 @@
     }
 
     .metric-box {
-        background: #f8fafc;
+        background: var(--bg-secondary);
         padding: 6px;
         border-radius: 6px;
         text-align: center;
@@ -480,7 +509,7 @@
 
     .metric-period {
         font-size: 0.6em;
-        color: #64748b;
+        color: var(--text-secondary);
         margin-bottom: 2px;
         display: flex;
         align-items: center;
@@ -492,14 +521,14 @@
     .metric-value {
         font-size: 0.9em;
         font-weight: 700;
-        color: #1e293b;
+        color: var(--text-primary);
         margin-bottom: 1px;
         line-height: 1.1;
     }
 
     .metric-label {
         font-size: 0.65em;
-        color: #94a3b8;
+        color: var(--text-tertiary);
         font-weight: 500;
     }
 
@@ -516,12 +545,23 @@
         min-height: 50px;
     }
 
+    /* 🌙 Dark mode variation section - utilise body.dark-mode */
+    body.dark-mode .variation-section {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        border: 2px solid #334155;
+    }
+
     .variation-title {
         font-size: 0.65em;
         color: #0369a1;
         margin-bottom: 3px;
         font-weight: 500;
         line-height: 1.1;
+    }
+
+    /* 🌙 Dark mode variation title - utilise body.dark-mode */
+    body.dark-mode .variation-title {
+        color: #38bdf8;
     }
 
     .variation-value {
@@ -534,11 +574,11 @@
     /* 🔴 CORRECTION: Color inversion for variations */
     .variation-positive { color: #dc2626; } /* Red for increases */
     .variation-negative { color: #059669; } /* Green for decreases */
-    .variation-neutral { color: #64748b; }
+    .variation-neutral { color: var(--text-secondary); }
 
     .variation-absolute {
         font-size: 0.7em;
-        color: #64748b;
+        color: var(--text-secondary);
         margin-bottom: 3px;
         font-weight: 500;
         line-height: 1.1;
@@ -546,7 +586,7 @@
 
     .variation-subtitle {
         font-size: 0.65em;
-        color: #64748b;
+        color: var(--text-secondary);
         font-weight: 500;
     }
 
@@ -570,21 +610,21 @@
         margin: 0 auto 24px;
         width: 48px;
         height: 48px;
-        color: #94a3b8;
+        color: var(--text-tertiary);
         opacity: 0.7;
     }
 
     .empty-title {
         font-size: 1.25rem;
         font-weight: 600;
-        color: #1e293b;
+        color: var(--text-primary);
         margin: 0 0 12px 0;
         line-height: 1.3;
     }
 
     .empty-subtitle {
         font-size: 0.95rem;
-        color: #64748b;
+        color: var(--text-secondary);
         margin: 0;
         line-height: 1.5;
     }
@@ -597,6 +637,42 @@
         to {
             stroke-dashoffset: 0;
         }
+    }
+
+    /* 🌙 Styles spécifiques dark mode pour compatibilité avec le système existant */
+    body.dark-mode .dropdown-item.selected {
+        background: #475569;
+    }
+
+    body.dark-mode .period-indicator.period-1 { 
+        background: #22c55e; 
+    }
+
+    body.dark-mode .period-indicator.period-2 { 
+        background: #38bdf8; 
+    }
+
+    body.dark-mode .base-100-indicator {
+        background: #1e40af;
+        color: #dbeafe;
+    }
+
+    body.dark-mode .analyze-button {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+        border-color: rgba(59, 130, 246, 0.4);
+        color: #60a5fa;
+    }
+
+    body.dark-mode .analyze-button:hover {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%);
+        border-color: rgba(59, 130, 246, 0.6);
+        color: #3b82f6;
+    }
+
+    body.dark-mode .analyze-button:disabled {
+        background: rgba(71, 85, 105, 0.3);
+        border-color: rgba(71, 85, 105, 0.5);
+        color: #64748b;
     }
 
     @media (max-width: 1200px) {
@@ -1067,7 +1143,68 @@
         });
 
         createChart();
+
+        // 🔄 NOUVEAU: Observer pour les changements de thème
+        const themeToggle = document.getElementById('theme-toggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('change', function() {
+                // Délai pour laisser le temps au DOM de se mettre à jour
+                setTimeout(() => {
+                    updateChartTheme();
+                }, 50);
+            });
+        }
+
+        // 🔄 Observer les changements de classe sur body (si le thème change par autre moyen)
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    updateChartTheme();
+                }
+            });
+        });
+
+        observer.observe(document.body, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
     });
+
+    // 🌙 Fonction pour obtenir les couleurs selon le thème actuel
+    function getThemeColors() {
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        return {
+            isDarkMode,
+            gridColor: isDarkMode ? 'rgba(71, 85, 105, 0.4)' : 'rgba(226, 232, 240, 0.3)',
+            zerolineColor: isDarkMode ? 'rgba(71, 85, 105, 0.8)' : 'rgba(226, 232, 240, 0.8)',
+            textColor: isDarkMode ? '#cbd5e1' : '#64748b',
+            titleColor: isDarkMode ? '#f1f5f9' : '#1e293b',
+            paperBg: isDarkMode ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)'
+        };
+    }
+
+    // 🔄 Fonction pour mettre à jour le thème du graphique
+    function updateChartTheme() {
+        const chartDiv = document.getElementById('chart');
+        if (!chartDiv || !chartDiv.data) return;
+
+        const colors = getThemeColors();
+
+        const update = {
+            'xaxis.tickfont.color': colors.textColor,
+            'xaxis.gridcolor': colors.gridColor,
+            'yaxis.tickfont.color': colors.textColor,
+            'yaxis.gridcolor': colors.gridColor,
+            'yaxis.zerolinecolor': colors.zerolineColor,
+            'yaxis.title.font.color': colors.textColor,
+            'font.color': colors.titleColor,
+            'legend.font.color': colors.titleColor,
+            'paper_bgcolor': colors.paperBg
+        };
+
+        Plotly.relayout('chart', update);
+        console.log('🎨 Chart theme updated:', colors.isDarkMode ? 'dark' : 'light');
+    }
 
     function createChart() {
         {% if series_data %}
@@ -1079,6 +1216,7 @@
                 }
 
                 const isMultipleElements = seriesData.length > 1;
+                const colors = getThemeColors();
 
                 // 🎨 Get unit of first element if single element
                 let yAxisTitle = 'Value';
@@ -1105,7 +1243,7 @@
                 }
 
                 const traces = seriesData.map((serie, index) => {
-                    const colors = ['#3b82f6', '#10b981', '#f59e0b'];
+                    const traceColors = ['#3b82f6', '#10b981', '#f59e0b'];
 
                     let values = serie.values || [];
                     let dates = serie.dates || [];
@@ -1128,13 +1266,13 @@
                         mode: 'lines+markers',
                         name: serie.name,
                         line: { 
-                            color: colors[index % colors.length], 
+                            color: traceColors[index % traceColors.length], 
                             width: 3,
                             shape: 'spline'
                         },
                         marker: { 
                             size: 6, 
-                            color: colors[index % colors.length]
+                            color: traceColors[index % traceColors.length]
                         },
                         hovertemplate: '<b>%{fullData.name}</b><br>%{x}<br>Value: %{y:.2f}<extra></extra>',
                         type: 'scatter'
@@ -1150,28 +1288,28 @@
                     margin: { l: 70, r: 30, t: 20, b: 50 },
                     hovermode: 'x unified',
                     plot_bgcolor: 'rgba(0,0,0,0)',
-                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    paper_bgcolor: colors.paperBg,
                     xaxis: { 
                         showgrid: true, 
-                        gridcolor: 'rgba(226, 232, 240, 0.3)',
+                        gridcolor: colors.gridColor,
                         zeroline: false,
                         tickformat: '%Y-%m-%d',
-                        tickfont: { color: '#64748b', size: 11 }
+                        tickfont: { color: colors.textColor, size: 11 }
                     },
                     yaxis: { 
                         showgrid: true, 
-                        gridcolor: 'rgba(226, 232, 240, 0.3)',
+                        gridcolor: colors.gridColor,
                         zeroline: true,
-                        zerolinecolor: 'rgba(226, 232, 240, 0.8)',
+                        zerolinecolor: colors.zerolineColor,
                         title: { 
                             text: yAxisTitle, 
-                            font: { color: '#64748b', size: 12 } 
+                            font: { color: colors.textColor, size: 12 } 
                         },
-                        tickfont: { color: '#64748b', size: 11 }
+                        tickfont: { color: colors.textColor, size: 11 }
                     },
                     font: { 
                         family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                        color: '#1e293b' 
+                        color: colors.titleColor
                     },
                     legend: {
                         x: 0,
@@ -1179,7 +1317,10 @@
                         orientation: 'h',
                         bgcolor: 'rgba(0,0,0,0)',
                         bordercolor: 'rgba(0,0,0,0)',
-                        font: { size: 11 },
+                        font: { 
+                            size: 11,
+                            color: colors.titleColor
+                        },
                         showlegend: true
                     },
                     shapes: [
