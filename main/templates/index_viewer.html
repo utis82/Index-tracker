@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Analyse d'Index{% endblock %}
+{% block title %}Index Analysis{% endblock %}
 
 {% block content %}
 <style>
@@ -145,7 +145,7 @@
         margin-left: 8px;
     }
 
-    /* ✨ Bouton Analyser glacé */
+    /* ✨ Analyze button - frosted glass effect */
     .analyze-button {
         background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
         backdrop-filter: blur(12px);
@@ -336,7 +336,7 @@
         min-height: 500px;
         display: flex;
         flex-direction: column;
-        height: 490px; /* Hauteur fixe pour alignement */
+        height: 490px; /* Fixed height for alignment */
     }
 
     .chart-title {
@@ -363,12 +363,12 @@
         min-height: 480px;
     }
 
-    /* 🎯 NOUVELLE STRUCTURE - 3 cards fixes alignées avec le graphique */
+    /* 🎯 NEW STRUCTURE - 3 fixed cards aligned with the chart */
     .metrics-panel {
         display: flex;
         flex-direction: column;
-        height: 540px; /* Même hauteur que chart-container */
-        gap: 8px; /* Espacement constant entre les cards */
+        height: 540px; /* Same height as chart-container */
+        gap: 8px; /* Constant spacing between cards */
     }
 
     .metric-card {
@@ -377,7 +377,7 @@
         border-radius: 12px;
         padding: 16px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        height: calc((100% - 16px) / 3); /* (Hauteur totale - 2 gaps) / 3 */
+        height: calc((100% - 16px) / 3); /* (Total height - 2 gaps) / 3 */
         display: flex;
         flex-direction: column;
         opacity: 0;
@@ -391,7 +391,7 @@
     .metric-card:nth-child(2) { animation-delay: 0.2s; }
     .metric-card:nth-child(3) { animation-delay: 0.3s; }
 
-    /* Card vide pour les inputs non sélectionnés */
+    /* Empty card for unselected inputs */
     .metric-card.empty {
         background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
         border: 2px dashed #cbd5e1;
@@ -531,9 +531,9 @@
         line-height: 1;
     }
 
-    /* 🔴 CORRECTION : Inversement des couleurs pour les variations */
-    .variation-positive { color: #dc2626; } /* Rouge pour les hausses */
-    .variation-negative { color: #059669; } /* Vert pour les baisses */
+    /* 🔴 CORRECTION: Color inversion for variations */
+    .variation-positive { color: #dc2626; } /* Red for increases */
+    .variation-negative { color: #059669; } /* Green for decreases */
     .variation-neutral { color: #64748b; }
 
     .variation-absolute {
@@ -589,7 +589,7 @@
         line-height: 1.5;
     }
 
-    /* Animation pour les lignes du graphique */
+    /* Animation for chart lines */
     @keyframes drawLine {
         from {
             stroke-dashoffset: 1000;
@@ -695,7 +695,7 @@
                     </div>
                 </div>
 
-                <!-- ✨ Bouton Analyser à droite de la dropdown -->
+                <!-- ✨ Analyze button to the right of the dropdown -->
                 <div class="button-group">
                     <button type="submit" class="analyze-button" form="analysisForm" id="analyzeButton">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap">
@@ -708,9 +708,9 @@
         </div>
     </form>
 
-    <!-- Layout 3 colonnes : Périodes | Graphique | Métriques -->
+    <!-- 3-column layout: Periods | Chart | Metrics -->
     <div class="analysis-content">
-        <!-- Colonne gauche : Périodes -->
+        <!-- Left column: Periods -->
         <div class="periods-container">
             <div class="periods-section" id="periodsSection">
                 <div class="period-group">
@@ -753,7 +753,7 @@
             </div>
         </div>
 
-        <!-- Colonne centrale : Graphique -->
+        <!-- Central column: Chart -->
         <div class="results-section visible" id="resultsSection">
             <div class="chart-container">
                 {% if series_data and series_data != '[]' %}
@@ -785,10 +785,10 @@
             </div>
         </div>
 
-        <!-- Colonne droite : Métriques - TOUJOURS 3 CARDS -->
+        <!-- Right column: Metrics - ALWAYS 3 CARDS -->
         <div class="metrics-panel">
             {% if not start_a or not end_a or not start_b or not end_b %}
-                <!-- Si les périodes ne sont pas définies, première card avec le message -->
+                <!-- If periods are not defined, first card with message -->
                 <div class="metric-card empty">
                     <div class="empty-card-content">
                         <div class="empty-card-icon">
@@ -803,7 +803,7 @@
                     </div>
                 </div>
 
-                <!-- Cards vides pour Input 2 et Input 3 -->
+                <!-- Empty cards for Input 2 and Input 3 -->
                 <div class="metric-card empty">
                     <div class="empty-card-content">
                         <div class="empty-card-icon">
@@ -833,7 +833,7 @@
                 </div>
 
             {% else %}
-                <!-- Si les périodes sont définies, on affiche les vraies données ou les slots vides -->
+                <!-- If periods are defined, display real data or empty slots -->
                 {% if period_stats %}
                     {% for element_name, stats in period_stats.items %}
                         {% if forloop.counter <= 3 %}
@@ -879,7 +879,7 @@
                     {% endfor %}
                 {% endif %}
 
-                <!-- Compléter avec des cards vides si moins de 3 éléments -->
+                <!-- Fill with empty cards if less than 3 elements -->
                 {% if period_stats %}
                     {% if period_stats|length < 2 %}
                         <div class="metric-card empty">
@@ -913,7 +913,7 @@
                         </div>
                     {% endif %}
                 {% else %}
-                    <!-- Si pas de period_stats mais périodes définies, 3 cards vides -->
+                    <!-- If no period_stats but periods defined, 3 empty cards -->
                     <div class="metric-card empty">
                         <div class="empty-card-content">
                             <div class="empty-card-icon">
@@ -924,6 +924,21 @@
                                 </svg>
                             </div>
                             <div class="empty-card-title">Input 1</div>
+                            <div class="empty-card-subtitle">Select an element to analyze</div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card empty">
+                        <div class="empty-card-content">
+                            <div class="empty-card-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="8" x2="12" y2="12"/>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                </svg>
+                            </div>
+                            <div class="empty-card-title">Input 2</div>
+                            <div class="empty-card-subtitle">Select an element to analyze</div>
                         </div>
                     </div>
 
@@ -1003,7 +1018,7 @@
 
         const analyzeButton = document.getElementById('analyzeButton');
 
-        // Le bouton se désactive seulement si aucun élément n'est sélectionné
+        // The button is disabled only if no element is selected
         if (selectedCount > 0) {
             analyzeButton.disabled = false;
         } else {
@@ -1032,19 +1047,19 @@
 
         updateSelectedCount();
 
-        // ✨ CORRECTION : Marquer les éléments sélectionnés comme checked au chargement
+        // ✨ CORRECTION: Mark selected elements as checked on load
         document.querySelectorAll('#dropdownContent input[type="checkbox"]:checked').forEach(cb => {
             cb.closest('.dropdown-item').classList.add('selected');
         });
 
-        // Écouteurs pour les champs de date
+        // Listeners for date fields
         document.querySelectorAll('input[type="date"]').forEach(input => {
             input.addEventListener('change', function() {
                 console.log('Date modified:', input.name, input.value);
             });
         });
 
-        // Écouteurs pour les checkboxes
+        // Listeners for checkboxes
         document.querySelectorAll('#dropdownContent input[type="checkbox"]').forEach(cb => {
             cb.addEventListener('change', function() {
                 updateSelectedCount();
@@ -1065,12 +1080,12 @@
 
                 const isMultipleElements = seriesData.length > 1;
 
-                // 🎨 Obtenir l'unité du premier élément si un seul élément
+                // 🎨 Get unit of first element if single element
                 let yAxisTitle = 'Value';
                 if (!isMultipleElements && seriesData[0]) {
-                    // Déterminer le type d'élément et son unité
+                    // Determine element type and its unit
                     if (seriesData[0].name && seriesData[0].name.includes('📊')) {
-                        // C'est un index
+                        // It's an index
                         {% if user_favorites %}
                             const favorites = [
                                 {% for idx in user_favorites %}
@@ -1084,8 +1099,8 @@
                             }
                         {% endif %}
                     } else if (seriesData[0].name && (seriesData[0].name.includes('📦') || seriesData[0].name.includes('🔧'))) {
-                        // C'est un produit ou une pièce
-                        yAxisTitle = 'Prix (€)';
+                        // It's a product or part
+                        yAxisTitle = 'Price (€)';
                     }
                 }
 
@@ -1234,12 +1249,12 @@
                     modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'autoScale2d']
                 };
 
-                // 🎬 Créer le graphique avec animation
+                // 🎬 Create chart with animation
                 Plotly.newPlot('chart', traces, layout, config)
                     .then(() => {
                         console.log("✅ Chart created successfully!");
 
-                        // 🎨 Animation des lignes - effet drawline
+                        // 🎨 Line animation - drawline effect
                         setTimeout(() => {
                             const chart = document.getElementById('chart');
                             const svgElement = chart.querySelector('.plotly .cartesianlayer .plot');
@@ -1248,7 +1263,7 @@
                                 const lines = svgElement.querySelectorAll('.scatterlayer .trace .lines path');
                                 const markers = svgElement.querySelectorAll('.scatterlayer .trace .points path');
 
-                                // Animer les lignes
+                                // Animate lines
                                 lines.forEach((line, index) => {
                                     if (line) {
                                         const length = line.getTotalLength();
@@ -1258,7 +1273,7 @@
                                     }
                                 });
 
-                                // Masquer puis afficher les marqueurs avec délai
+                                // Hide then show markers with delay
                                 markers.forEach((marker, index) => {
                                     if (marker) {
                                         marker.style.opacity = '0';
@@ -1285,17 +1300,3 @@
 </script>
 
 {% endblock %}
-                        </div>
-                    </div>
-
-                    <div class="metric-card empty">
-                        <div class="empty-card-content">
-                            <div class="empty-card-icon">
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <line x1="12" y1="8" x2="12" y2="12"/>
-                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                                </svg>
-                            </div>
-                            <div class="empty-card-title">Input 2</div>
-                            <div class="empty-card-subtitle">Select an element to analyze</div>

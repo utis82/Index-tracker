@@ -1,4 +1,8 @@
-{% extends "base.html" %}
+/* Numeric formatting */
+  .index-table td[style*="text-align: right"] {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-weight: 500;
+  }{% extends "base.html" %}
 {% block title %}Index List{% endblock %}
 
 {% block content %}
@@ -10,8 +14,18 @@
       <table class="index-table" style="width: 100%; border-collapse: collapse;">
         <thead>
           <tr style="text-align: left; font-weight: 600;">
-            <th style="padding: 12px;">Index</th>
-            <th style="padding: 12px;">Current Price</th>
+            <th style="padding: 12px; position: relative;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span>Index</span>
+                <select onchange="applySorting(this.value)" class="sort-select" style="padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 6px; background: white; font-size: 0.875rem;">
+                  <option value="">Sort by...</option>
+                  <option value="name-asc">A → Z</option>
+                  <option value="name-desc">Z → A</option>
+                  <option value="category">By Category</option>
+                </select>
+              </div>
+            </th>
+            <th style="padding: 12px; text-align: right;">Current Price</th>
             <th style="padding: 12px;">Unit</th>
             <th style="padding: 12px;">Mini Chart</th>
             <th style="padding: 12px;">Last Update</th>
@@ -22,6 +36,10 @@
             {% with index=entry.index latest=entry.latest %}
             <tr class="index-row transition-colors duration-200" 
                 data-url="{% url 'main:index_viewer' index.id %}"
+                data-category="{{ index.category }}"
+                data-name="{{ index.name }}"
+                data-price="{{ latest.value }}"
+                data-date="{{ latest.date }}"
                 style="border-bottom: 1px solid rgba(229, 231, 235, 0.5);">
               <td style="padding: 12px; display: flex; align-items: center; gap: 8px;">
                 <form method="post"
@@ -56,7 +74,13 @@
                   {{ index.name }}
                 </span>
               </td>
-              <td style="padding: 12px;">{{ latest.value }}</td>
+              <td style="padding: 12px; text-align: right; font-variant-numeric: tabular-nums;">
+                {% if latest.value %}
+                  {{ latest.value|floatformat:2 }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
               <td style="padding: 12px;">{{ latest.unit }}</td>
               <td style="padding: 12px; width: 120px;">
                 <div id="mini-chart-{{ forloop.counter }}" style="height: 40px;"></div>
@@ -221,6 +245,38 @@
   .lucide-icon {
     flex-shrink: 0;
   }
+  
+  /* Sort select styling */
+  .sort-select {
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  
+  .sort-select:hover {
+    border-color: #9ca3af;
+  }
+  
+  .sort-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  }
+  
+  body.dark-mode .sort-select {
+    background: rgb(30, 41, 59) !important;
+    border-color: #475569 !important;
+    color: #e2e8f0 !important;
+  }
+  
+  body.dark-mode .sort-select:hover {
+    border-color: #64748b !important;
+  }
+  
+  body.dark-mode .sort-select:focus {
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2) !important;
+  }
 </style>
 
 <!-- JS global -->
@@ -288,6 +344,32 @@
     attributes: true,
     attributeFilter: ['class']
   });
+  
+  // Simple sorting function
+  function applySorting(sortType) {
+    if (!sortType) return;
+    
+    const tbody = document.querySelector('.index-table tbody');
+    const rows = Array.from(tbody.querySelectorAll('.index-row'));
+    
+    rows.sort((a, b) => {
+      if (sortType === 'name-asc') {
+        return a.dataset.name.toLowerCase().localeCompare(b.dataset.name.toLowerCase());
+      } 
+      else if (sortType === 'name-desc') {
+        return b.dataset.name.toLowerCase().localeCompare(a.dataset.name.toLowerCase());
+      } 
+      else if (sortType === 'category') {
+        const categoryA = a.dataset.category || '';
+        const categoryB = b.dataset.category || '';
+        return categoryA.localeCompare(categoryB);
+      }
+      return 0;
+    });
+    
+    // Re-append sorted rows
+    rows.forEach(row => tbody.appendChild(row));
+  }
 </script>
 
 <!-- Plotly -->
