@@ -1082,4 +1082,9 @@ box-sizing: border-box;
       height: 200px !important;
       flex: 1 !important;
   }
+  /* Numeric formatting */
+  .index-table td[style*="text-align: right"] {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-weight: 500;
+  }
 }
