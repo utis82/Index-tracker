@@ -137,6 +137,103 @@
   </div>
 {% endif %}
 
+<!-- NOUVELLE SECTION PRODUITS -->
+{% if product_charts %}
+  <div class="section-title">
+    <span class="emoji">🏗️</span> Your product tracking
+  </div>
+
+  <div class="card shadow-lg" style="border-radius: 16px; padding: 24px; background: white; margin-bottom: 2rem;">
+    <div class="table-responsive" style="overflow-x: auto;">
+      <table class="index-table" style="width: 100%; border-collapse: collapse;">
+
+        <thead>
+          <tr style="text-align: left; font-weight: 600; background-color: rgba(240, 248, 255, 0.6);">
+            <th style="padding: 12px;">Product</th>
+            <th style="padding: 12px;">Reference Price</th>
+            <th style="padding: 12px;">Current Price</th>
+            <th style="padding: 12px;">Reference Date</th>
+            <th style="padding: 12px;">Δ since reference</th>
+            <th style="padding: 12px;">Mini Chart</th>
+            <th style="padding: 12px;">Last Update</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in product_charts %}
+            <tr class="index-row" onclick="window.location.href='{% url 'main:prix_indexes' %}'" style="cursor: pointer;">
+              
+              <!-- Product name with icon -->
+              <td style="padding: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <i data-lucide="package" class="lucide-icon" title="Product" style="width: 16px; height: 16px; flex-shrink: 0; color: #f59e0b;"></i>
+                  <span style="font-weight: 600; line-height: 1;">{{ product.name }}</span>
+                </div>
+              </td>
+
+              <!-- Reference Price -->
+              <td style="padding: 12px;">{{ product.reference_price }} €</td>
+              
+              <!-- Current Price -->
+              <td style="padding: 12px;">{{ product.current_price }} €</td>
+              
+              <!-- Reference Date -->
+              <td style="padding: 12px;">{{ product.reference_date }}</td>
+
+              <!-- Δ since reference -->
+              <td style="padding: 12px; color: {% if product.variation_since_ref > 0 %}red{% elif product.variation_since_ref < 0 %}green{% else %}inherit{% endif %};">
+                {% if product.variation_since_ref > 0 %}▲{% elif product.variation_since_ref < 0 %}▼{% endif %}
+                {% if product.variation_since_ref %}{{ product.variation_since_ref }} %{% else %}—{% endif %}
+              </td>
+
+              <!-- Mini chart -->
+              <td style="padding: 12px; width: 120px;">
+                <div id="product-mini-chart-{{ forloop.counter }}" style="height: 40px;"></div>
+                <script>
+                  Plotly.newPlot(
+                    'product-mini-chart-{{ forloop.counter }}',
+                    [{
+                      x: {{ product.mini_dates|safe }},
+                      y: {{ product.mini_values|safe }},
+                      mode: 'lines',
+                      line: { color: '#f59e0b', width: 2 },
+                      hoverinfo: 'skip',
+                      fill: 'tozeroy',
+                      fillcolor: 'rgba(245, 158, 11, 0.2)',
+                      type: 'scatter'
+                    }],
+                    {
+                      margin: { l: 0, r: 0, t: 0, b: 0 },
+                      xaxis: { visible: false },
+                      yaxis: { visible: false },
+                      paper_bgcolor: 'rgba(0,0,0,0)',
+                      plot_bgcolor: 'rgba(0,0,0,0)',
+                    },
+                    { staticPlot: true, displayModeBar: false }
+                  );
+                </script>
+              </td>
+
+              <!-- Last update -->
+              <td style="padding: 12px;">{{ product.last_update }}</td>
+
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+{% else %}
+  <div class="section-title">
+    <span class="emoji">🏗️</span> Your product tracking
+  </div>
+  <div class="no-favorites">
+    <p>You haven't created any products yet 🔧</p>
+    <a href="{% url 'main:prix_indexes' %}" class="button">👉 Create your first product</a>
+    <p>Build products with indexed components!</p>
+  </div>
+{% endif %}
+
 <!-- ✅ AJAX script for favorites -->
 <script>
   function toggleFavorite(event, indexId) {
