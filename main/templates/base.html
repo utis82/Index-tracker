@@ -1,11 +1,11 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <meta charset="UTF-8">
-  <title>{% block title %}Ma plateforme Index{% endblock %}</title>
+  <title>{% block title %}My Index Platform{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
@@ -16,18 +16,19 @@
     <nav class="navbar">
       <div class="nav-left">
         <a href="{% url 'main:home' %}" class="logo">
-          <img src="{% static 'img/logo.png' %}" alt="Logo Index Tracker" class="logo-image" />
+          <img src="{% static 'img/logo.png' %}" alt="Index Tracker Logo" class="logo-image logo-light" />
+          <img src="{% static 'img/logo_DM-Photoroom.png' %}" alt="Index Tracker Logo" class="logo-image logo-dark" />
         </a>
         <a href="{% url 'main:dashboard' %}"><i data-lucide="bar-chart-3"></i> Dashboard</a>
-        <a href="{% url 'main:liste_index' %}"><i data-lucide="file-text"></i> Liste des Index</a>
+        <a href="{% url 'main:liste_index' %}"><i data-lucide="file-text"></i> Index List</a>
         <a href="{% url 'main:index_viewer_home' %}"><i data-lucide="line-chart"></i> Index Viewer</a>
-        <a href="{% url 'main:prix_indexes' %}"><i data-lucide="layers"></i> Prix Indexés</a>
+        <a href="{% url 'main:prix_indexes' %}"><i data-lucide="layers"></i> Indexed Prices</a>
         
 
         {% if user.is_authenticated %}
           {% with level=user.userprofile.subscription_level %}
             {% if level == "pack5" or level == "pack10" or level == "premium" %}
-              <a href="{% url 'main:index_import_excel' %}"><i data-lucide="upload"></i> Import Excel</a>
+              <a href="{% url 'main:index_import_excel' %}"><i data-lucide="upload"></i> Excel Import</a>
             {% endif %}
             {% if level == "premium" %}
               <a href="{% url 'main:upload' %}"><i data-lucide="settings"></i> Admin Upload</a>
@@ -38,7 +39,7 @@
 
       <div class="nav-center">
         <form id="index-search-form" autocomplete="off" class="search-form">
-          <input type="text" id="index-search" placeholder="Rechercher un index..." />
+          <input type="text" id="index-search" placeholder="Search for an index..." />
           <div id="suggestions" class="suggestions-box"></div>
         </form>
       </div>
@@ -49,9 +50,9 @@
           <span class="slider"></span>
         </label>
         {% if user.is_authenticated %}
-          <a href="{% url 'main:logout' %}"><i data-lucide="log-out"></i> Déconnexion</a>
+          <a href="{% url 'main:logout' %}"><i data-lucide="log-out"></i> Logout</a>
         {% else %}
-          <a href="{% url 'main:login' %}"><i data-lucide="log-in"></i> Connexion</a>
+          <a href="{% url 'main:login' %}"><i data-lucide="log-in"></i> Login</a>
         {% endif %}
       </div>
     </nav>
@@ -62,7 +63,7 @@
   </main>
 
   <footer>
-    © 2025 Index-Tracker. Tous droits réservés.
+    © 2025 Index-Tracker. All rights reserved.
   </footer>
 
   <script>
@@ -70,11 +71,24 @@
 
     const toggle = document.getElementById('theme-toggle');
     const darkClass = 'dark-mode';
+    const logoLight = document.querySelector('.logo-light');
+    const logoDark = document.querySelector('.logo-dark');
+
+    function updateLogos() {
+      if (document.body.classList.contains(darkClass)) {
+        logoLight.style.display = 'none';
+        logoDark.style.display = 'block';
+      } else {
+        logoLight.style.display = 'block';
+        logoDark.style.display = 'none';
+      }
+    }
 
     if (localStorage.getItem('theme') === 'dark') {
       document.body.classList.add(darkClass);
       toggle.checked = true;
     }
+    updateLogos(); // Initial logo update
 
     toggle.addEventListener('change', () => {
       if (toggle.checked) {
@@ -84,6 +98,7 @@
         document.body.classList.remove(darkClass);
         localStorage.setItem('theme', 'light');
       }
+      updateLogos(); // Update logos on toggle
     });
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -122,12 +137,64 @@
   <script>
     document.querySelectorAll('.favorite-form').forEach(form => {
       form.addEventListener('click', event => {
-        event.stopPropagation();  // 🛑 Empêche le clic de propager au <li>
+        event.stopPropagation();  // 🛑 Prevents click from propagating to <li>
       });
     });
   </script>
 
 {% block extra_scripts %}{% endblock %}
+  
+<style>
+/* Force higher z-index for search suggestions */
+.navbar {
+  position: relative !important;
+  z-index: 10000 !important;
+}
+
+.nav-center {
+  position: relative !important;
+  z-index: 10001 !important;
+}
+
+.search-form {
+  position: relative !important;
+  z-index: 10002 !important;
+}
+
+#suggestions.suggestions-box {
+  position: absolute !important;
+  z-index: 99999 !important;
+  background: white !important;
+  border: 1px solid #cbd5e1 !important;
+  width: 100% !important;
+  max-height: 200px !important;
+  overflow-y: auto !important;
+  top: 42px !important;
+  left: 0 !important;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.06) !important;
+  border-radius: 8px !important;
+}
+
+body.dark-mode #suggestions.suggestions-box {
+  background: #1e293b !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3) !important;
+}
+
+.suggestion-item {
+  padding: 8px 12px !important;
+  cursor: pointer !important;
+}
+
+.suggestion-item:hover {
+  background-color: #f0f7ff !important;
+}
+
+body.dark-mode .suggestion-item:hover {
+  background-color: #334155 !important;
+}
+</style>
+
   <script>
     lucide.createIcons();
   </script>

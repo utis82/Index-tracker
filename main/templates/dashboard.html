@@ -4,13 +4,13 @@
 {% block content %}
 
 <div class="dashboard-header with-badge">
-  <h2>Bienvenue {{ user.username }}, voici vos index favoris</h2>
+  <h2>Welcome {{ user.username }}, here are your favorite indexes</h2>
   <div class="subscription-badge">🔐 {{ subscription|capfirst }}</div>
 </div>
 
 {% if charts %}
   <div class="section-title">
-    <span class="emoji">⭐</span> Suivi de vos index
+    <span class="emoji">⭐</span> Your index tracking
   </div>
 
 <div class="card shadow-lg" style="border-radius: 16px; padding: 24px; background: white; margin-bottom: 2rem;">
@@ -20,76 +20,78 @@
       <thead>
         <tr style="text-align: left; font-weight: 600; background-color: rgba(240, 248, 255, 0.6);">
           <th style="padding: 12px;">Index</th>
-          <th style="padding: 12px;">Prix actuel</th>
-          <th style="padding: 12px;">Unité</th>
-          <th style="padding: 12px;">Δ 1 mois</th>
-          <th style="padding: 12px;">Δ 6 mois</th>
-          <th style="padding: 12px;">Δ 1 an</th>
-          <th style="padding: 12px;">Mini graphique</th>
-          <th style="padding: 12px;">Mise à jour</th>
+          <th style="padding: 12px;">Current Price</th>
+          <th style="padding: 12px;">Unit</th>
+          <th style="padding: 12px;">Δ 1 month</th>
+          <th style="padding: 12px;">Δ 6 months</th>
+          <th style="padding: 12px;">Δ 1 year</th>
+          <th style="padding: 12px;">Mini Chart</th>
+          <th style="padding: 12px;">Last Update</th>
         </tr>
       </thead>
       <tbody>
         {% for item in charts %}
           <tr class="index-row" onclick="window.location.href='{% url 'main:index_viewer' item.id %}'" style="cursor: pointer;">
             
-            <!-- Colonne 1 : étoile + nom -->
-            <td style="padding: 12px; display: flex; align-items: center; gap: 8px;">
-              <form method="post"
-                    action="{% url 'main:toggle_favorite' item.id %}"
-                    class="favorite-form"
-                    onsubmit="event.preventDefault(); toggleFavorite(event, {{ item.id }});">
-                {% csrf_token %}
-                <button type="submit"
-                        class="favorite-btn"
-                        data-index-id="{{ item.id }}"
-                        title="Ajouter ou retirer des favoris"
-                        style="font-size: 1.2rem; background: none; border: none; cursor: pointer;">
-                  {% if item.id in favorite_ids %}★{% else %}☆{% endif %}
-                </button>
-              </form>
-              <span style="font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                {{ item.name }}
+            <!-- Column 1: star + category icon + name -->
+            <td style="padding: 12px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <form method="post"
+                      action="{% url 'main:toggle_favorite' item.id %}"
+                      class="favorite-form"
+                      onsubmit="event.preventDefault(); toggleFavorite(event, {{ item.id }});">
+                  {% csrf_token %}
+                  <button type="submit"
+                          class="favorite-btn"
+                          data-index-id="{{ item.id }}"
+                          title="Add or remove from favorites"
+                          style="font-size: 1.2rem; background: none; border: none; cursor: pointer; padding: 0; line-height: 1;">
+                    {% if item.id in favorite_ids %}★{% else %}☆{% endif %}
+                  </button>
+                </form>
+                
+                <!-- Category icon positioned between star and name -->
                 {% if item.category == "Raw material" %}
-                  <i data-lucide="tree-deciduous" class="lucide-icon" title="Matière première"></i>
+                  <i data-lucide="tree-deciduous" class="lucide-icon" title="Raw Material" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
                 {% elif item.category == "Inflation" %}
-                  <i data-lucide="trending-up" class="lucide-icon" title="Inflation"></i>
+                  <i data-lucide="trending-up" class="lucide-icon" title="Inflation" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
                 {% elif item.category == "Labour Cost" %}
-                  <i data-lucide="user" class="lucide-icon" title="Coût du travail"></i>
+                  <i data-lucide="user" class="lucide-icon" title="Labor Cost" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
                 {% elif item.category == "Energy" %}
-                  <i data-lucide="zap" class="lucide-icon" title="Énergie"></i>
+                  <i data-lucide="zap" class="lucide-icon" title="Energy" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
                 {% elif item.category == "Logistic" %}
-                  <i data-lucide="truck" class="lucide-icon" title="Logistique"></i>
+                  <i data-lucide="truck" class="lucide-icon" title="Logistics" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
                 {% else %}
-                  <i data-lucide="circle" class="lucide-icon" title="{{ item.category }}"></i>
+                  <i data-lucide="circle" class="lucide-icon" title="{{ item.category }}" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
                 {% endif %}
-              </span>
-
+                
+                <span style="font-weight: 600; line-height: 1;">{{ item.name }}</span>
+              </div>
             </td>
 
-            <!-- Prix -->
+            <!-- Price -->
             <td style="padding: 12px;">{{ item.price }} €</td>
-            <td style="padding: 12px;">{{ item.unit }}</td>  <!-- ✅ Nouvelle cellule -->
+            <td style="padding: 12px;">{{ item.unit }}</td>
 
-            <!-- Δ 1 mois -->
+            <!-- Δ 1 month -->
             <td style="padding: 12px; color: {% if item.variation_1m > 0 %}red{% elif item.variation_1m  < 0 %}green{% else %}inherit{% endif %};">
               {% if item.variation_1m > 0 %}▲{% elif item.variation_1m  < 0 %}▼{% else %}inherit{% endif %}
-              {% if item.variation_1m %}{{ item.variation_1m }} %{% else %}—{% endif %}
+              {% if item.variation_1m %}{{ item.variation_1m }} %{% else %}—{% endif %}
             </td>
 
-            <!-- Δ 6 mois -->
+            <!-- Δ 6 months -->
             <td style="padding: 12px; color: {% if item.variation_6m  > 0 %}red{% elif item.variation_6m  < 0 %}green{% else %}inherit{% endif %};">
               {% if item.variation_6m > 0 %}▲{% elif item.variation_6m  < 0 %}▼{% else %}inherit{% endif %}
-              {% if item.variation_6m %}{{ item.variation_6m }} %{% else %}—{% endif %}
+              {% if item.variation_6m %}{{ item.variation_6m }} %{% else %}—{% endif %}
             </td>
 
-            <!-- Δ 1 an -->
+            <!-- Δ 1 year -->
             <td style="padding: 12px; color: {% if item.variation_1y  > 0 %}red{% elif item.variation_1y  < 0 %}green{% else %}inherit{% endif %};">
               {% if item.variation_1y > 0 %}▲{% elif item.variation_1y  < 0 %}▼{% else %}inherit{% endif %}
-              {% if item.variation_1y %}{{ item.variation_1y }} %{% else %}—{% endif %}
+              {% if item.variation_1y %}{{ item.variation_1y }} %{% else %}—{% endif %}
             </td>
 
-            <!-- Mini graphique -->
+            <!-- Mini chart -->
             <td style="padding: 12px; width: 120px;">
               <div id="mini-chart-{{ forloop.counter }}" style="height: 40px;"></div>
               <script>
@@ -117,7 +119,7 @@
               </script>
             </td>
 
-            <!-- Dernière mise à jour -->
+            <!-- Last update -->
             <td style="padding: 12px;">{{ item.last_update }}</td>
 
           </tr>
@@ -125,15 +127,17 @@
       </tbody>
     </table>
   </div>
+</div>
+
 {% else %}
   <div class="no-favorites">
-    <p>Vous n'avez pas encore sélectionné d'index favoris 🧐</p>
-    <a href="{% url 'main:liste_index' %}" class="button">👉 Voir la liste des index</a>
-    <p>ou utilisez la barre de recherche ci-dessus 🔍</p>
+    <p>You haven't selected any favorite indexes yet 🧐</p>
+    <a href="{% url 'main:liste_index' %}" class="button">👉 View index list</a>
+    <p>or use the search bar above 🔍</p>
   </div>
 {% endif %}
 
-<!-- ✅ Script AJAX pour favoris -->
+<!-- ✅ AJAX script for favorites -->
 <script>
   function toggleFavorite(event, indexId) {
     event.stopPropagation();
@@ -155,5 +159,52 @@
     });
   }
 </script>
+
+<style>
+/* Dark mode styles for dashboard */
+body.dark-mode .card {
+  background: rgba(30, 41, 59, 0.7) !important;
+  color: #e0f2fe;
+}
+
+body.dark-mode .index-table thead tr {
+  background-color: rgba(51, 65, 85, 0.6) !important;
+}
+
+body.dark-mode .index-table th {
+  color: #e0f2fe;
+}
+
+body.dark-mode .index-table td {
+  color: #e0f2fe;
+}
+
+body.dark-mode .index-row:hover {
+  background-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+body.dark-mode .lucide-icon {
+  color: #94a3b8 !important;
+}
+
+body.dark-mode .no-favorites {
+  background-color: rgba(30, 41, 59, 0.7);
+  color: #e0f2fe;
+}
+
+body.dark-mode .no-favorites .button {
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+}
+
+/* Improve favorite button styling */
+.favorite-btn:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 4px;
+}
+
+body.dark-mode .favorite-btn:hover {
+  background-color: rgba(59, 130, 246, 0.2);
+}
+</style>
 
 {% endblock %}

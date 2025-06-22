@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Accueil{% endblock %}
+{% block title %}Home{% endblock %}
 {% block content %}
 
 <style>
-/* Animation fade in/fade out des messages */
+/* Fade in/fade out animation for messages */
 .messages-container {
   position: relative;
   height: 2.5rem;
@@ -32,6 +32,36 @@
   animation: fadeInOut 12s ease-in-out infinite;
 }
 
+/* Dark mode styles */
+.dark-mode .fade-message {
+  color: #e2e8f0;
+}
+
+.dark-mode .hero-title {
+  color: #f1f5f9;
+}
+
+.dark-mode .hero-subtitle {
+  color: #cbd5e1;
+}
+
+.dark-mode .chart-background {
+  opacity: 0.15;
+}
+
+.dark-mode .floating-circle {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.06), rgba(59, 130, 246, 0.03));
+  backdrop-filter: blur(3px);
+}
+
+.dark-mode .chart-path {
+  filter: drop-shadow(0 4px 12px rgba(14, 165, 233, 0.2));
+}
+
+.dark-mode .message-icon {
+  color: #38bdf8;
+}
+
 .fade-message:nth-child(1) { animation-delay: 0s; }
 .fade-message:nth-child(2) { animation-delay: 3s; }
 .fade-message:nth-child(3) { animation-delay: 6s; }
@@ -51,7 +81,7 @@
   100% { opacity: 0; transform: translateY(-10px); }
 }
 
-/* Animation de fond avec courbes d'index 3D */
+/* Background animation with 3D index curves */
 .chart-background {
   position: absolute;
   top: 0;
@@ -167,10 +197,22 @@
     opacity: 0.4;
   }
 }
+
+/* Dark mode hover effects */
+.dark-mode .cta-button {
+  background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+  color: white;
+  box-shadow: 0 8px 32px rgba(14, 165, 233, 0.3);
+}
+
+.dark-mode .cta-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(14, 165, 233, 0.4);
+}
 </style>
 
 <div class="hero-container">
-  <!-- Animation de fond avec courbes d'index 3D -->
+  <!-- Background animation with 3D index curves -->
   <div class="chart-background">
     <svg class="chart-layer" viewBox="0 0 800 400" preserveAspectRatio="none">
       <defs>
@@ -188,21 +230,21 @@
         </linearGradient>
       </defs>
       
-      <!-- Courbe d'index 1 (croissante) -->
+      <!-- Index curve 1 (growing) -->
       <path class="chart-area area-1" d="M0,350 Q200,320 400,280 T800,200 L800,400 L0,400 Z" />
       <path class="chart-path chart-1" d="M0,350 Q200,320 400,280 T800,200" />
       
-      <!-- Courbe d'index 2 (volatile) -->
+      <!-- Index curve 2 (volatile) -->
       <path class="chart-area area-2" d="M0,300 Q150,250 300,270 Q450,290 600,240 T800,220 L800,400 L0,400 Z" />
       <path class="chart-path chart-2" d="M0,300 Q150,250 300,270 Q450,290 600,240 T800,220" />
       
-      <!-- Courbe d'index 3 (stable) -->
+      <!-- Index curve 3 (stable) -->
       <path class="chart-area area-3" d="M0,320 Q200,310 400,315 Q600,320 800,310 L800,400 L0,400 Z" />
       <path class="chart-path chart-3" d="M0,320 Q200,310 400,315 Q600,320 800,310" />
     </svg>
   </div>
 
-  <!-- Éléments flottants modernisés -->
+  <!-- Modernized floating elements -->
   <div class="floating-elements">
     <div class="floating-circle circle-1"></div>
     <div class="floating-circle circle-2"></div>
@@ -210,34 +252,34 @@
   </div>
 
   <div class="hero-content">
-    <h1 class="hero-title">Centraliser, Analyser, Performer.</h1>
-    <p class="hero-subtitle">Tous vos index, enfin réunis au même endroit.</p>
+    <h1 class="hero-title">Centralize, Analyze, Perform.</h1>
+    <p class="hero-subtitle">All your indexes, finally unified in one place.</p>
     
     <div class="messages-container">
       <div class="fade-message">
         <i data-lucide="bar-chart-3" class="message-icon"></i>
-        Visualisez tous vos index dans votre tableau de bord
+        Visualize all your indexes in your dashboard
       </div>
       <div class="fade-message">
         <i data-lucide="download" class="message-icon"></i>
-        Exportez les données dont vous avez besoin
+        Export the data you need
       </div>
       <div class="fade-message">
         <i data-lucide="brain" class="message-icon"></i>
-        Créez vos propres modèles avec vos données
+        Create your own models with your data
       </div>
       <div class="fade-message">
         <i data-lucide="trending-up" class="message-icon"></i>
-        Suivez l'évolution en temps réel
+        Track real-time evolution
       </div>
     </div>
     
-    <a href="{% url 'main:register' %}" class="cta-button">Créer un compte</a>
+    <a href="{% url 'main:register' %}" class="cta-button">Create an account</a>
   </div>
 </div>
 
 <script>
-// Initialiser les icônes Lucide après le chargement de la page
+// Initialize Lucide icons after page load
 document.addEventListener('DOMContentLoaded', function() {
   if (typeof lucide !== 'undefined') {
     lucide.createIcons();

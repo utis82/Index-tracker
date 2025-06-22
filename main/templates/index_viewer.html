@@ -437,61 +437,6 @@
         font-weight: 400;
     }
 
-    /* Card avec message pour périodes manquantes */
-    .metric-card.no-periods {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border: 2px solid #f1f5f9;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .metric-card.no-periods::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #f59e0b, #d97706, #f59e0b);
-        background-size: 200% 100%;
-        animation: shimmer 2s ease-in-out infinite;
-    }
-
-    @keyframes shimmer {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
-    }
-
-    .no-periods-content {
-        text-align: center;
-        padding: 30px 20px;
-    }
-
-    .no-periods-icon {
-        width: 40px;
-        height: 40px;
-        margin: 0 auto 16px;
-        color: #d97706;
-    }
-
-    .no-periods-title {
-        font-size: 1.1em;
-        font-weight: 700;
-        color: #92400e;
-        margin-bottom: 10px;
-        letter-spacing: -0.025em;
-    }
-
-    .no-periods-subtitle {
-        font-size: 0.9em;
-        color: #1e293b;
-        line-height: 1.6;
-        font-weight: 500;
-    }
-
     @keyframes slideIn {
         to {
             opacity: 1;
@@ -693,8 +638,9 @@
                                 {% regroup user_favorites by category as categories %}
                                 {% for category in categories %}
                                     <div class="dropdown-category">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M3 3v5h5M3 8l4-4M21 21v-5h-5M21 16l-4 4"></path>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trending-up">
+                                            <polyline points="22,7 13.5,15.5 8.5,10.5 2,17"></polyline>
+                                            <polyline points="16,7 22,7 22,13"></polyline>
                                         </svg>
                                         {{ category.grouper|default:"Others" }}
                                     </div>
@@ -711,14 +657,15 @@
 
                             {% if user.products.all %}
                                 <div class="dropdown-category">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hexagon">
                                         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                                     </svg>
                                     My Products
                                 </div>
                                 {% for product in user.products.all %}
                                     <div class="dropdown-item" onclick="toggleSelection(this, 'product', {{ product.id }})">
-                                        <input type="checkbox" name="product_id" value="{{ product.id }}">
+                                        <input type="checkbox" name="product_id" value="{{ product.id }}"
+                                               {% if product in selected_products %}checked{% endif %}>
                                         <span class="item-name">{{ product.name }}</span>
                                         <span class="item-type">(Product)</span>
                                     </div>
@@ -727,15 +674,17 @@
 
                             {% if user.products.all %}
                                 <div class="dropdown-category">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings">
+                                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
                                     </svg>
                                     My Parts
                                 </div>
                                 {% for product in user.products.all %}
                                     {% for part in product.parts.all %}
                                         <div class="dropdown-item" onclick="toggleSelection(this, 'part', {{ part.id }})">
-                                            <input type="checkbox" name="part_id" value="{{ part.id }}">
+                                            <input type="checkbox" name="part_id" value="{{ part.id }}"
+                                                   {% if part in selected_parts %}checked{% endif %}>
                                             <span class="item-name">{{ part.name }}</span>
                                             <span class="item-type">({{ product.name }})</span>
                                         </div>
@@ -749,8 +698,8 @@
                 <!-- ✨ Bouton Analyser à droite de la dropdown -->
                 <div class="button-group">
                     <button type="submit" class="analyze-button" form="analysisForm" id="analyzeButton">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap">
+                            <polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"></polygon>
                         </svg>
                         Analyze
                     </button>
@@ -809,8 +758,9 @@
             <div class="chart-container">
                 {% if series_data and series_data != '[]' %}
                     <div class="chart-title">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"></polyline>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-line-chart">
+                            <path d="M3 3v18h18"></path>
+                            <path d="m7 12 4-4 4 4 6-6"></path>
                         </svg>
                         Comparative Evolution
                         {% if selected_indexes|length > 1 %}
@@ -822,8 +772,9 @@
                     <div class="no-data-message">
                         <div class="empty-state-content">
                             <div class="empty-icon">
-                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"></polyline>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-line-chart">
+                                    <path d="M3 3v18h18"></path>
+                                    <path d="m7 12 4-4 4 4 6-6"></path>
                                 </svg>
                             </div>
                             <h3 class="empty-title">Analyze your data</h3>
@@ -836,37 +787,30 @@
 
         <!-- Colonne droite : Métriques - TOUJOURS 3 CARDS -->
         <div class="metrics-panel">
-            {% comment %}
-            🎯 LOGIQUE : Toujours afficher exactement 3 cards
-            - Si on a des period_stats, on affiche les vraies données
-            - Si pas de périodes définies, on affiche le message d'aide
-            - Pour les emplacements vides, on affiche "Input X"
-            {% endcomment %}
-
             {% if not start_a or not end_a or not start_b or not end_b %}
                 <!-- Si les périodes ne sont pas définies, première card avec le message -->
-            <div class="metric-card empty">
-                <div class="empty-card-content">
-                    <div class="empty-card-icon">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                            <line x1="9" y1="9" x2="15" y2="15"/>
-                            <line x1="15" y1="9" x2="9" y2="15"/>
-                        </svg>
+                <div class="metric-card empty">
+                    <div class="empty-card-content">
+                        <div class="empty-card-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-x">
+                                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                                <path d="m9 9 6 6"></path>
+                                <path d="m15 9-6 6"></path>
+                            </svg>
+                        </div>
+                        <div class="empty-card-title">Input 1</div>
+                        <div class="empty-card-subtitle">Please select P1 and P2 periods to run the analysis</div>
                     </div>
-                    <div class="empty-card-title">Input 1</div>
-                    <div class="empty-card-subtitle">Please select P1 and P2 periods to run the analysis</div>
                 </div>
-            </div>
 
                 <!-- Cards vides pour Input 2 et Input 3 -->
                 <div class="metric-card empty">
                     <div class="empty-card-content">
                         <div class="empty-card-icon">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                <line x1="9" y1="9" x2="15" y2="15"/>
-                                <line x1="15" y1="9" x2="9" y2="15"/>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-x">
+                                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                                <path d="m9 9 6 6"></path>
+                                <path d="m15 9-6 6"></path>
                             </svg>
                         </div>
                         <div class="empty-card-title">Input 2</div>
@@ -877,10 +821,10 @@
                 <div class="metric-card empty">
                     <div class="empty-card-content">
                         <div class="empty-card-icon">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                <line x1="9" y1="9" x2="15" y2="15"/>
-                                <line x1="15" y1="9" x2="9" y2="15"/>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-x">
+                                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                                <path d="m9 9 6 6"></path>
+                                <path d="m15 9-6 6"></path>
                             </svg>
                         </div>
                         <div class="empty-card-title">Input 3</div>
@@ -941,10 +885,10 @@
                         <div class="metric-card empty">
                             <div class="empty-card-content">
                                 <div class="empty-card-icon">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <line x1="12" y1="8" x2="12" y2="12"/>
-                                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <path d="m9,9 6,6"></path>
+                                        <path d="m15,9 -6,6"></path>
                                     </svg>
                                 </div>
                                 <div class="empty-card-title">Input 2</div>
@@ -957,10 +901,10 @@
                         <div class="metric-card empty">
                             <div class="empty-card-content">
                                 <div class="empty-card-icon">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <line x1="12" y1="8" x2="12" y2="12"/>
-                                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <path d="m9,9 6,6"></path>
+                                        <path d="m15,9 -6,6"></path>
                                     </svg>
                                 </div>
                                 <div class="empty-card-title">Input 3</div>
@@ -980,21 +924,6 @@
                                 </svg>
                             </div>
                             <div class="empty-card-title">Input 1</div>
-                            <div class="empty-card-subtitle">Select an element to analyze</div>
-                        </div>
-                    </div>
-
-                    <div class="metric-card empty">
-                        <div class="empty-card-content">
-                            <div class="empty-card-icon">
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <line x1="12" y1="8" x2="12" y2="12"/>
-                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                                </svg>
-                            </div>
-                            <div class="empty-card-title">Input 2</div>
-                            <div class="empty-card-subtitle">Select an element to analyze</div>
                         </div>
                     </div>
 
@@ -1019,7 +948,7 @@
 
 <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
 <script>
-    let selectedCount = {{ selected_indexes|length|default:0 }};
+    let selectedCount = {{ selected_indexes|length|default:0 }} + {{ selected_products|length|default:0 }} + {{ selected_parts|length|default:0 }};
     const maxSelection = 3;
     let isDropdownOpen = false;
 
@@ -1103,6 +1032,7 @@
 
         updateSelectedCount();
 
+        // ✨ CORRECTION : Marquer les éléments sélectionnés comme checked au chargement
         document.querySelectorAll('#dropdownContent input[type="checkbox"]:checked').forEach(cb => {
             cb.closest('.dropdown-item').classList.add('selected');
         });
@@ -1135,24 +1065,27 @@
 
                 const isMultipleElements = seriesData.length > 1;
 
-                // 🎨 Obtenir l'unité du premier index si un seul élément
+                // 🎨 Obtenir l'unité du premier élément si un seul élément
                 let yAxisTitle = 'Value';
                 if (!isMultipleElements && seriesData[0]) {
-                    // Chercher dans les données de series pour les index
+                    // Déterminer le type d'élément et son unité
                     if (seriesData[0].name && seriesData[0].name.includes('📊')) {
+                        // C'est un index
                         {% if user_favorites %}
                             const favorites = [
                                 {% for idx in user_favorites %}
                                     {id: {{ idx.id }}, name: "{{ idx.name|escapejs }}", unit: "{{ idx.unit|default:'Index'|escapejs }}"},
                                 {% endfor %}
                             ];
-                            // Trouver l'index par son nom
                             const currentSerie = seriesData[0].name.replace('📊 ', '');
                             const indexInfo = favorites.find(f => f.name === currentSerie);
                             if (indexInfo && indexInfo.unit && indexInfo.unit !== 'Index') {
                                 yAxisTitle = indexInfo.unit;
                             }
                         {% endif %}
+                    } else if (seriesData[0].name && (seriesData[0].name.includes('📦') || seriesData[0].name.includes('🔧'))) {
+                        // C'est un produit ou une pièce
+                        yAxisTitle = 'Prix (€)';
                     }
                 }
 
@@ -1232,7 +1165,7 @@
                         bgcolor: 'rgba(0,0,0,0)',
                         bordercolor: 'rgba(0,0,0,0)',
                         font: { size: 11 },
-                        showlegend: true  // ✨ Force l'affichage même pour une seule série
+                        showlegend: true
                     },
                     shapes: [
                         {% if start_a and end_a %}
@@ -1301,9 +1234,6 @@
                     modeBarButtonsToRemove: ['pan2d', 'select2d', 'lasso2d', 'autoScale2d']
                 };
 
-                // ✨ Force l'affichage de la légende pour tous les cas
-                layout.showlegend = true;
-
                 // 🎬 Créer le graphique avec animation
                 Plotly.newPlot('chart', traces, layout, config)
                     .then(() => {
@@ -1355,3 +1285,17 @@
 </script>
 
 {% endblock %}
+                        </div>
+                    </div>
+
+                    <div class="metric-card empty">
+                        <div class="empty-card-content">
+                            <div class="empty-card-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="8" x2="12" y2="12"/>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                </svg>
+                            </div>
+                            <div class="empty-card-title">Input 2</div>
+                            <div class="empty-card-subtitle">Select an element to analyze</div>
