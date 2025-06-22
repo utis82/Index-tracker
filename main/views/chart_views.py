@@ -74,7 +74,7 @@ def index_viewer(request, index_id=None):
                 dates = [v.date.strftime("%Y-%m-%d") for v in values]
                 vals = [float(v.value) for v in values]
                 series_data.append({
-                    "name": f"📊 {idx.name}",
+                    "name": f"IDX {idx.name}",
                     "id": f"index_{idx.id}",
                     "dates": dates,
                     "values": vals,
@@ -148,7 +148,7 @@ def index_viewer(request, index_id=None):
                     dates = [point["date"] for point in data_points]
                     values = [point["value"] for point in data_points]
                     series_data.append({
-                        "name": f"📦 {product.name}",
+                        "name": f"PRD {product.name}",
                         "id": f"product_{product.id}",
                         "dates": dates,
                         "values": values,
@@ -209,7 +209,7 @@ def index_viewer(request, index_id=None):
                     dates = [point["date"] for point in part_data_points]
                     values = [point["value"] for point in part_data_points]
                     series_data.append({
-                        "name": f"🔧 {part.name}",
+                        "name": f"PRT {part.name}",
                         "id": f"part_{part.id}",
                         "dates": dates,
                         "values": values,
@@ -238,7 +238,7 @@ def index_viewer(request, index_id=None):
                     mean_b = mean(values_b)
                     variation = ((mean_b - mean_a) / mean_a) * 100 if mean_a != 0 else 0
 
-                    period_stats[f"📊 {idx.name}"] = {
+                    period_stats[f"IDX {idx.name}"] = {
                         "min_a": min(values_a),
                         "max_a": max(values_a),
                         "mean_a": round(mean_a, 2),
@@ -275,7 +275,7 @@ def index_viewer(request, index_id=None):
                     mean_b = mean(product_values_b)
                     variation = ((mean_b - mean_a) / mean_a) * 100 if mean_a != 0 else 0
 
-                    period_stats[f"📦 {product.name}"] = {
+                    period_stats[f"PRD {product.name}"] = {
                         "min_a": min(product_values_a),
                         "max_a": max(product_values_a),
                         "mean_a": round(mean_a, 2),
@@ -312,7 +312,7 @@ def index_viewer(request, index_id=None):
                     mean_b = mean(part_values_b)
                     variation = ((mean_b - mean_a) / mean_a) * 100 if mean_a != 0 else 0
 
-                    period_stats[f"🔧 {part.name}"] = {
+                    period_stats[f"PRT {part.name}"] = {
                         "min_a": min(part_values_a),
                         "max_a": max(part_values_a),
                         "mean_a": round(mean_a, 2),
