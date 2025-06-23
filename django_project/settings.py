@@ -30,15 +30,15 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 ALLOWED_HOSTS = []
 if os.environ.get('ALLOWED_HOSTS'):
     ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(',')
-    # Nettoyer les espaces
-    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS]
+    # Nettoyer les espaces et points-virgules
+    ALLOWED_HOSTS = [host.strip().rstrip(';') for host in ALLOWED_HOSTS]
 else:
     # Hosts par défaut pour dev
     ALLOWED_HOSTS = [".replit.dev", ".replit.app", "localhost", "127.0.0.1"]
 
 # Ajout automatique du domaine Railway si présent
 if os.environ.get('RAILWAY_STATIC_URL'):
-    railway_domain = os.environ.get('RAILWAY_STATIC_URL').replace('https://', '').replace('http://', '')
+    railway_domain = os.environ.get('RAILWAY_STATIC_URL').replace('https://', '').replace('http://', '').rstrip(';')
     ALLOWED_HOSTS.append(railway_domain)
 
 # 🔍 DEBUG: Afficher toutes les variables d'environnement CSRF
@@ -48,11 +48,17 @@ print(f"🚂 RAILWAY_STATIC_URL: {repr(os.environ.get('RAILWAY_STATIC_URL'))}")
 print(f"🏠 ALLOWED_HOSTS brute: {repr(os.environ.get('ALLOWED_HOSTS'))}")
 print("="*50)
 
-# CSRF trusted origins - Configuration FORCÉE pour test
+# CSRF trusted origins - Configuration avec nettoyage du point-virgule
 if os.environ.get('RAILWAY_STATIC_URL'):
-    # On est sur Railway - FORCER la valeur
-    CSRF_TRUSTED_ORIGINS = ['https://index-tracker-production.up.railway.app']
+    # On est sur Railway - FORCER la valeur ET nettoyer le point-virgule
+    csrf_raw = 'https://index-tracker-production.up.railway.app'
+    CSRF_TRUSTED_ORIGINS = [csrf_raw.strip().rstrip(';')]
     print("🚂 RAILWAY DETECTÉ - CSRF FORCÉ À: https://index-tracker-production.up.railway.app")
+elif os.environ.get('CSRF_TRUSTED_ORIGINS'):
+    # Variable d'environnement définie - nettoyer les points-virgules
+    CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS').split(',')
+    CSRF_TRUSTED_ORIGINS = [origin.strip().rstrip(';') for origin in CSRF_TRUSTED_ORIGINS]
+    print("🌐 VARIABLE CSRF DETECTÉE - nettoyage des points-virgules")
 else:
     # On est en local
     CSRF_TRUSTED_ORIGINS = [
