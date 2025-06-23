@@ -127,7 +127,7 @@ def import_excel_view(request):
 
     return render(request, "admin/import_excel.html")
 
-
+@login_required
 def liste_index_view(request):
     indexes = Index.objects.all()
     enriched_indexes = []
