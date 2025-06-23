@@ -48,11 +48,16 @@ print(f"🚂 RAILWAY_STATIC_URL: {repr(os.environ.get('RAILWAY_STATIC_URL'))}")
 print(f"🏠 ALLOWED_HOSTS brute: {repr(os.environ.get('ALLOWED_HOSTS'))}")
 print("="*50)
 
-# CSRF trusted origins - Configuration avec nettoyage HARDCORE du point-virgule
+# CSRF trusted origins - TEST ULTIME
 if os.environ.get('RAILWAY_STATIC_URL'):
-    # On est sur Railway - FORCER la valeur sans utiliser les variables Railway
-    CSRF_TRUSTED_ORIGINS = ['https://index-tracker-production.up.railway.app']
-    print("🚂 RAILWAY DETECTÉ - CSRF HARDCORE FORCÉ À: https://index-tracker-production.up.railway.app")
+    # On est sur Railway - TEST avec une string complètement neuve
+    url_clean = "https://index-tracker-production.up.railway.app"
+    CSRF_TRUSTED_ORIGINS = [url_clean]
+    print(f"🚂 RAILWAY DETECTÉ - URL clean: {repr(url_clean)}")
+    print(f"🧪 TEST: Length = {len(url_clean)}, ends with ';' = {url_clean.endswith(';')}")
+    print(f"🔬 CSRF final type: {type(CSRF_TRUSTED_ORIGINS[0])}")
+    print(f"🔬 CSRF final repr: {repr(CSRF_TRUSTED_ORIGINS[0])}")
+    print(f"🔬 CSRF final len: {len(CSRF_TRUSTED_ORIGINS[0])}")
 elif os.environ.get('CSRF_TRUSTED_ORIGINS'):
     # Variable d'environnement définie - nettoyer les points-virgules
     CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS').split(',')
