@@ -193,8 +193,8 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # Paramètres de sécurité pour la production
 if not DEBUG:
-    # HTTPS obligatoire en production
-    SECURE_SSL_REDIRECT = True
+    # HTTPS obligatoire en production - DÉSACTIVÉ temporairement pour Railway
+    # SECURE_SSL_REDIRECT = True  # ← Commenté car Railway gère déjà HTTPS
     SECURE_HSTS_SECONDS = 31536000  # 1 an
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
