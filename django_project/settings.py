@@ -7,7 +7,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
+import dj_database_url
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement depuis .env (uniquement en local)
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,6 +30,8 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 ALLOWED_HOSTS = []
 if os.environ.get('ALLOWED_HOSTS'):
     ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(',')
+    # Nettoyer les espaces
+    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS]
 else:
     # Hosts par défaut pour dev
     ALLOWED_HOSTS = [".replit.dev", ".replit.app", "localhost", "127.0.0.1"]
@@ -34,11 +41,22 @@ if os.environ.get('RAILWAY_STATIC_URL'):
     railway_domain = os.environ.get('RAILWAY_STATIC_URL').replace('https://', '').replace('http://', '')
     ALLOWED_HOSTS.append(railway_domain)
 
-# CSRF trusted origins
-CSRF_TRUSTED_ORIGINS = [
-    "https://*.replit.dev", 
-    "https://*.replit.app",
-]
+# CSRF trusted origins - Configuration flexible
+CSRF_TRUSTED_ORIGINS = []
+if os.environ.get('CSRF_TRUSTED_ORIGINS'):
+    # Utiliser les variables d'environnement (Railway)
+    CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS').split(',')
+    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS]
+else:
+    # Valeurs par défaut pour développement local
+    CSRF_TRUSTED_ORIGINS = [
+        "https://*.replit.dev", 
+        "https://*.replit.app",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
+
+# Ajout automatique Railway (fallback)
 if os.environ.get('RAILWAY_STATIC_URL'):
     CSRF_TRUSTED_ORIGINS.append(os.environ.get('RAILWAY_STATIC_URL'))
 
@@ -57,6 +75,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Pour les fichiers statiques
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -91,13 +110,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'django_project.wsgi.application'
 
-# Database
+# Database - Configuration automatique PostgreSQL/SQLite
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f'sqlite:///{BASE_DIR}/db.sqlite3',
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 # Password validation
@@ -123,8 +143,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = 'fr-fr'  # Changé pour français
+TIME_ZONE = 'Europe/Paris'  # Changé pour Paris
 USE_I18N = True
 USE_TZ = True
 
@@ -138,11 +158,82 @@ STATICFILES_DIRS = [
 # Pour la production (Railway), collecte des fichiers statiques
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+# Configuration WhiteNoise pour optimiser les fichiers statiques
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Configuration des médias
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/login/'
 
+# Configuration Crispy Forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+# Paramètres de sécurité pour la production
+if not DEBUG:
+    # HTTPS obligatoire en production
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 an
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # Sécurité des cookies
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    # Protection contre les attaques
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = 'DENY'
+
+    # Préférences de contenu sécurisé
+    SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+# Configuration des logs pour Railway
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'django.log',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'main': {  # Logs de votre app
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+    },
+}
