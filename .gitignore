@@ -162,3 +162,39 @@ cython_debug/
 # Nix
 /result
 /result-*
+
+# === AJOUTS SPÉCIFIQUES DJANGO/RAILWAY ===
+
+# Fichiers d'environnement supplémentaires
+.env.local
+.env.production
+.env.development
+.env.staging
+
+# Django - fichiers statiques collectés
+/staticfiles/
+/static_collected/
+
+# Django - fichiers médias uploadés
+/media/
+
+# Railway - fichiers de build
+.railway/
+
+# IDE supplémentaires
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+
+# Logs spécifiques
+django.log
+gunicorn.log
