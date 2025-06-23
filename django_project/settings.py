@@ -41,24 +41,30 @@ if os.environ.get('RAILWAY_STATIC_URL'):
     railway_domain = os.environ.get('RAILWAY_STATIC_URL').replace('https://', '').replace('http://', '')
     ALLOWED_HOSTS.append(railway_domain)
 
-# CSRF trusted origins - Configuration flexible
-CSRF_TRUSTED_ORIGINS = []
-if os.environ.get('CSRF_TRUSTED_ORIGINS'):
-    # Utiliser les variables d'environnement (Railway)
-    CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS').split(',')
-    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS]
+# 🔍 DEBUG: Afficher toutes les variables d'environnement CSRF
+print("🔍 DEBUG VARIABLES D'ENVIRONNEMENT:")
+print(f"📊 CSRF_TRUSTED_ORIGINS brute: {repr(os.environ.get('CSRF_TRUSTED_ORIGINS'))}")
+print(f"🚂 RAILWAY_STATIC_URL: {repr(os.environ.get('RAILWAY_STATIC_URL'))}")
+print(f"🏠 ALLOWED_HOSTS brute: {repr(os.environ.get('ALLOWED_HOSTS'))}")
+print("="*50)
+
+# CSRF trusted origins - Configuration FORCÉE pour test
+if os.environ.get('RAILWAY_STATIC_URL'):
+    # On est sur Railway - FORCER la valeur
+    CSRF_TRUSTED_ORIGINS = ['https://index-tracker-production.up.railway.app']
+    print("🚂 RAILWAY DETECTÉ - CSRF FORCÉ À: https://index-tracker-production.up.railway.app")
 else:
-    # Valeurs par défaut pour développement local
+    # On est en local
     CSRF_TRUSTED_ORIGINS = [
         "https://*.replit.dev", 
         "https://*.replit.app",
         "http://localhost:8000",
         "http://127.0.0.1:8000",
     ]
+    print("🏠 LOCAL DETECTÉ - CSRF configuré pour Replit")
 
-# Ajout automatique Railway (fallback)
-if os.environ.get('RAILWAY_STATIC_URL'):
-    CSRF_TRUSTED_ORIGINS.append(os.environ.get('RAILWAY_STATIC_URL'))
+print(f"📝 CSRF_TRUSTED_ORIGINS final: {CSRF_TRUSTED_ORIGINS}")
+print("="*50)
 
 # Application definition
 INSTALLED_APPS = [
