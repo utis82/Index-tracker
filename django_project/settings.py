@@ -46,20 +46,6 @@ print("🔍 DEBUG VARIABLES D'ENVIRONNEMENT:")
 print(f"📊 CSRF_TRUSTED_ORIGINS brute: {repr(os.environ.get('CSRF_TRUSTED_ORIGINS'))}")
 print(f"🚂 RAILWAY_STATIC_URL: {repr(os.environ.get('RAILWAY_STATIC_URL'))}")
 print(f"🏠 ALLOWED_HOSTS brute: {repr(os.environ.get('ALLOWED_HOSTS'))}")
-# 👤 CRÉATION AUTOMATIQUE D'UN SUPERUTILISATEUR (TEMPORAIRE)
-from django.contrib.auth.models import User
-try:
-    if not User.objects.filter(is_superuser=True).exists():
-        User.objects.create_superuser('admin', '***REMOVED***', '***REMOVED***')
-        print("🔑 Superutilisateur créé !")
-        print("📧 Username: Kookavicks82")
-        print("🔐 Password: IndexTracker2025!")
-        print("✉️ Email: ***REMOVED***")
-    else:
-        print("👤 Superutilisateur existe déjà")
-except Exception as e:
-    print(f"❌ Erreur création superutilisateur: {e}")
-
 print("="*50)
 
 # CSRF trusted origins - TEST ULTIME
