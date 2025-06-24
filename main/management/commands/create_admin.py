@@ -10,7 +10,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Lire depuis les variables d'environnement (SÉCURISÉ)
         admin_username = os.environ.get('ADMIN_USERNAME', 'admin')
-        admin_email = os.environ.get('ADMIN_EMAIL', 'admin@railway.app')
+        admin_email = os.environ.get('ADMIN_EMAIL', '***REMOVED***')
         admin_password = os.environ.get('ADMIN_PASSWORD')
 
         if not admin_password:
