@@ -66,7 +66,7 @@ def import_excel_view(request):
 
             # 🚀 NOUVEAU : Traitement par chunks pour éviter les timeouts
             total_rows = worksheet.max_row - 1  # -1 car on ignore la ligne d'en-tête
-            chunk_size = 10  # Traiter 10 lignes à la fois
+            chunk_size = 5  # Traiter 10 lignes à la fois
             processed_rows = 0
             start_time = time.time()
 
