@@ -20,8 +20,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', '***REMOVED***')
+# 🔒 SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    if os.environ.get('DEBUG', 'True').lower() == 'true':
+        # Générer une clé temporaire pour le développement
+        import secrets
+        SECRET_KEY = secrets.token_urlsafe(50)
+        print("⚠️ Utilisation d'une SECRET_KEY temporaire pour le développement")
+    else:
+        raise ValueError("❌ SECRET_KEY environment variable is required in production!")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
@@ -41,7 +49,7 @@ if os.environ.get('RAILWAY_STATIC_URL'):
     railway_domain = os.environ.get('RAILWAY_STATIC_URL').replace('https://', '').replace('http://', '').rstrip(';')
     ALLOWED_HOSTS.append(railway_domain)
 
-# 🔍 DEBUG: Afficher toutes les variables d'environnement CSRF
+# 🔍 DEBUG: Afficher toutes les variables d'environnement CSRF (temporaire)
 print("🔍 DEBUG VARIABLES D'ENVIRONNEMENT:")
 print(f"📊 CSRF_TRUSTED_ORIGINS brute: {repr(os.environ.get('CSRF_TRUSTED_ORIGINS'))}")
 print(f"🚂 RAILWAY_STATIC_URL: {repr(os.environ.get('RAILWAY_STATIC_URL'))}")
