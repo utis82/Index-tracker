@@ -8,12 +8,19 @@
 <style>
   /* 🎛️ MAIN PARAMETER - Modify this value to change row height */
   :root {
-    --row-height: 20px;  /* Change this value (e.g.: 40px, 56px, 60px...) */
+    --row-height: 20px;
     --header-height: calc(var(--row-height) - 4px);
   }
 
+  /* Remove duplicate .card styles - rely on style.css */
+  
   .icon-button svg:hover {
-    stroke: #1d4ed8; /* beautiful elegant blue */
+    stroke: #1d4ed8;
+  }
+
+  /* Dark mode: icon hover color */
+  body.dark-mode .icon-button svg:hover {
+    stroke: #60a5fa;
   }
 
   .btn-primary {
@@ -49,15 +56,37 @@
     background-color: #e5e7eb;
   }
 
+  /* Dark mode buttons */
+  body.dark-mode .btn-secondary {
+    background-color: #374151;
+    color: #e5e7eb;
+    border-color: #4b5563;
+  }
+
+  body.dark-mode .btn-secondary:hover {
+    background-color: #4b5563;
+  }
+
   .modal-card h5, .modal-card h6 {
     font-weight: 600;
     color: #1e293b;
+  }
+
+  /* Dark mode modal headers */
+  body.dark-mode .modal-card h5,
+  body.dark-mode .modal-card h6 {
+    color: #e0f2fe;
   }
 
   .component-form {
     background-color: #f9fafb;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
+  }
+
+  body.dark-mode .component-form {
+    background-color: #1e293b;
+    border-color: #334155;
   }
 
   .modal-overlay {
@@ -80,10 +109,17 @@
     padding: 1.5rem;
     min-width: 500px;
     max-width: 800px;
-    max-height: 95vh;
+    max-height: 80vh;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     overflow-y: auto;
     width: 90%;
+  }
+
+  /* Dark mode modal */
+  body.dark-mode .modal-card {
+    background: #1e293b;
+    color: #e0f2fe;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   }
 
   .hidden {
@@ -92,15 +128,15 @@
 
   .page-layout {
     display: flex;
-    gap: 1.5rem; /* Reduced gap */
+    gap: 1.5rem;
     margin-top: 1rem;
     height: calc(100vh - 100px);
-    max-width: 100vw; /* Prevents overflow */
-    overflow-x: hidden; /* Hides horizontal overflow */
+    max-width: 100vw;
+    overflow-x: hidden;
   }
 
   .left-panel {
-    flex: 0 0 55%; /* 60% for tree structure (instead of 66%) */
+    flex: 0 0 55%;
     max-width: 60%;
     background: white;
     padding: 1rem 1.5rem;
@@ -110,21 +146,36 @@
     position: relative;
   }
 
+  /* Dark mode left panel */
+  body.dark-mode .left-panel {
+    background: rgba(30, 41, 59, 0.7);
+    color: #e0f2fe;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
+
   .right-panel {
-    flex: 1; /* 40% for chart */
-    min-width: 0; /* Allows compression if needed */
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
   }
 
-  .card {
+  /* Override card for right panel */
+  .right-panel .card {
     background: white;
     padding: 1rem;
     border-radius: 12px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.05);
     height: 100%;
-    min-width: 0; /* Allows compression */
-    overflow: hidden; /* Prevents overflow */
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  /* Dark mode right panel card */
+  body.dark-mode .right-panel .card {
+    background: rgba(30, 41, 59, 0.7);
+    color: #e0f2fe;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
   }
 
   .icon-button {
@@ -138,6 +189,10 @@
     width: 18px;
     height: 18px;
     stroke: #0ea5e9;
+  }
+
+  body.dark-mode .icon-button svg {
+    stroke: #38bdf8;
   }
 
   .icon-button.graph-active {
@@ -158,19 +213,24 @@
   table.arbo-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.8rem; /* Reduced font size */
+    font-size: 0.8rem;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    table-layout: fixed; /* CRUCIAL - Forces fixed heights */
+    table-layout: fixed;
+  }
+
+  /* Dark mode table shadow */
+  body.dark-mode table.arbo-table {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 
   table.arbo-table th,
   table.arbo-table td {
-    padding: 10px 12px; /* Reduced padding */
+    padding: 10px 12px;
     border: none;
     text-align: left;
-    height: var(--row-height); /* Uses CSS variable */
+    height: var(--row-height);
     vertical-align: middle;
   }
 
@@ -178,10 +238,16 @@
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     font-weight: 600;
     color: #334155;
-    font-size: 0.75rem; /* Even smaller font for headers */
+    font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    height: var(--header-height); /* Header slightly smaller */
+    height: var(--header-height);
+  }
+
+  /* Dark mode table headers */
+  body.dark-mode table.arbo-table th {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    color: #cbd5e1;
   }
 
   .level-1 {
@@ -189,15 +255,25 @@
     border-left: 4px solid #0ea5e9;
   }
 
+  /* Dark mode level-1 */
+  body.dark-mode .level-1 {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-left-color: #38bdf8;
+  }
+
   .level-1 td {
     font-weight: 600;
     color: #0284c7;
-    padding: 10px 12px; /* Reduced padding */
-    padding-left: 16px; /* Level 1: base indentation */
-    height: var(--row-height) !important; /* Forces height */
+    padding: 10px 12px;
+    padding-left: 16px;
+    height: var(--row-height) !important;
     max-height: var(--row-height) !important;
     overflow: hidden;
-    font-size: 0.85rem; /* Slightly smaller font */
+    font-size: 0.85rem;
+  }
+
+  body.dark-mode .level-1 td {
+    color: #38bdf8;
   }
 
   .level-1:hover {
@@ -206,20 +282,33 @@
     transition: all 0.2s ease;
   }
 
+  body.dark-mode .level-1:hover {
+    background: linear-gradient(135deg, #334155 0%, #475569 100%);
+  }
+
   .level-2 {
     background: #ffffff;
     border-left: 3px solid #e2e8f0;
   }
 
+  body.dark-mode .level-2 {
+    background: #1e293b;
+    border-left-color: #475569;
+  }
+
   .level-2 td {
     font-weight: 500;
     color: #475569;
-    padding: 10px 12px; /* Reduced padding */
-    padding-left: 44px !important; /* Level 2: more pronounced indentation (+28px from level 1) */
-    height: var(--row-height) !important; /* Forces height */
+    padding: 10px 12px;
+    padding-left: 44px !important;
+    height: var(--row-height) !important;
     max-height: var(--row-height) !important;
     overflow: hidden;
-    font-size: 0.8rem; /* Smaller font */
+    font-size: 0.8rem;
+  }
+
+  body.dark-mode .level-2 td {
+    color: #94a3b8;
   }
 
   .level-2:hover {
@@ -228,22 +317,36 @@
     transition: all 0.2s ease;
   }
 
+  body.dark-mode .level-2:hover {
+    background: #334155;
+    border-left-color: #38bdf8;
+  }
+
   .level-3 {
     background: #f8fafc;
     border-left: 2px solid #cbd5e1;
   }
 
+  body.dark-mode .level-3 {
+    background: #0f172a;
+    border-left-color: #334155;
+  }
+
   .level-3 td {
-    font-size: 0.75rem; /* Even smaller font */
+    font-size: 0.75rem;
     color: #64748b;
-    padding: 3px 12px !important; /* Very reduced padding */
-    padding-left: 72px !important; /* Level 3: even more pronounced indentation (+28px from level 2) */
+    padding: 3px 12px !important;
+    padding-left: 72px !important;
     font-weight: 400;
-    height: 22px !important; /* Very compact height */
+    height: 22px !important;
     max-height: 22px !important;
     vertical-align: middle;
     line-height: 1.1;
     overflow: hidden;
+  }
+
+  body.dark-mode .level-3 td {
+    color: #94a3b8;
   }
 
   .level-3:hover {
@@ -252,22 +355,32 @@
     transition: all 0.2s ease;
   }
 
-  /* Style for slice badges - ultra compact */
+  body.dark-mode .level-3:hover {
+    background: #1e293b;
+    border-left-color: #38bdf8;
+  }
+
   .slice-badge {
     display: inline-flex;
     align-items: center;
     background: #f1f5f9;
-    padding: 1px 4px; /* Minimal padding */
+    padding: 1px 4px;
     border-radius: 3px;
     border: 1px solid #e2e8f0;
-    height: 16px !important; /* Very reduced height */
+    height: 16px !important;
     max-height: 16px !important;
     line-height: 1;
-    font-size: 0.65rem; /* Even smaller font */
-    white-space: nowrap; /* Prevents line wrapping */
+    font-size: 0.65rem;
+    white-space: nowrap;
     position: relative;
-    z-index: 10; /* Above other elements */
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Very light shadow */
+    z-index: 10;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+
+  body.dark-mode .slice-badge {
+    background: #334155;
+    border-color: #475569;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
   }
 
   .slice-badge svg {
@@ -283,14 +396,12 @@
     display: inline-block;
   }
 
-  /* Badge container with allowed overflow */
   .slice-badge-container {
     position: relative;
-    overflow: visible !important; /* Allows overflow */
+    overflow: visible !important;
     z-index: 10;
   }
 
-  /* Cell containing badges can overflow */
   .level-3 td:first-child {
     position: relative;
     overflow: visible !important;
@@ -315,7 +426,12 @@
     height: 14px;
     border-radius: 2px;
     background: #e2e8f0;
-    transform: rotate(0deg); /* Horizontal arrow by default */
+    transform: rotate(0deg);
+  }
+
+  body.dark-mode .toggle-icon {
+    background: #475569;
+    color: #94a3b8;
   }
 
   .toggle-icon:hover {
@@ -323,14 +439,20 @@
     color: #475569;
   }
 
-  /* Down arrow when expanded */
+  body.dark-mode .toggle-icon:hover {
+    background: #64748b;
+    color: #e2e8f0;
+  }
+
   .expanded .toggle-icon {
     transform: rotate(90deg);
     background: #0ea5e9;
     color: white;
   }
 
-  /* Old collapsed style removed as replaced by expanded */
+  body.dark-mode .expanded .toggle-icon {
+    background: #38bdf8;
+  }
 
   .collapse-target {
     display: table-row-group;
@@ -360,7 +482,6 @@
     border-radius: 8px;
   }
 
-  /* Animation for chart */
   @keyframes drawLine {
     from {
       stroke-dashoffset: 1000;
@@ -383,9 +504,18 @@
     text-align: left;
   }
 
+  body.dark-mode .form-table th,
+  body.dark-mode .form-table td {
+    border-bottom-color: #334155;
+  }
+
   .form-table th {
     width: 30%;
     font-weight: 600;
+  }
+
+  body.dark-mode .form-table th {
+    color: #cbd5e1;
   }
 
   .form-table input,
@@ -396,10 +526,20 @@
     border-radius: 4px;
   }
 
-  /* Styles for slice management */
+  body.dark-mode .form-table input,
+  body.dark-mode .form-table select {
+    background-color: #0f172a;
+    color: #e0f2fe;
+    border-color: #475569;
+  }
+
   .slice-row td {
     padding: 0.5rem;
     border-bottom: 1px solid #f1f5f9;
+  }
+
+  body.dark-mode .slice-row td {
+    border-bottom-color: #334155;
   }
 
   .slice-row input,
@@ -411,9 +551,21 @@
     font-size: 0.85rem;
   }
 
+  body.dark-mode .slice-row input,
+  body.dark-mode .slice-row select {
+    background-color: #0f172a;
+    color: #e0f2fe;
+    border-color: #475569;
+  }
+
   .slice-row select:disabled {
     background-color: #f9fafb;
     color: #9ca3af;
+  }
+
+  body.dark-mode .slice-row select:disabled {
+    background-color: #1e293b;
+    color: #64748b;
   }
 
   .delete-slice-btn {
@@ -428,12 +580,69 @@
     background-color: #fef2f2;
   }
 
+  body.dark-mode .delete-slice-btn:hover {
+    background-color: #7f1d1d;
+  }
+
   .delete-slice-btn svg {
     stroke: #dc2626;
   }
 
+  body.dark-mode .delete-slice-btn svg {
+    stroke: #ef4444;
+  }
+
   .opacity-50 {
     opacity: 0.5;
+  }
+
+  /* Chart empty state dark mode */
+  body.dark-mode #priceChart {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+  }
+
+  body.dark-mode #emptyState {
+    color: #94a3b8;
+  }
+
+  body.dark-mode #emptyState svg {
+    stroke: #64748b;
+  }
+
+  /* Form backgrounds dark mode */
+  body.dark-mode div[style*="background-color: #f8fafc"] {
+    background-color: #1e293b !important;
+  }
+
+  body.dark-mode div[style*="background-color: #f1f5f9"] {
+    background-color: #0f172a !important;
+  }
+
+  /* Slice table dark mode */
+  body.dark-mode #slicesTable {
+    background: #1e293b !important;
+  }
+
+  body.dark-mode #slicesTable thead {
+    background-color: #0f172a !important;
+  }
+
+  body.dark-mode #slicesTable th {
+    border-bottom-color: #334155 !important;
+    color: #cbd5e1 !important;
+  }
+
+  /* Total percentage box dark mode */
+  body.dark-mode div[style*="background: white"] {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+  }
+
+  /* Section title dark mode */
+  body.dark-mode .section-title {
+    background: linear-gradient(90deg, #1e293b, #334155);
+    color: #e0f2fe;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
 </style>
 
@@ -656,7 +865,7 @@
           <div id="baseMode" style="font-size: 0.75rem; color: #94a3b8;"></div>
         </div>
       </div>
-      <div id="priceChart" style="height: 450px; width: 100%; border-radius: 8px; background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%); display: flex; align-items: center; justify-content: center; color: #94a3b8;">
+      <div id="priceChart" style="height: 570px; width: 100%; border-radius: 8px; background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%); display: flex; align-items: center; justify-content: center; color: #94a3b8;">
         <div style="text-align: center;" id="emptyState">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-bottom: 1rem;">
             <path d="M3 3v18h18"/>
@@ -733,7 +942,7 @@
       <input type="hidden" name="part_id" id="part-id-input" />
 
       <!-- Basic part information -->
-      <div style="background-color: #f8fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+      <div class="part-form-section" style="background-color: #f8fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
         <h6 style="font-weight: 600; margin-bottom: 1rem; color: #1e293b;">📋 Basic information</h6>
         <table class="form-table">
           <tr>
@@ -762,7 +971,7 @@
       </div>
 
       <!-- Slices Section -->
-      <div style="background-color: #f1f5f9; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+      <div class="slice-form-section" style="background-color: #f1f5f9; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
           <h6 style="font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 8px;">
             <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pie-chart" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -799,7 +1008,7 @@
           </div>
         </div>
 
-        <div style="margin-top: 1rem; padding: 0.75rem; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">
+        <div class="percentage-summary" style="margin-top: 1rem; padding: 0.75rem; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <span style="font-weight: 500;">Total percentages:</span>
             <span id="totalPercentage" style="font-weight: 600; color: #dc2626;">0%</span>
@@ -830,6 +1039,66 @@
     </form>
   </div>
 </div>
+
+<!-- Add Dark Mode Specific Styles for JavaScript-controlled elements -->
+<style>
+  /* Dark mode section backgrounds with !important for inline styles */
+  body.dark-mode .part-form-section {
+    background-color: #1e293b !important;
+  }
+
+  body.dark-mode .slice-form-section {
+    background-color: #0f172a !important;
+  }
+
+  body.dark-mode .percentage-summary {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+  }
+
+  /* Dark mode for dynamic color styles */
+  body.dark-mode span[style*="color: #0284c7"] {
+    color: #38bdf8 !important;
+  }
+
+  body.dark-mode span[style*="color: #64748b"] {
+    color: #94a3b8 !important;
+  }
+
+  body.dark-mode span[style*="color: #059669"] {
+    color: #10b981 !important;
+  }
+
+  body.dark-mode span[style*="color: #dc2626"] {
+    color: #ef4444 !important;
+  }
+
+  body.dark-mode span[style*="color: #6b7280"] {
+    color: #9ca3af !important;
+  }
+
+  body.dark-mode span[style*="color: #6366f1"] {
+    color: #818cf8 !important;
+  }
+
+  body.dark-mode span[style*="color: #94a3b8"] {
+    color: #cbd5e1 !important;
+  }
+
+  /* Dark mode for h4 title in chart */
+  body.dark-mode h4[style*="color: #0284c7"] {
+    color: #38bdf8 !important;
+  }
+
+  /* Dark mode for divs with color styles */
+  body.dark-mode div[style*="color: #64748b"] {
+    color: #94a3b8 !important;
+  }
+
+  body.dark-mode div[style*="color: #94a3b8"] {
+    color: #cbd5e1 !important;
+  }
+</style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
 <script>
@@ -1009,7 +1278,12 @@ document.addEventListener("DOMContentLoaded", () => {
         chartContainer.style.display = 'flex';
         chartContainer.style.alignItems = 'center';
         chartContainer.style.justifyContent = 'center';
-        chartContainer.style.background = 'linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%)';
+        
+        // Apply dark mode background if needed
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        chartContainer.style.background = isDarkMode 
+          ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' 
+          : 'linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%)';
         
         if (!emptyState) {
           emptyState = document.createElement('div');
@@ -1100,6 +1374,9 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     
+    // Dark mode detection for chart
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    
     const layout = {
       height: 580,
       margin: { l: 60, r: 30, t: 20, b: 50 },
@@ -1110,26 +1387,27 @@ document.addEventListener("DOMContentLoaded", () => {
         showgrid: false, 
         zeroline: false, 
         type: 'date',
-        tickfont: { color: '#64748b', size: 11 }
+        tickfont: { color: isDarkMode ? '#94a3b8' : '#64748b', size: 11 }
       },
       yaxis: { 
         showgrid: true, 
         zeroline: false, 
-        gridcolor: 'rgba(14, 165, 233, 0.1)',
-        tickfont: { color: '#64748b', size: 11 },
+        gridcolor: isDarkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(14, 165, 233, 0.1)',
+        tickfont: { color: isDarkMode ? '#94a3b8' : '#64748b', size: 11 },
         title: { 
           text: useBase100 ? 'Base 100' : 'Price (€)', 
-          font: { color: '#64748b', size: 12 } 
+          font: { color: isDarkMode ? '#94a3b8' : '#64748b', size: 12 } 
         }
       },
-      font: { color: '#475569' },
+      font: { color: isDarkMode ? '#cbd5e1' : '#475569' },
       showlegend: count > 1,
       legend: {
         x: 0.02,
         y: 0.98,
-        bgcolor: 'rgba(255, 255, 255, 0.8)',
-        bordercolor: '#e2e8f0',
-        borderwidth: 1
+        bgcolor: isDarkMode ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+        bordercolor: isDarkMode ? '#334155' : '#e2e8f0',
+        borderwidth: 1,
+        font: { color: isDarkMode ? '#cbd5e1' : '#475569' }
       }
     };
 
@@ -1406,6 +1684,16 @@ document.addEventListener("DOMContentLoaded", () => {
       submitBtn.disabled = true;
       submitBtn.classList.add('opacity-50');
     }
+    
+    // Dark mode color adaptation
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    if (isDarkMode) {
+      if (Math.abs(total - 100) < 0.1) {
+        totalElement.style.color = '#10b981';
+      } else {
+        totalElement.style.color = '#ef4444';
+      }
+    }
   };
 
   // Close modals by clicking on overlay
@@ -1416,6 +1704,20 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
+  
+  // Listen for dark mode changes to update chart
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.attributeName === 'class') {
+        // If there are active charts, redraw them with the new theme
+        if (activeItems.size > 0) {
+          updateChart();
+        }
+      }
+    });
+  });
+  
+  observer.observe(document.body, { attributes: true });
 });
 </script>
 
