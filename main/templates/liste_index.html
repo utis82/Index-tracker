@@ -3,12 +3,11 @@
 
 {% block content %}
 <div class="page-container">
-  <h1 class="section-title"><span class="emoji">📄</span> All Indexes</h1>
-
   <div class="card shadow-lg" style="border-radius: 16px; padding: 24px; margin-bottom: 2rem;">
-    <div class="table-responsive" style="overflow-x: auto;">
+    <!-- Container avec hauteur fixe pour permettre le scroll -->
+    <div class="table-container" style="max-height: 84vh; overflow-y: auto; border-radius: 8px;">
       <table class="index-table" style="width: 100%; border-collapse: collapse;">
-        <thead>
+        <thead class="sticky-header">
           <tr style="text-align: left; font-weight: 600;">
             <th style="padding: 12px; position: relative;">
               <div style="display: flex; align-items: center; gap: 12px;">
@@ -135,6 +134,31 @@
 
 <!-- Custom styles for dark mode -->
 <style>
+  /* Container du tableau avec scroll */
+  .table-container {
+    position: relative;
+    border: 1px solid rgba(229, 231, 235, 0.5);
+  }
+  
+  body.dark-mode .table-container {
+    border-color: rgba(75, 85, 99, 0.5) !important;
+  }
+
+  /* En-tête sticky */
+  .sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background-color: rgba(240, 248, 255, 0.95);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  body.dark-mode .sticky-header {
+    background-color: rgba(15, 23, 42, 0.95) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  }
+
   /* Base card styling */
   .card {
     background: white;
@@ -148,12 +172,13 @@
   
   /* Table header styling */
   .index-table thead tr {
-    background-color: rgba(240, 248, 255, 0.6);
+    background-color: inherit;
   }
   
   .index-table th {
     color: #1e293b;
     font-weight: 600;
+    border-bottom: 2px solid rgba(229, 231, 235, 0.8);
   }
   
   .index-table td {
@@ -167,13 +192,9 @@
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
   }
   
-  body.dark-mode .index-table thead tr {
-    background-color: rgba(15, 23, 42, 0.8) !important;
-  }
-  
   body.dark-mode .index-table th {
-    background-color: rgba(15, 23, 42, 0.8) !important;
     color: rgb(243, 244, 246) !important;
+    border-bottom-color: rgba(75, 85, 99, 0.8) !important;
   }
   
   body.dark-mode .index-table td {
@@ -242,11 +263,13 @@
     flex-shrink: 0;
   }
   
-  /* Sort select styling */
+  /* Sort select styling - adaptation pour sticky header */
   .sort-select {
     font-family: inherit;
     cursor: pointer;
     transition: border-color 0.2s;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(4px);
   }
   
   .sort-select:hover {
@@ -260,7 +283,7 @@
   }
   
   body.dark-mode .sort-select {
-    background: rgb(30, 41, 59) !important;
+    background: rgba(30, 41, 59, 0.9) !important;
     border-color: #475569 !important;
     color: #e2e8f0 !important;
   }
@@ -272,6 +295,37 @@
   body.dark-mode .sort-select:focus {
     border-color: #60a5fa !important;
     box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2) !important;
+  }
+  
+  /* Custom scrollbar pour le container */
+  .table-container::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .table-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.5);
+  }
+  
+  body.dark-mode .table-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  body.dark-mode .table-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  body.dark-mode .table-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
   }
 </style>
 
