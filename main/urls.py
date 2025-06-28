@@ -2,16 +2,15 @@
 from django.urls import path
 from main.views.base_views import (home, login_view, dashboard, register_view,
                                    upload_excel, logout_view, search_index,
-                                   choose_primary_index)
+                                   choose_primary_index, contact_view)  # ← Ajoutez contact_view ici
 from main.views.index_views import import_excel_view, liste_index_view
 from main.views.chart_views import (index_viewer, toggle_favorite_ajax, 
                                    get_index_data_ajax, export_analysis_data)
 from main.views.user_views import toggle_favorite
 from main.views.prix_indexes_views import prix_indexes_view, delete_structure, get_structure_data
-from main.views import prix_indexes_views
+from main.views import prix_indexes_views,base_views
 
 app_name = 'main'
-
 urlpatterns = [
     path('', home, name='home'),
     path('login/', login_view, name='login'),
@@ -43,13 +42,12 @@ urlpatterns = [
     path('get-part-data/<int:part_id>/',
          prix_indexes_views.get_part_data,
          name='get_part_data'),
-
     # Index Viewer - nouvelle interface
     path('index-analysis/', index_viewer, name='index_analysis'),
     path('index-analysis/<int:index_id>/', index_viewer, name='index_analysis_with_id'),
-
     # AJAX endpoints
     path('toggle_favorite/<int:index_id>/', toggle_favorite_ajax, name='toggle_favorite_ajax'),
     path('api/index/<int:index_id>/data/', get_index_data_ajax, name='get_index_data'),
     path('api/analysis/export/', export_analysis_data, name='export_analysis'),
+    path('contact/', contact_view, name='contact'),
 ]

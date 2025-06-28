@@ -6,10 +6,12 @@ from .models import Product, Part, Slice
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
+
 # ------------------------
 # 🔹 Product (Produit)
 # ------------------------
 class ProductForm(forms.ModelForm):
+
     class Meta:
         model = Product
         fields = ['name', 'reference_date']  # ← Ajouter reference_date
@@ -27,10 +29,12 @@ class ProductForm(forms.ModelForm):
                 Column('reference_date', css_class='col-md-6'),
             ))
 
+
 # ------------------------
 # 🔹 Part (Partie)
 # ------------------------
 class PartForm(forms.ModelForm):
+
     class Meta:
         model = Part
         fields = ['name', 'reference_date']
@@ -38,16 +42,29 @@ class PartForm(forms.ModelForm):
             'reference_date': forms.DateInput(attrs={'type': 'date'}),
         }
 
+
 # ------------------------
 # 🔹 Slice (Tranche)
 # ------------------------
 class SliceForm(forms.ModelForm):
+
     class Meta:
         model = Slice
-        fields = ['label', 'component_type', 'index', 'fixed_amount', 'percentage','reference_date']
+        fields = [
+            'label', 'component_type', 'index', 'fixed_amount', 'percentage',
+            'reference_date'
+        ]
         widgets = {
-            'fixed_amount': forms.NumberInput(attrs={'step': '0.01', 'class': 'fixed-field'}),
-            'percentage': forms.NumberInput(attrs={'step': '0.01', 'class': 'percentage-field'}),
+            'fixed_amount':
+            forms.NumberInput(attrs={
+                'step': '0.01',
+                'class': 'fixed-field'
+            }),
+            'percentage':
+            forms.NumberInput(attrs={
+                'step': '0.01',
+                'class': 'percentage-field'
+            }),
         }
 
     def __init__(self, *args, **kwargs):
@@ -55,7 +72,9 @@ class SliceForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if self.user:
-            self.fields['index'].queryset = self.user.userprofile.favorite_indexes.all()
+            self.fields[
+                'index'].queryset = self.user.userprofile.favorite_indexes.all(
+                )
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -79,14 +98,19 @@ class SliceForm(forms.ModelForm):
         perc = cleaned_data.get("percentage")
 
         if fixed and perc:
-            raise forms.ValidationError("Remplissez soit un montant (€), soit un pourcentage (%), pas les deux.")
+            raise forms.ValidationError(
+                "Remplissez soit un montant (€), soit un pourcentage (%), pas les deux."
+            )
         return cleaned_data
+
 
 # ------------------------
 # 🔹 Custom Formsets
 # ------------------------
 
+
 class CustomStructureComponentFormSet(BaseInlineFormSet):
+
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
@@ -94,9 +118,13 @@ class CustomStructureComponentFormSet(BaseInlineFormSet):
         if self.user:
             for form in self.forms:
                 if 'index' in form.fields:
-                    form.fields['index'].queryset = self.user.userprofile.favorite_indexes.all()
+                    form.fields[
+                        'index'].queryset = self.user.userprofile.favorite_indexes.all(
+                        )
+
 
 class CustomSliceFormSet(BaseInlineFormSet):
+
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
@@ -116,24 +144,25 @@ class CustomSliceFormSet(BaseInlineFormSet):
             if form.cleaned_data.get("percentage"):
                 total += form.cleaned_data["percentage"]
         if total > 100:
-            raise forms.ValidationError("La somme des pourcentages dépasse 100%.")
+            raise forms.ValidationError(
+                "La somme des pourcentages dépasse 100%.")
+
 
 # ------------------------
 # 🔹 Formsets
 # ------------------------
 
-PartFormSet = inlineformset_factory(
-    Product,
-    Part,
-    form=PartForm,
-    formset=CustomStructureComponentFormSet,
-    extra=1,
-    can_delete=True
-)
+PartFormSet = inlineformset_factory(Product,
+                                    Part,
+                                    form=PartForm,
+                                    formset=CustomStructureComponentFormSet,
+                                    extra=1,
+                                    can_delete=True)
 
 # ------------------------
 # 🔹 User Signup Form
 # ------------------------
+
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True, label="Adresse email")
@@ -148,3 +177,33 @@ class CustomUserCreationForm(UserCreationForm):
             field = self.fields[field_name]
             field.widget.attrs['class'] = 'form-input'
             field.widget.attrs['placeholder'] = field.label
+
+
+# ------------------------
+# 🔹 Contact Form
+# ------------------------
+
+class ContactForm(forms.Form):
+    name = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Votre nom complet'
+        }))
+    email = forms.EmailField(widget=forms.EmailInput(
+        attrs={
+            'class': 'form-control',
+            'placeholder': 'votre-email@exemple.com'
+        }))
+    subject = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Sujet de votre message'
+        }))
+    message = forms.CharField(widget=forms.Textarea(
+        attrs={
+            'class': 'form-control',
+            'placeholder': 'Décrivez votre question ou problème...',
+            'rows': 5
+        }))

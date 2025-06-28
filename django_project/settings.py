@@ -199,6 +199,23 @@ LOGIN_URL = '/login/'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
+# ✉️ CONFIGURATION EMAIL
+# Configuration email pour Gmail
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# Variables d'environnement à configurer dans Railway
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'indextracker.contact@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # Mot de passe d'application Gmail
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'indextracker.contact@gmail.com')
+
+# Pour le développement local, vous pouvez aussi utiliser la console
+if DEBUG and not os.environ.get('EMAIL_HOST_PASSWORD'):
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    print("📧 Mode développement: emails affichés dans la console")
+
 # Paramètres de sécurité pour la production
 if not DEBUG:
     # HTTPS obligatoire en production - DÉSACTIVÉ temporairement pour Railway

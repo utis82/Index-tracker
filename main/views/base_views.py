@@ -4,11 +4,14 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.admin.views.decorators import staff_member_required
+from django.views.decorators.http import require_POST
+from django.core.mail import send_mail
+from django.conf import settings
 from datetime import datetime, timedelta
 from main.models import Index, IndexValue, Product, Part, Slice
 from main.utils import get_user_index_data
+from main.forms import CustomUserCreationForm, ContactForm
 import json
-from main.forms import CustomUserCreationForm
 from datetime import date as datetime_date
 
 
@@ -231,6 +234,62 @@ def get_product_last_update(product, index_data):
                             latest_date = index_latest
 
     return latest_date.strftime("%Y-%m-%d")
+
+
+# ✉️ FONCTION CONTACT (NOUVELLE)
+@require_POST
+def contact_view(request):
+    """Vue pour traiter le formulaire de contact via AJAX"""
+    try:
+        # Récupération des données du formulaire
+        name = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip()
+        subject = request.POST.get('subject', '').strip()
+        message = request.POST.get('message', '').strip()
+
+        # Validation basique
+        if not all([name, email, subject, message]):
+            return JsonResponse({
+                'status': 'error', 
+                'message': 'Tous les champs sont requis'
+            }, status=400)
+
+        # Construction du message email
+        email_subject = f"[IndexTracker Contact] {subject}"
+        email_body = f"""
+Nouveau message de contact depuis IndexTracker
+
+Nom: {name}
+Email: {email}
+Sujet: {subject}
+
+Message:
+{message}
+
+---
+Envoyé depuis l'application IndexTracker
+Utilisateur connecté: {request.user.username if request.user.is_authenticated else 'Anonyme'}
+        """
+
+        # Envoi de l'email
+        send_mail(
+            subject=email_subject,
+            message=email_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=['indextracker.contact@gmail.com'],
+            fail_silently=False,
+        )
+
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Votre message a été envoyé avec succès!'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Une erreur est survenue lors de l\'envoi. Veuillez réessayer.'
+        }, status=500)
 
 
 # Reste du code existant (login_view, register_view, etc.)
