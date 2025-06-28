@@ -1385,13 +1385,17 @@ document.addEventListener("DOMContentLoaded", () => {
       paper_bgcolor: 'rgba(0,0,0,0)',
       xaxis: { 
         showgrid: false, 
-        zeroline: false, 
+        zeroline: false,
+        showline: true,           // Affiche la ligne de l'axe X
+        linecolor: colors.textColor,
         type: 'date',
         tickfont: { color: isDarkMode ? '#94a3b8' : '#64748b', size: 11 }
       },
       yaxis: { 
         showgrid: true, 
         zeroline: false, 
+        showline: true,           // Affiche la ligne de l'axe X
+        linecolor: colors.textColor,
         gridcolor: isDarkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(14, 165, 233, 0.1)',
         tickfont: { color: isDarkMode ? '#94a3b8' : '#64748b', size: 11 },
         title: { 

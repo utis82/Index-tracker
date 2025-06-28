@@ -78,6 +78,7 @@ def index_viewer(request, index_id=None):
                     "id": f"index_{idx.id}",
                     "dates": dates,
                     "values": vals,
+                    "unit": idx.unit or "Index",
                 })
 
     # === NOUVEAU : Gestion des PRODUITS ===
@@ -152,6 +153,7 @@ def index_viewer(request, index_id=None):
                         "id": f"product_{product.id}",
                         "dates": dates,
                         "values": values,
+                        "unit": "€",
                     })
 
     # === NOUVEAU : Gestion des PIÈCES ===
@@ -213,6 +215,7 @@ def index_viewer(request, index_id=None):
                         "id": f"part_{part.id}",
                         "dates": dates,
                         "values": values,
+                        "unit": "€",
                     })
 
     # Calcul des statistiques si toutes les dates sont fournies

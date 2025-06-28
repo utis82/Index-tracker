@@ -1261,29 +1261,30 @@
                 const isMultipleElements = seriesData.length > 1;
                 const colors = getThemeColors();
 
-                // 🎨 Get unit of first element if single element
+                // 🎨 Détermination intelligente du titre de l'axe Y avec unité
                 let yAxisTitle = 'Value';
+                let shouldNormalize = false;
+
                 if (!isMultipleElements && seriesData[0]) {
-                    // Determine element type and its unit
-                    if (seriesData[0].name && seriesData[0].name.includes('📊')) {
-                        // It's an index
-                        {% if user_favorites %}
-                            const favorites = [
-                                {% for idx in user_favorites %}
-                                    {id: {{ idx.id }}, name: "{{ idx.name|escapejs }}", unit: "{{ idx.unit|default:'Index'|escapejs }}"},
-                                {% endfor %}
-                            ];
-                            const currentSerie = seriesData[0].name.replace('📊 ', '');
-                            const indexInfo = favorites.find(f => f.name === currentSerie);
-                            if (indexInfo && indexInfo.unit && indexInfo.unit !== 'Index') {
-                                yAxisTitle = indexInfo.unit;
-                            }
-                        {% endif %}
-                    } else if (seriesData[0].name && (seriesData[0].name.includes('📦') || seriesData[0].name.includes('🔧'))) {
-                        // It's a product or part
-                        yAxisTitle = 'Price (€)';
+                    // Un seul élément sélectionné - utiliser son unité spécifique
+                    if (seriesData[0].unit) {
+                        yAxisTitle = `Value (${seriesData[0].unit})`;
+                    }
+                    shouldNormalize = false;
+                } else if (isMultipleElements) {
+                    // Plusieurs éléments - vérifier s'ils ont tous la même unité
+                    const units = [...new Set(seriesData.map(s => s.unit).filter(u => u))];
+                    if (units.length === 1 && units[0]) {
+                        // Même unité pour tous = afficher l'unité, PAS de normalisation
+                        yAxisTitle = `Value (${units[0]})`;
+                        shouldNormalize = false;
+                    } else {
+                        // Unités différentes = normalisation en Base 100
+                        yAxisTitle = 'Base 100';
+                        shouldNormalize = true;
                     }
                 }
+
 
                 const traces = seriesData.map((serie, index) => {
                     const traceColors = ['#3b82f6', '#10b981', '#f59e0b'];
@@ -1294,12 +1295,11 @@
                     if (values.length === 0 || dates.length === 0) {
                         return null;
                     }
-
-                    if (isMultipleElements && values.length > 0) {
+                   
+                    if (shouldNormalize && values.length > 0) {
                         const baseValue = values[0];
                         if (baseValue !== 0) {
                             values = values.map(v => (v / baseValue) * 100);
-                            yAxisTitle = 'Base 100';
                         }
                     }
 
@@ -1333,16 +1333,23 @@
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     paper_bgcolor: colors.paperBg,
                     xaxis: { 
-                        showgrid: true, 
+                        showgrid: true,
+                        showline: true,
+                        linecolor: colors.textColor,
                         gridcolor: colors.gridColor,
                         zeroline: false,
                         tickformat: '%Y-%m-%d',
                         tickfont: { color: colors.textColor, size: 11 }
+                        
+                                  
+                        
                     },
                     yaxis: { 
                         showgrid: true, 
                         gridcolor: colors.gridColor,
-                        zeroline: true,
+                        showline: true,
+                        linecolor: colors.textColor,
+                        zeroline: false,
                         zerolinecolor: colors.zerolineColor,
                         title: { 
                             text: yAxisTitle, 
