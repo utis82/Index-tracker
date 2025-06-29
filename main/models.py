@@ -1,8 +1,15 @@
 from django.db import models
 from django.contrib.auth.models import User
+import random
+import string
+from datetime import datetime, timedelta
+from django.utils import timezone
+
 
 class Product(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='products')
+    user = models.ForeignKey(User,
+                             on_delete=models.CASCADE,
+                             related_name='products')
     name = models.CharField(max_length=100)
     reference_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -14,15 +21,20 @@ class Product(models.Model):
     def __str__(self):
         return f"📦 {self.name}"
 
+
 # 🧱 Modèle Part avec prix de référence
 class Part(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='parts')
+    product = models.ForeignKey(Product,
+                                on_delete=models.CASCADE,
+                                related_name='parts')
     name = models.CharField(max_length=100)
     reference_date = models.DateField()
-    reference_price = models.FloatField("Prix de référence (€)", help_text="Prix à la date de référence")
+    reference_price = models.FloatField(
+        "Prix de référence (€)", help_text="Prix à la date de référence")
 
     def __str__(self):
         return f"🔹 {self.name} ({self.product.name}) - {self.reference_price}€"
+
 
 class Index(models.Model):
     name = models.CharField(max_length=100)
@@ -32,14 +44,19 @@ class Index(models.Model):
     def __str__(self):
         return self.name
 
+
 class IndexValue(models.Model):
     index = models.ForeignKey(Index, on_delete=models.CASCADE)
-    part = models.ForeignKey(Part, null=True, blank=True, on_delete=models.CASCADE)
+    part = models.ForeignKey(Part,
+                             null=True,
+                             blank=True,
+                             on_delete=models.CASCADE)
     value = models.FloatField()
     date = models.DateField()
 
     def __str__(self):
         return f"{self.index.name} - {self.date}: {self.value}"
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -49,9 +66,15 @@ class UserProfile(models.Model):
         ('pack_10', 'Pack 10 index'),
         ('premium', 'Premium'),
     ]
-    subscription_plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default='free')
+    subscription_plan = models.CharField(max_length=20,
+                                         choices=PLAN_CHOICES,
+                                         default='free')
     favorite_indexes = models.ManyToManyField(Index, blank=True)
-    primary_index = models.ForeignKey(Index, null=True, blank=True, on_delete=models.SET_NULL, related_name='users_with_primary_index')
+    primary_index = models.ForeignKey(Index,
+                                      null=True,
+                                      blank=True,
+                                      on_delete=models.SET_NULL,
+                                      related_name='users_with_primary_index')
     primary_index_change_count = models.PositiveIntegerField(default=0)
 
     def index_limit(self):
@@ -76,19 +99,56 @@ class UserProfile(models.Model):
     def can_modify_favorites(self):
         return self.primary_index_change_count < self.change_limit()
 
+
 # 🧩 Modèle Slice
 class Slice(models.Model):
-    part = models.ForeignKey(Part, on_delete=models.CASCADE, related_name='slices')
-    reference_date = models.DateField("Date de référence", null=True, blank=True)
-    COMPONENT_TYPE_CHOICES = [
-        ('fixed', 'Fixe (non indexé)'),
-        ('indexed', 'Indexé')
-    ]
-    component_type = models.CharField(max_length=10, choices=COMPONENT_TYPE_CHOICES)
+    part = models.ForeignKey(Part,
+                             on_delete=models.CASCADE,
+                             related_name='slices')
+    reference_date = models.DateField("Date de référence",
+                                      null=True,
+                                      blank=True)
+    COMPONENT_TYPE_CHOICES = [('fixed', 'Fixe (non indexé)'),
+                              ('indexed', 'Indexé')]
+    component_type = models.CharField(max_length=10,
+                                      choices=COMPONENT_TYPE_CHOICES)
     percentage = models.FloatField(null=True, blank=True)
     fixed_amount = models.FloatField(null=True, blank=True)
-    index = models.ForeignKey(Index, on_delete=models.SET_NULL, null=True, blank=True)
-    label = models.CharField(max_length=100, help_text="Nom de la tranche (ex: énergie, transport...)")
+    index = models.ForeignKey(Index,
+                              on_delete=models.SET_NULL,
+                              null=True,
+                              blank=True)
+    label = models.CharField(
+        max_length=100,
+        help_text="Nom de la tranche (ex: énergie, transport...)")
 
     def __str__(self):
         return f"🔸 {self.label} ({self.part.name})"
+
+
+class EmailVerification(models.Model):
+    """Modèle pour stocker les codes de vérification email"""
+    user = models.OneToOneField(User,
+                                on_delete=models.CASCADE,
+                                related_name='email_verification')
+    verification_code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Vérification {self.user.username} - {self.verification_code}"
+
+    @classmethod
+    def generate_code(cls):
+        """Génère un code à 6 chiffres"""
+        return ''.join(random.choices(string.digits, k=6))
+
+    def is_expired(self):
+        """Vérifie si le code a expiré (15 minutes)"""
+        expiry_time = self.created_at + timedelta(minutes=15)
+        return timezone.now() > expiry_time
+
+    def save(self, *args, **kwargs):
+        if not self.verification_code:
+            self.verification_code = self.generate_code()
+        super().save(*args, **kwargs)

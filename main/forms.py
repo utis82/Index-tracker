@@ -5,6 +5,7 @@ from crispy_forms.layout import Layout, Row, Column, Div
 from .models import Product, Part, Slice
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 
 
 # ------------------------
@@ -183,6 +184,7 @@ class CustomUserCreationForm(UserCreationForm):
 # 🔹 Contact Form
 # ------------------------
 
+
 class ContactForm(forms.Form):
     name = forms.CharField(
         max_length=100,
@@ -207,3 +209,68 @@ class ContactForm(forms.Form):
             'placeholder': 'Décrivez votre question ou problème...',
             'rows': 5
         }))
+
+
+# ------------------------
+# 🔹 Email Verification Forms
+# ------------------------
+
+
+class EmailVerificationForm(forms.Form):
+    """Formulaire pour saisir le code de vérification"""
+    verification_code = forms.CharField(
+        max_length=6,
+        min_length=6,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'form-input text-center',
+                'placeholder': '000000',
+                'style': 'font-size: 1.5rem; letter-spacing: 0.5rem;',
+                'maxlength': '6',
+                'autocomplete': 'off'
+            }),
+        label="Code de vérification")
+
+    def clean_verification_code(self):
+        code = self.cleaned_data['verification_code']
+        if not code.isdigit():
+            raise ValidationError(
+                'Le code doit contenir uniquement des chiffres.')
+        return code
+
+
+class ResendCodeForm(forms.Form):
+    """Formulaire pour renvoyer un code"""
+    email = forms.EmailField(widget=forms.HiddenInput())
+
+
+# Modifiez votre CustomUserCreationForm existant pour désactiver le compte par défaut
+class CustomUserCreationForm(UserCreationForm):
+    email = forms.EmailField(required=True, label="Adresse email")
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "password1", "password2"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in self.fields:
+            field = self.fields[field_name]
+            field.widget.attrs['class'] = 'form-input'
+            field.widget.attrs['placeholder'] = field.label
+
+    def clean_email(self):
+        """Vérifier que l'email n'est pas déjà utilisé"""
+        email = self.cleaned_data['email']
+        if User.objects.filter(email=email).exists():
+            raise ValidationError('Cette adresse email est déjà utilisée.')
+        return email
+
+    def save(self, commit=True):
+        """Créer le compte mais le désactiver jusqu'à vérification"""
+        user = super().save(commit=False)
+        user.email = self.cleaned_data['email']
+        user.is_active = False  # Désactiver jusqu'à vérification
+        if commit:
+            user.save()
+        return user

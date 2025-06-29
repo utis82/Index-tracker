@@ -3,16 +3,22 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User  # 🔥 AJOUT IMPORTANT
 from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.http import require_POST
 from django.core.mail import send_mail
 from django.conf import settings
-from datetime import datetime, timedelta
-from main.models import Index, IndexValue, Product, Part, Slice
+from django.contrib import messages  # 🔥 AJOUT IMPORTANT
+from django.utils import timezone  # 🔥 AJOUT IMPORTANT
+
+# Imports de votre app
+from main.models import Index, IndexValue, Product, Part, Slice, EmailVerification  # 🔥 AJOUT EmailVerification
 from main.utils import get_user_index_data
-from main.forms import CustomUserCreationForm, ContactForm
+from main.forms import CustomUserCreationForm, ContactForm, EmailVerificationForm, ResendCodeForm  # 🔥 AJOUTS
+
+# Imports Python standard
 import json
-from datetime import date as datetime_date
+from datetime import datetime, timedelta, date as datetime_date
 
 
 @login_required
@@ -38,32 +44,47 @@ def dashboard(request):
         def get_value_x_days_ago(days):
             target = latest_date - timedelta(days=days)
             margin = timedelta(days=7)
-            candidates = [v.value for v in values if abs(v.date - target) <= margin]
+            candidates = [
+                v.value for v in values if abs(v.date - target) <= margin
+            ]
             return candidates[0] if candidates else None
 
         def variation(past_val):
-            return round(((current_price - past_val) / past_val) * 100, 2) if past_val else None
+            return round(((current_price - past_val) / past_val) *
+                         100, 2) if past_val else None
 
         val_1m = get_value_x_days_ago(30)
         val_6m = get_value_x_days_ago(180)
         val_1y = get_value_x_days_ago(365)
 
         charts.append({
-            "id": index.id,
-            "name": index.name,
-            "price": round(current_price, 2),
-            "variation_1m": variation(val_1m),
-            "variation_6m": variation(val_6m),
-            "variation_1y": variation(val_1y),
-            "mini_dates": json.dumps([d.strftime("%Y-%m-%d") for d in dates[-30:]]),
-            "mini_values": json.dumps(val[-30:]),
-            "last_update": latest_date.strftime("%Y-%m-%d"),
-            "unit": index.unit, 
-            "category": index.category,
+            "id":
+            index.id,
+            "name":
+            index.name,
+            "price":
+            round(current_price, 2),
+            "variation_1m":
+            variation(val_1m),
+            "variation_6m":
+            variation(val_6m),
+            "variation_1y":
+            variation(val_1y),
+            "mini_dates":
+            json.dumps([d.strftime("%Y-%m-%d") for d in dates[-30:]]),
+            "mini_values":
+            json.dumps(val[-30:]),
+            "last_update":
+            latest_date.strftime("%Y-%m-%d"),
+            "unit":
+            index.unit,
+            "category":
+            index.category,
         })
 
     # === PRODUCT CHARTS (nouveau) ===
-    products = Product.objects.filter(user=request.user).prefetch_related("parts__slices__index")
+    products = Product.objects.filter(
+        user=request.user).prefetch_related("parts__slices__index")
     product_charts = []
 
     try:
@@ -81,35 +102,49 @@ def dashboard(request):
         # Calculer la variation depuis la date de référence
         variation_since_ref = None
         if reference_price and reference_price > 0:
-            variation_since_ref = round(((current_price - reference_price) / reference_price) * 100, 2)
+            variation_since_ref = round(
+                ((current_price - reference_price) / reference_price) * 100, 2)
 
         # Générer les données pour le mini-graphique
-        mini_dates, mini_values = generate_product_mini_chart_data(product, index_data)
+        mini_dates, mini_values = generate_product_mini_chart_data(
+            product, index_data)
 
         # Trouver la dernière date de mise à jour
         last_update = get_product_last_update(product, index_data)
 
         product_charts.append({
-            "id": product.id,
-            "name": product.name,
-            "reference_price": round(reference_price, 2) if reference_price else 0,
-            "current_price": round(current_price, 2),
-            "reference_date": product.reference_date.strftime("%Y-%m-%d"),
-            "variation_since_ref": variation_since_ref,
-            "mini_dates": json.dumps(mini_dates),
-            "mini_values": json.dumps(mini_values),
-            "last_update": last_update,
+            "id":
+            product.id,
+            "name":
+            product.name,
+            "reference_price":
+            round(reference_price, 2) if reference_price else 0,
+            "current_price":
+            round(current_price, 2),
+            "reference_date":
+            product.reference_date.strftime("%Y-%m-%d"),
+            "variation_since_ref":
+            variation_since_ref,
+            "mini_dates":
+            json.dumps(mini_dates),
+            "mini_values":
+            json.dumps(mini_values),
+            "last_update":
+            last_update,
         })
 
     # Favoris IDs pour les étoiles
     favorite_ids = [index.id for index in favorites]
 
-    return render(request, "dashboard.html", {
-        "charts": charts,
-        "product_charts": product_charts,  # ✨ NOUVEAU
-        "subscription": user_profile.subscription_plan,
-        "favorite_ids": favorite_ids,
-    })
+    return render(
+        request,
+        "dashboard.html",
+        {
+            "charts": charts,
+            "product_charts": product_charts,  # ✨ NOUVEAU
+            "subscription": user_profile.subscription_plan,
+            "favorite_ids": favorite_ids,
+        })
 
 
 def calculate_product_current_price(product, index_data):
@@ -118,7 +153,8 @@ def calculate_product_current_price(product, index_data):
     today = datetime_date.today()
 
     for part in product.parts.all():
-        part_current_price = calculate_part_price_at_date(part, today, index_data)
+        part_current_price = calculate_part_price_at_date(
+            part, today, index_data)
         total_price += part_current_price
 
     return total_price
@@ -129,7 +165,8 @@ def calculate_part_price_at_date(part, target_date, index_data):
     total_price = 0
 
     for slice_obj in part.slices.all():
-        slice_reference_value = part.reference_price * (slice_obj.percentage / 100)
+        slice_reference_value = part.reference_price * (slice_obj.percentage /
+                                                        100)
 
         if slice_obj.component_type == 'indexed' and slice_obj.index_id and slice_obj.percentage:
             # Calcul pour tranches indexées
@@ -139,7 +176,9 @@ def calculate_part_price_at_date(part, target_date, index_data):
             # Chercher la valeur la plus proche de target_date
             current_val = None
             if series:
-                available_dates = [d for d in series.keys() if d <= target_date]
+                available_dates = [
+                    d for d in series.keys() if d <= target_date
+                ]
                 if available_dates:
                     closest_date = max(available_dates)
                     current_val = series.get(closest_date)
@@ -187,7 +226,8 @@ def generate_product_mini_chart_data(product, index_data):
             if current_date.month == 12:
                 current_date = datetime_date(current_date.year + 1, 1, 1)
             else:
-                current_date = datetime_date(current_date.year, current_date.month + 1, 1)
+                current_date = datetime_date(current_date.year,
+                                             current_date.month + 1, 1)
 
         return dates, values
 
@@ -195,7 +235,10 @@ def generate_product_mini_chart_data(product, index_data):
     all_dates = set()
     for index_id in all_index_ids:
         if index_id in index_data:
-            index_dates = [d for d in index_data[index_id].keys() if d >= product.reference_date]
+            index_dates = [
+                d for d in index_data[index_id].keys()
+                if d >= product.reference_date
+            ]
             all_dates.update(index_dates)
 
     if not all_dates:
@@ -249,10 +292,12 @@ def contact_view(request):
 
         # Validation basique
         if not all([name, email, subject, message]):
-            return JsonResponse({
-                'status': 'error', 
-                'message': 'Tous les champs sont requis'
-            }, status=400)
+            return JsonResponse(
+                {
+                    'status': 'error',
+                    'message': 'Tous les champs sont requis'
+                },
+                status=400)
 
         # Construction du message email
         email_subject = f"[IndexTracker Contact] {subject}"
@@ -281,15 +326,21 @@ Utilisateur connecté: {request.user.username if request.user.is_authenticated e
         )
 
         return JsonResponse({
-            'status': 'success',
-            'message': 'Votre message a été envoyé avec succès!'
+            'status':
+            'success',
+            'message':
+            'Votre message a été envoyé avec succès!'
         })
 
     except Exception as e:
-        return JsonResponse({
-            'status': 'error',
-            'message': 'Une erreur est survenue lors de l\'envoi. Veuillez réessayer.'
-        }, status=500)
+        return JsonResponse(
+            {
+                'status':
+                'error',
+                'message':
+                'Une erreur est survenue lors de l\'envoi. Veuillez réessayer.'
+            },
+            status=500)
 
 
 # Reste du code existant (login_view, register_view, etc.)
@@ -321,14 +372,41 @@ def upload_excel(request):
 
 
 def register_view(request):
+    """Vue d'inscription modifiée pour envoyer un code de vérification"""
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
+            # Créer l'utilisateur (désactivé par défaut)
             user = form.save()
-            login(request, user)
-            return redirect("main:dashboard")
+
+            # Créer le code de vérification
+            verification, created = EmailVerification.objects.get_or_create(
+                user=user)
+            if not created:
+                # Si l'objet existe déjà, générer un nouveau code
+                verification.verification_code = EmailVerification.generate_code(
+                )
+                verification.created_at = timezone.now()
+                verification.is_verified = False
+                verification.save()
+
+            # Envoyer l'email de vérification
+            if send_verification_email(user, verification.verification_code):
+                messages.success(
+                    request,
+                    'Un code de vérification a été envoyé à votre adresse email.'
+                )
+                return redirect('main:verify_email', user_id=user.id)
+            else:
+                messages.error(
+                    request,
+                    'Erreur lors de l\'envoi de l\'email. Veuillez réessayer.')
+                user.delete(
+                )  # Supprimer l'utilisateur si l'email n'a pas pu être envoyé
+
     else:
         form = CustomUserCreationForm()
+
     return render(request, "register.html", {"form": form})
 
 
@@ -369,8 +447,10 @@ def choose_primary_index(request):
                 if user_profile.primary_index_change_count >= max_changes:
                     return render(
                         request, "choose_primary_index.html", {
-                            "indexes": Index.objects.all(),
-                            "error": "Vous avez atteint la limite de modifications."
+                            "indexes":
+                            Index.objects.all(),
+                            "error":
+                            "Vous avez atteint la limite de modifications."
                         })
                 user_profile.primary_index = new_index
                 user_profile.primary_index_change_count += 1
@@ -382,3 +462,113 @@ def choose_primary_index(request):
             "indexes": Index.objects.all(),
             "current_index": user_profile.primary_index
         })
+
+
+def verify_email(request, user_id):
+    """Vue pour vérifier le code email"""
+    try:
+        user = User.objects.get(id=user_id, is_active=False)
+        verification = EmailVerification.objects.get(user=user)
+    except (User.DoesNotExist, EmailVerification.DoesNotExist):
+        messages.error(request, 'Lien de vérification invalide.')
+        return redirect('main:register')
+
+    if verification.is_verified:
+        messages.info(request, 'Votre compte est déjà vérifié.')
+        return redirect('main:login')
+
+    if request.method == "POST":
+        form = EmailVerificationForm(request.POST)
+        if form.is_valid():
+            code = form.cleaned_data['verification_code']
+
+            if verification.is_expired():
+                messages.error(request,
+                               'Le code a expiré. Demandez un nouveau code.')
+            elif verification.verification_code == code:
+                # Code correct - activer le compte
+                user.is_active = True
+                user.save()
+                verification.is_verified = True
+                verification.save()
+
+                messages.success(request,
+                                 'Votre compte a été vérifié avec succès !')
+
+                # Connecter automatiquement l'utilisateur
+                login(request, user)
+                return redirect('main:dashboard')
+            else:
+                messages.error(request, 'Code incorrect. Veuillez réessayer.')
+    else:
+        form = EmailVerificationForm()
+
+    return render(
+        request, "verify_email.html", {
+            "form": form,
+            "user": user,
+            "email": user.email,
+            "is_expired": verification.is_expired()
+        })
+
+
+def resend_verification_code(request, user_id):
+    """Vue pour renvoyer un code de vérification"""
+    try:
+        user = User.objects.get(id=user_id, is_active=False)
+        verification = EmailVerification.objects.get(user=user)
+    except (User.DoesNotExist, EmailVerification.DoesNotExist):
+        messages.error(request, 'Utilisateur non trouvé.')
+        return redirect('main:register')
+
+    if verification.is_verified:
+        messages.info(request, 'Votre compte est déjà vérifié.')
+        return redirect('main:login')
+
+    # Générer un nouveau code
+    verification.verification_code = EmailVerification.generate_code()
+    verification.created_at = timezone.now()
+    verification.save()
+
+    # Envoyer le nouveau code
+    if send_verification_email(user, verification.verification_code):
+        messages.success(
+            request, 'Un nouveau code a été envoyé à votre adresse email.')
+    else:
+        messages.error(
+            request,
+            'Erreur lors de l\'envoi de l\'email. Veuillez réessayer.')
+
+    return redirect('main:verify_email', user_id=user.id)
+
+
+def send_verification_email(user, code):
+    """Fonction utilitaire pour envoyer l'email de vérification"""
+    subject = 'Vérification de votre compte IndexTracker'
+    message = f"""
+Bonjour {user.username},
+
+Merci de vous être inscrit sur IndexTracker !
+
+Votre code de vérification est : {code}
+
+Ce code expire dans 15 minutes.
+
+Si vous n'avez pas créé de compte, ignorez cet email.
+
+Cordialement,
+L'équipe IndexTracker
+    """
+
+    try:
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+        return True
+    except Exception as e:
+        print(f"Erreur envoi email: {e}")
+        return False

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Email Verification - IndexTracker{% endblock %}
+
+{% block content %}
+<div class="hero-container">
+  <div class="hero-content fade-in">
+    <h1 class="hero-title">Verify your email address</h1>
+    <p class="hero-subtitle">
+      A verification code has been sent to<br>
+      <strong style="color:#3b82f6;">{{ email }}</strong>
+    </p>
+
+    {% if messages %}
+      {% for message in messages %}
+        <p style="color:{% if message.tags == 'success' %}green{% elif message.tags == 'error' %}red{% else %}#3b82f6{% endif %}; margin-bottom: 1rem; text-align: center;">
+          {{ message }}
+        </p>
+      {% endfor %}
+    {% endif %}
+
+    <div class="login-card">
+      <form method="POST" class="login-form">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="{{ form.verification_code.id_for_label }}">Verification code</label>
+          <input type="text" 
+                 name="{{ form.verification_code.name }}" 
+                 id="{{ form.verification_code.id_for_label }}" 
+                 required 
+                 class="form-input" 
+                 placeholder="000000"
+                 maxlength="6"
+                 autocomplete="off"
+                 style="text-align: center; font-size: 1.4rem; letter-spacing: 0.5rem; font-family: monospace;">
+          {% if form.verification_code.errors %}
+            <p style="color: red; font-size: 0.9rem; margin-top: 0.5rem;">{{ form.verification_code.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <button type="submit" class="cta-button" style="width: 100%; margin-top: 1rem;">
+          ✅ Verify my account
+        </button>
+      </form>
+    </div>
+
+    <!-- Additional options -->
+    <div style="text-align: center; margin-top: 1.5rem;">
+      {% if is_expired %}
+        <p style="color: red; margin-bottom: 1rem;">⏰ Your code has expired</p>
+        <a href="{% url 'main:resend_verification_code' user.id %}" 
+           class="cta-button" 
+           style="display: inline-block; padding: 0.5rem 1rem; text-decoration: none; background-color: #6b7280;">
+          🔄 Send new code
+        </a>
+      {% else %}
+        <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 0.5rem;">
+          Didn't receive the code?
+        </p>
+        <a href="{% url 'main:resend_verification_code' user.id %}" 
+           style="color: #3b82f6; font-weight: 600; text-decoration: none;">
+          Resend code
+        </a>
+      {% endif %}
+    </div>
+
+    <p style="text-align: center; margin-top: 1rem;">
+      <a href="{% url 'main:register' %}" style="color: #6b7280; text-decoration: none;">
+        ← Back to registration
+      </a>
+    </p>
+
+    <!-- Discrete tips -->
+    <div style="margin-top: 2rem; padding: 1rem; background-color: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 4px solid #3b82f6;">
+      <p style="margin: 0; font-size: 0.9rem; color: #4b5563;">
+        <strong>💡 Tips:</strong> Check your spam folder • Code expires in 15 minutes • 6 digits only
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const codeInput = document.getElementById('{{ form.verification_code.id_for_label }}');
+    if (codeInput) {
+        // Auto-focus
+        codeInput.focus();
+        
+        // Empêcher les caractères non-numériques
+        codeInput.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value.length > 6) {
+                this.value = this.value.slice(0, 6);
+            }
+        });
+        
+        // Auto-submit quand 6 chiffres sont entrés
+        codeInput.addEventListener('input', function(e) {
+            if (this.value.length === 6) {
+                setTimeout(() => {
+                    this.form.submit();
+                }, 500);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

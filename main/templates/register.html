@@ -1,49 +1,40 @@
 {% extends "base.html" %}
 {% load static %}
-
-{% block title %}Inscription{% endblock %}
-
+{% block title %}Sign Up{% endblock %}
 {% block content %}
 <div class="hero-container">
   <div class="hero-content fade-in">
-    <h1 class="hero-title">Créer un compte</h1>
-    <p class="hero-subtitle">Rejoignez notre plateforme pour suivre vos index et gérer vos coûts indexés.</p>
-
+    <h1 class="hero-title">Create an account</h1>
+    <p class="hero-subtitle">Join our platform to track your indexes and manage your indexed costs.</p>
     {% if form.errors %}
       <p style="color:red; margin-bottom: 1rem;">
-        Merci de corriger les erreurs ci-dessous.
+        Please correct the errors below.
       </p>
     {% endif %}
-
     <div class="login-card">
       <form method="POST" class="login-form">
         {% csrf_token %}
         <div class="form-group">
-          <label for="{{ form.username.id_for_label }}">Nom d'utilisateur</label>
+          <label for="{{ form.username.id_for_label }}">Username</label>
           {{ form.username }}
         </div>
-
         <div class="form-group">
-          <label for="{{ form.email.id_for_label }}">Adresse email</label>
+          <label for="{{ form.email.id_for_label }}">Email address</label>
           {{ form.email }}
         </div>
-
         <div class="form-group">
-          <label for="{{ form.password1.id_for_label }}">Mot de passe</label>
+          <label for="{{ form.password1.id_for_label }}">Password</label>
           {{ form.password1 }}
         </div>
-
         <div class="form-group">
-          <label for="{{ form.password2.id_for_label }}">Confirmer le mot de passe</label>
+          <label for="{{ form.password2.id_for_label }}">Confirm password</label>
           {{ form.password2 }}
         </div>
-
-        <button type="submit" class="cta-button" style="width: 100%; margin-top: 1rem;">S'inscrire</button>
+        <button type="submit" class="cta-button" style="width: 100%; margin-top: 1rem;">Sign up</button>
       </form>
     </div>
-
     <p style="text-align:center; margin-top: 1rem;">
-      Déjà inscrit ? <a href="{% url 'main:login' %}" style="color:#3b82f6; font-weight: 600;">Se connecter</a>
+      Already have an account? <a href="{% url 'main:login' %}" style="color:#3b82f6; font-weight: 600;">Sign in</a>
     </p>
   </div>
 </div>
