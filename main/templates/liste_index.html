@@ -327,6 +327,18 @@
   body.dark-mode .table-container::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.5);
   }
+
+  /* NOUVEAU : Style pour le modal d'erreur seulement */
+  .modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  }
+
+  .modal-header {
+    border-radius: 15px 15px 0 0;
+    border-bottom: none;
+  }
 </style>
 
 <!-- JS global -->
@@ -340,7 +352,7 @@
     });
   });
 
-  // Fonction globale utilisée par les formulaires
+  // FONCTION MODIFIÉE : gestion des limites
   function toggleFavorite(event, indexId) {
     event.stopPropagation();
     const button = document.querySelector(`.favorite-btn[data-index-id="${indexId}"]`);
@@ -352,13 +364,32 @@
       body: formData,
       headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
-    .then(response => response.json())
+    .then(response => {
+      console.log('Response status:', response.status);
+      return response.json();
+    })
     .then(data => {
-      button.textContent = data.is_favorite ? "★" : "☆";
+      console.log('Response data:', data);
+      if (data.error) {
+        // Afficher une alert simple pour l'instant
+        alert(data.message + (data.upgrade_message ? '\n\n' + data.upgrade_message : ''));
+      } else {
+        // Comportement normal
+        button.textContent = data.is_favorite ? "★" : "☆";
+        console.log('Success:', data.message);
+      }
     })
     .catch(error => {
       console.error('Error:', error);
+      alert('An error occurred. Please try again.');
     });
+  }
+
+  // NOUVELLE FONCTION : Modal d'erreur pour les limites (simplifiée)
+  function showLimitModal(data) {
+    // Pour l'instant, utilisons juste une alert améliorée
+    const message = `${data.title}\n\n${data.message}\n\n${data.upgrade_message}\n\nCurrent Plan: ${data.current_plan}\nIndexes Used: ${data.current_count}/${data.max_indexes}`;
+    alert(message);
   }
   
   // Update charts when dark mode changes

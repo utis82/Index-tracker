@@ -10,6 +10,7 @@ from main.views.chart_views import (index_viewer, toggle_favorite_ajax,
 from main.views.user_views import toggle_favorite
 from main.views.prix_indexes_views import prix_indexes_view, delete_structure, get_structure_data
 from main.views import prix_indexes_views, base_views
+from main.views.user_views import get_user_plan_status
 
 app_name = 'main'
 urlpatterns = [
@@ -31,9 +32,7 @@ urlpatterns = [
     path('toggle-favorite/<int:index_id>/',
          toggle_favorite,
          name='toggle_favorite'),
-    path('choose-primary-index/',
-         choose_primary_index,
-         name='choose_primary_index'),
+   
     path('prix-indexes/', prix_indexes_view, name='prix_indexes'),
     path('delete-structure/<int:pk>/',
          delete_structure,
@@ -61,4 +60,9 @@ urlpatterns = [
          name='get_index_data'),
     path('api/analysis/export/', export_analysis_data, name='export_analysis'),
     path('contact/', contact_view, name='contact'),
+    path('upgrade-plan/', base_views.upgrade_plan_view, name='upgrade_plan'),
+    path('api/upgrade-plan/',
+         base_views.upgrade_plan_api,
+         name='upgrade_plan_api'),
+    path('api/plan-status/', get_user_plan_status, name='plan_status'),
 ]

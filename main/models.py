@@ -57,39 +57,39 @@ class IndexValue(models.Model):
     def __str__(self):
         return f"{self.index.name} - {self.date}: {self.value}"
 
+        # Dans votre models.py, remplacez la classe UserProfile par :
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     PLAN_CHOICES = [
-        ('free', 'Gratuit'),
-        ('pack_5', 'Pack 5 index'),
-        ('pack_10', 'Pack 10 index'),
+        ('free', 'Free'),
+        ('5_index', '5 Index'),
+        ('10_index', '10 Index'),
         ('premium', 'Premium'),
     ]
     subscription_plan = models.CharField(max_length=20,
                                          choices=PLAN_CHOICES,
                                          default='free')
     favorite_indexes = models.ManyToManyField(Index, blank=True)
-    primary_index = models.ForeignKey(Index,
-                                      null=True,
-                                      blank=True,
-                                      on_delete=models.SET_NULL,
-                                      related_name='users_with_primary_index')
-    primary_index_change_count = models.PositiveIntegerField(default=0)
+    # NOUVEAU : Compteur spécifique aux favoris
+    favorite_changes_count = models.PositiveIntegerField(default=0)
+
+    # SUPPRIMÉ : primary_index et primary_index_change_count
 
     def index_limit(self):
         return {
             'free': 1,
-            'pack_5': 5,
-            'pack_10': 10,
+            '5_index': 5,
+            '10_index': 10,
             'premium': float('inf')
         }[self.subscription_plan]
 
     def change_limit(self):
         return {
-            'free': 3,
-            'pack_5': 5,
-            'pack_10': 10,
+            'free': 4,
+            '5_index': 6,
+            '10_index': 11,
             'premium': float('inf')
         }[self.subscription_plan]
 
@@ -97,7 +97,7 @@ class UserProfile(models.Model):
         return self.favorite_indexes.count() < self.index_limit()
 
     def can_modify_favorites(self):
-        return self.primary_index_change_count < self.change_limit()
+        return self.favorite_changes_count < self.change_limit()
 
 
 # 🧩 Modèle Slice
