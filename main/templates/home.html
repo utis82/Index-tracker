@@ -209,6 +209,178 @@
   transform: translateY(-2px);
   box-shadow: 0 12px 40px rgba(14, 165, 233, 0.4);
 }
+
+/* Features section styles */
+.features-section {
+  padding: 80px 0;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.dark-mode .features-section {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+.features-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.features-intro {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.features-intro h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.dark-mode .features-intro h2 {
+  color: #f1f5f9;
+}
+
+.features-intro p {
+  font-size: 1.2rem;
+  color: #64748b;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.dark-mode .features-intro p {
+  color: #cbd5e1;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2.5rem;
+  margin-bottom: 4rem;
+}
+
+.feature-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
+  position: relative;
+  overflow: hidden;
+}
+
+.dark-mode .feature-card {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #0ea5e9, #3b82f6, #06b6d4);
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.dark-mode .feature-card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.feature-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  color: white;
+}
+
+.feature-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1rem;
+}
+
+.dark-mode .feature-title {
+  color: #f1f5f9;
+}
+
+.feature-description {
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.dark-mode .feature-description {
+  color: #cbd5e1;
+}
+
+.feature-benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.feature-benefits li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  color: #475569;
+}
+
+.dark-mode .feature-benefits li {
+  color: #94a3b8;
+}
+
+.feature-benefits li::before {
+  content: '✓';
+  color: #10b981;
+  font-weight: bold;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.feature-benefits li strong {
+  color: #1e293b;
+}
+
+.dark-mode .feature-benefits li strong {
+  color: #f1f5f9;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .features-intro h2 {
+    font-size: 2rem;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .feature-card {
+    padding: 2rem;
+  }
+}
 </style>
 
 <div class="hero-container">
@@ -277,6 +449,60 @@
     <a href="{% url 'main:register' %}" class="cta-button">Create an account</a>
   </div>
 </div>
+
+<!-- Features Section -->
+<section class="features-section">
+  <div class="features-container">
+    <div class="features-intro">
+      <h2>Optimize your financial index management</h2>
+      <p>Index Tracker is the application that optimize and simplify the management of your purchasing and financial indexes. Centralise your data, analyse your variations and trends, and perform better.</p>
+    </div>
+
+    <div class="features-grid">
+      <!-- Feature 1: Centralized Information -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i data-lucide="database"></i>
+        </div>
+        <h3 class="feature-title">Centralised, updated and shared information</h3>
+        <p class="feature-description">One single place for all your business indexes and price revision formulas, available everytime and everywhere</p>
+        <ul class="feature-benefits">
+          <li><strong>Time saving:</strong> avoid searching, compiling, understanding. Quickly find all the information you need.</li>
+          <li><strong>Data reliability:</strong> eliminate errors and duplication thanks to a single source of truth.</li>
+          <li><strong>Data sharing:</strong> optimise internal collaboration (between your teams and department) and simplify discussion with your suppliers and customers</li>
+        </ul>
+      </div>
+
+      <!-- Feature 2: Automated Analysis -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i data-lucide="activity"></i>
+        </div>
+        <h3 class="feature-title">Automated and reliable analysis</h3>
+        <p class="feature-description">Optimise all your analysis (trends, performance and key indicators) with a quick, robust and reliable tool.</p>
+        <ul class="feature-benefits">
+          <li><strong>See:</strong> display and share every indexes</li>
+          <li><strong>Analyse:</strong> calculate in two clicks you trend and variations over the time or between periods</li>
+          <li><strong>Act:</strong> check direct effect of index variation on your internal product cost or on your supplies. Act in consequences.</li>
+        </ul>
+      </div>
+
+      <!-- Feature 3: Performance -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i data-lucide="target"></i>
+        </div>
+        <h3 class="feature-title">Perform</h3>
+        <p class="feature-description">Fitted for finance, purchasing and commercial departments, from operational needs to Top Managers.</p>
+        <ul class="feature-benefits">
+          <li><strong>Save time:</strong> skip the searching and analysing time. Get ready to access everywhere at anytime a reliable information.</li>
+          <li><strong>Save money:</strong> know the market and negotiate on the right timing.</li>
+          <li><strong>Be leader:</strong> get ready and consistent for daily negociation to strategic decisions and forecasts</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
 
 <script>
 // Initialize Lucide icons after page load
