@@ -335,35 +335,54 @@
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.feature-benefits li {
+.feature-benefit-item {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-  font-size: 0.95rem;
-  color: #475569;
+  gap: 1rem;
 }
 
-.dark-mode .feature-benefits li {
-  color: #94a3b8;
-}
-
-.feature-benefits li::before {
+.feature-benefit-item::before {
   content: '✓';
   color: #10b981;
   font-weight: bold;
+  font-size: 1.1rem;
   flex-shrink: 0;
   margin-top: 0.1rem;
+  width: 20px;
+  text-align: center;
 }
 
-.feature-benefits li strong {
+.feature-benefit-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.feature-benefit-title {
   color: #1e293b;
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0 0 0.25rem 0;
+  line-height: 1.4;
 }
 
-.dark-mode .feature-benefits li strong {
+.dark-mode .feature-benefit-title {
   color: #f1f5f9;
+}
+
+.feature-benefit-description {
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.dark-mode .feature-benefit-description {
+  color: #cbd5e1;
 }
 
 /* Responsive */
@@ -466,11 +485,26 @@
         </div>
         <h3 class="feature-title">Centralised, updated and shared information</h3>
         <p class="feature-description">One single place for all your business indexes and price revision formulas, available everytime and everywhere</p>
-        <ul class="feature-benefits">
-          <li><strong>Time saving:</strong> avoid searching, compiling, understanding. Quickly find all the information you need.</li>
-          <li><strong>Data reliability:</strong> eliminate errors and duplication thanks to a single source of truth.</li>
-          <li><strong>Data sharing:</strong> optimise internal collaboration (between your teams and department) and simplify discussion with your suppliers and customers</li>
-        </ul>
+        <div class="feature-benefits">
+          <div class="feature-benefit-item">
+            <div class="feature-benefit-content">
+              <div class="feature-benefit-title">Time saving</div>
+              <div class="feature-benefit-description">avoid searching, compiling, understanding. Quickly find all the information you need.</div>
+            </div>
+          </div>
+          <div class="feature-benefit-item">
+            <div class="feature-benefit-content">
+              <div class="feature-benefit-title">Data reliability</div>
+              <div class="feature-benefit-description">eliminate errors and duplication thanks to a single source of truth.</div>
+            </div>
+          </div>
+          <div class="feature-benefit-item">
+            <div class="feature-benefit-content">
+              <div class="feature-benefit-title">Data sharing</div>
+              <div class="feature-benefit-description">optimise internal collaboration (between your teams and department) and simplify discussion with your suppliers and customers</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Feature 2: Automated Analysis -->
@@ -480,11 +514,26 @@
         </div>
         <h3 class="feature-title">Automated and reliable analysis</h3>
         <p class="feature-description">Optimise all your analysis (trends, performance and key indicators) with a quick, robust and reliable tool.</p>
-        <ul class="feature-benefits">
-          <li><strong>See:</strong> display and share every indexes</li>
-          <li><strong>Analyse:</strong> calculate in two clicks you trend and variations over the time or between periods</li>
-          <li><strong>Act:</strong> check direct effect of index variation on your internal product cost or on your supplies. Act in consequences.</li>
-        </ul>
+        <div class="feature-benefits">
+          <div class="feature-benefit-item">
+            <div class="feature-benefit-content">
+              <div class="feature-benefit-title">See</div>
+              <div class="feature-benefit-description">display and share every indexes</div>
+            </div>
+          </div>
+          <div class="feature-benefit-item">
+            <div class="feature-benefit-content">
+              <div class="feature-benefit-title">Analyse</div>
+              <div class="feature-benefit-description">calculate in two clicks you trend and variations over the time or between periods</div>
+            </div>
+          </div>
+          <div class="feature-benefit-item">
+            <div class="feature-benefit-content">
+              <div class="feature-benefit-title">Act</div>
+              <div class="feature-benefit-description">check direct effect of index variation on your internal product cost or on your supplies. Act in consequences.</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Feature 3: Performance -->
@@ -494,11 +543,26 @@
         </div>
         <h3 class="feature-title">Perform</h3>
         <p class="feature-description">Fitted for finance, purchasing and commercial departments, from operational needs to Top Managers.</p>
-        <ul class="feature-benefits">
-          <li><strong>Save time:</strong> skip the searching and analysing time. Get ready to access everywhere at anytime a reliable information.</li>
-          <li><strong>Save money:</strong> know the market and negotiate on the right timing.</li>
-          <li><strong>Be leader:</strong> get ready and consistent for daily negociation to strategic decisions and forecasts</li>
-        </ul>
+        <div class="feature-benefits">
+          <div class="feature-benefit-item">
+            <div class="feature-benefit-content">
+              <div class="feature-benefit-title">Save time</div>
+              <div class="feature-benefit-description">skip the searching and analysing time. Get ready to access everywhere at anytime a reliable information.</div>
+            </div>
+          </div>
+          <div class="feature-benefit-item">
+            <div class="feature-benefit-content">
+              <div class="feature-benefit-title">Save money</div>
+              <div class="feature-benefit-description">know the market and negotiate on the right timing.</div>
+            </div>
+          </div>
+          <div class="feature-benefit-item">
+            <div class="feature-benefit-content">
+              <div class="feature-benefit-title">Be leader</div>
+              <div class="feature-benefit-description">get ready and consistent for daily negociation to strategic decisions and forecasts</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
