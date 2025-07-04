@@ -39,7 +39,7 @@ class Part(models.Model):
 class Index(models.Model):
     name = models.CharField(max_length=100)
     unit = models.CharField(max_length=20, default="€/t")
-    category = models.CharField(max_length=50, default="Autre")
+    category = models.CharField(max_length=255, default="Autre")
 
     def __str__(self):
         return self.name
