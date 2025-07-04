@@ -3,8 +3,9 @@ from django.urls import path
 from main.views.base_views import (home, login_view, dashboard, register_view,
                                    upload_excel, logout_view, search_index,
                                    choose_primary_index, contact_view,
-                                   verify_email, resend_verification_code)
-from main.views.index_views import import_excel_view, liste_index_view
+                                   verify_email, resend_verification_code,
+                                   cleanup_duplicate_indexes)
+from main.views.index_views import liste_index_view
 from main.views.chart_views import (index_viewer, toggle_favorite_ajax,
                                     get_index_data_ajax, export_analysis_data)
 from main.views.user_views import toggle_favorite
@@ -13,6 +14,7 @@ from main.views import prix_indexes_views, base_views
 from main.views.user_views import get_user_plan_status
 
 app_name = 'main'
+
 urlpatterns = [
     path('', home, name='home'),
     path('login/', login_view, name='login'),
@@ -23,7 +25,7 @@ urlpatterns = [
          name='resend_verification_code'),
     path('dashboard/', dashboard, name='dashboard'),
     path('upload/', upload_excel, name='upload'),
-    path('index/import-excel/', import_excel_view, name='index_import_excel'),
+    path('index/import-excel/', upload_excel, name='index_import_excel'),
     path('liste-index/', liste_index_view, name='liste_index'),
     path('logout/', logout_view, name='logout'),
     path('search-index/', search_index, name='search_index'),
@@ -32,7 +34,6 @@ urlpatterns = [
     path('toggle-favorite/<int:index_id>/',
          toggle_favorite,
          name='toggle_favorite'),
-   
     path('prix-indexes/', prix_indexes_view, name='prix_indexes'),
     path('delete-structure/<int:pk>/',
          delete_structure,
@@ -46,12 +47,10 @@ urlpatterns = [
     path('get-part-data/<int:part_id>/',
          prix_indexes_views.get_part_data,
          name='get_part_data'),
-    # Index Viewer - nouvelle interface
     path('index-analysis/', index_viewer, name='index_analysis'),
     path('index-analysis/<int:index_id>/',
          index_viewer,
          name='index_analysis_with_id'),
-    # AJAX endpoints
     path('toggle_favorite/<int:index_id>/',
          toggle_favorite_ajax,
          name='toggle_favorite_ajax'),
@@ -65,4 +64,7 @@ urlpatterns = [
          base_views.upgrade_plan_api,
          name='upgrade_plan_api'),
     path('api/plan-status/', get_user_plan_status, name='plan_status'),
+    path('tools/cleanup-duplicates/',
+         cleanup_duplicate_indexes,
+         name='cleanup_duplicates'),
 ]

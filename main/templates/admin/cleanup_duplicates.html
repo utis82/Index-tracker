@@ -1,0 +1,214 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Nettoyage des doublons - Administration{% endblock %}
+
+{% block content %}
+<div class="content">
+    <h1>🧹 Nettoyage des index en doublon</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-danger{% else %}alert-info{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>📊 Analyse des doublons</h3>
+        </div>
+        <div class="card-body">
+            <div class="stats">
+                <div class="stat-item">
+                    <strong>{{ total_duplicates }}</strong> index en doublon détectés
+                </div>
+                <div class="stat-item">
+                    <strong>{{ estimated_cleanup }}</strong> valeurs à fusionner
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if duplicates %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>🔍 Doublons détectés (premiers 10)</h3>
+        </div>
+        <div class="card-body">
+            {% for clean_name, index_group in duplicates.items|slice:":10" %}
+            <div class="duplicate-group">
+                <h4>Groupe : {{ clean_name }}</h4>
+                <ul>
+                {% for index in index_group %}
+                    <li>
+                        <strong>{{ index.name }}</strong>
+                        ({{ index.values_count }} valeurs)
+                        {% if forloop.first %}
+                            <span class="badge badge-primary">Principal</span>
+                        {% else %}
+                            <span class="badge badge-warning">À fusionner</span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+
+            {% if duplicates|length > 10 %}
+            <p><em>... et {{ duplicates|length|add:"-10" }} autres groupes</em></p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>⚠️ Confirmation de nettoyage</h3>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <strong>Attention !</strong> Cette opération va :
+                <ul>
+                    <li>Fusionner tous les index en doublon</li>
+                    <li>Déplacer les valeurs vers l'index principal</li>
+                    <li>Supprimer les index vides</li>
+                    <li>Cette action est <strong>irréversible</strong></li>
+                </ul>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="confirm_cleanup" value="true">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir nettoyer tous les doublons ? Cette action est irréversible.')">
+                    🧹 Nettoyer tous les doublons
+                </button>
+                <a href="{% url 'admin:index' %}" class="btn btn-secondary">Annuler</a>
+            </form>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="alert alert-success">
+        <h4>✅ Aucun doublon détecté !</h4>
+        <p>Votre base de données est propre.</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.alert-warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+}
+
+.card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #ddd;
+    padding: 15px;
+    font-weight: bold;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.stats {
+    display: flex;
+    gap: 30px;
+}
+
+.stat-item {
+    padding: 10px;
+    background-color: #f1f3f4;
+    border-radius: 5px;
+}
+
+.duplicate-group {
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: #f8f9fa;
+}
+
+.duplicate-group h4 {
+    margin-top: 0;
+    color: #495057;
+}
+
+.badge {
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.badge-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    margin-right: 10px;
+    font-size: 14px;
+    font-weight: 400;
+    text-align: center;
+    text-decoration: none;
+    vertical-align: middle;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.btn-danger {
+    color: #fff;
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-secondary {
+    color: #6c757d;
+    background-color: transparent;
+    border-color: #6c757d;
+}
+
+.btn:hover {
+    opacity: 0.8;
+}
+</style>
+{% endblock %}

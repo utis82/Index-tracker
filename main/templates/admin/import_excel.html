@@ -1,14 +1,205 @@
 {% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Import Excel - Administration{% endblock %}
 
 {% block content %}
-  <h1>📥 Importer un fichier Excel (.xlsx)</h1>
+<div class="content">
+    <h1>📊 Import de fichier Excel</h1>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-danger{% else %}alert-info{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
 
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    <p>
-      <input type="file" name="excel_file" accept=".xlsx" required>
-    </p>
-    <button type="submit" class="default">Importer</button>
-  </form>
+    <div class="card">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="form-group mb-3">
+                    <label for="excel_file" class="form-label">
+                        <strong>📁 Sélectionner le fichier Excel :</strong>
+                    </label>
+                    <input type="file" 
+                           class="form-control" 
+                           id="excel_file" 
+                           name="excel_file" 
+                           accept=".xlsx,.xls" 
+                           required>
+                    <small class="form-text text-muted">
+                        Formats acceptés : .xlsx, .xls
+                    </small>
+                </div>
 
+                <!-- 🆕 NOUVELLE OPTION : Choix du mode d'import -->
+                <div class="form-group mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               id="replace_existing" 
+                               name="replace_existing" 
+                               value="true">
+                        <label class="form-check-label" for="replace_existing">
+                            <strong>🔄 Mode remplacement</strong>
+                        </label>
+                    </div>
+                    <small class="form-text text-muted">
+                        <strong>Si coché :</strong> Supprime toutes les anciennes valeurs et les remplace par les nouvelles<br>
+                        <strong>Si non coché :</strong> Ajoute les nouvelles valeurs et met à jour les existantes (recommandé)
+                    </small>
+                </div>
+
+                <div class="form-group mb-3">
+                    <button type="submit" class="btn btn-primary">
+                        📤 Importer le fichier
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3>ℹ️ Informations sur l'import</h3>
+        </div>
+        <div class="card-body">
+            <h4>📋 Format attendu :</h4>
+            <ul>
+                <li>Feuille Excel nommée "<strong>1. BDD</strong>"</li>
+                <li>Colonnes 1-8 : Métadonnées (Type, Source, Désignation, etc.)</li>
+                <li>Colonnes 9+ : Dates au format français (ex: mars-21, févr-24)</li>
+            </ul>
+
+            <h4>🔧 Modes d'import :</h4>
+            <ul>
+                <li><strong>Mode ajout (par défaut) :</strong> Ajoute les nouvelles données et met à jour les existantes</li>
+                <li><strong>Mode remplacement :</strong> Supprime complètement les anciennes données avant l'import</li>
+            </ul>
+
+            <h4>⚠️ Important :</h4>
+            <ul>
+                <li>L'import peut prendre plusieurs minutes selon la taille du fichier</li>
+                <li>Ne fermez pas la page pendant l'import</li>
+                <li>En cas d'erreur, vérifiez le format du fichier</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.alert-info {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+.card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #ddd;
+    padding: 15px;
+    font-weight: bold;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.form-control {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
+.form-check {
+    display: block;
+    min-height: 1.5rem;
+    padding-left: 1.5em;
+}
+
+.form-check-input {
+    width: 1em;
+    height: 1em;
+    margin-top: 0.25em;
+    margin-left: -1.5em;
+}
+
+.form-check-label {
+    margin-bottom: 0;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.42857143;
+    text-align: center;
+    text-decoration: none;
+    vertical-align: middle;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #004085;
+}
+
+.text-muted {
+    color: #6c757d;
+}
+</style>
 {% endblock %}
