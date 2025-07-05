@@ -8,178 +8,189 @@
   <div class="subscription-badge">🔐 {{ subscription|capfirst }}</div>
 </div>
 
-{% if charts %}
-  <div class="section-title">
-    <i data-lucide="chart-line" class="section-icon" style="width: 20px; height: 20px; color: #3b82f6;"></i> My Indexes
-  </div>
-
-<div class="card shadow-lg" style="border-radius: 16px; padding: 24px; background: white; margin-bottom: 2rem;">
-  <div class="table-responsive" style="overflow-x: auto;">
-    <table class="index-table" style="width: 100%; border-collapse: collapse;">
-
-      <thead>
-        <tr style="text-align: left; font-weight: 600; background-color: rgba(240, 248, 255, 0.6);">
-          <th style="padding: 12px;">Index</th>
-          <th style="padding: 12px;">Last Value</th>
-          <th style="padding: 12px;">Unit</th>
-          <th style="padding: 12px;">Δ 1 month</th>
-          <th style="padding: 12px;">Δ 6 months</th>
-          <th style="padding: 12px;">Δ 1 year</th>
-          <th style="padding: 12px;">Mini Chart</th>
-          <th style="padding: 12px;">Last Update</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in charts %}
-          <tr class="index-row" onclick="window.location.href='{% url 'main:index_viewer' item.id %}'" style="cursor: pointer;">
-            
-            <!-- Column 1: star + category icon + name -->
-            <td style="padding: 12px;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <form method="post"
-                      action="{% url 'main:toggle_favorite' item.id %}"
-                      class="favorite-form"
-                      onsubmit="event.preventDefault(); toggleFavorite(event, {{ item.id }});">
-                  {% csrf_token %}
-                  <button type="submit"
-                          class="favorite-btn"
-                          data-index-id="{{ item.id }}"
-                          title="Add or remove from favorites"
-                          style="font-size: 1.2rem; background: none; border: none; cursor: pointer; padding: 0; line-height: 1;">
-                    {% if item.id in favorite_ids %}★{% else %}☆{% endif %}
-                  </button>
-                </form>
-                
-                <!-- 🎨 NOUVELLES ICÔNES HARMONISÉES AVEC LISTE_INDEX -->
-                {% if item.category == "batiment" %}
-                  <i data-lucide="building-2" class="category-icon icon-building" title="Bâtiment et Construction" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% elif item.category == "energie" %}
-                  <i data-lucide="zap" class="category-icon icon-energy" title="Énergie" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% elif item.category == "matiere_premiere" %}
-                  <i data-lucide="tree-deciduous" class="category-icon icon-raw-material" title="Matières Premières" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% elif item.category == "transport" %}
-                  <i data-lucide="truck" class="category-icon icon-transport" title="Transport et Logistique" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% elif item.category == "main_oeuvre" %}
-                  <i data-lucide="hard-hat" class="category-icon icon-labor" title="Main d'œuvre" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% elif item.category == "equipement" %}
-                  <i data-lucide="settings" class="category-icon icon-equipment" title="Équipement et Machines" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% elif item.category == "service" %}
-                  <i data-lucide="wrench" class="category-icon icon-service" title="Services" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% elif item.category == "agriculture" %}
-                  <i data-lucide="wheat" class="category-icon icon-agriculture" title="Agriculture" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% elif item.category == "metaux" %}
-                  <i data-lucide="hammer" class="category-icon icon-metals" title="Métaux" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% elif item.category == "chimie" %}
-                  <i data-lucide="flask-conical" class="category-icon icon-chemistry" title="Chimie et Pétrochimie" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% elif item.category == "textile" %}
-                  <i data-lucide="shirt" class="category-icon icon-textile" title="Textile" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% elif item.category == "alimentaire" %}
-                  <i data-lucide="utensils" class="category-icon icon-food" title="Industrie Alimentaire" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                
-                <!-- Support pour les anciennes catégories (rétrocompatibilité) -->
-                {% elif item.category == "Raw material" %}
-                  <i data-lucide="tree-deciduous" class="category-icon icon-raw-material" title="Raw Material" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% elif item.category == "Inflation" %}
-                  <i data-lucide="trending-up" class="category-icon icon-inflation" title="Inflation" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% elif item.category == "Labour Cost" %}
-                  <i data-lucide="user" class="category-icon icon-labor" title="Labor Cost" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% elif item.category == "Energy" %}
-                  <i data-lucide="zap" class="category-icon icon-energy" title="Energy" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% elif item.category == "Logistic" %}
-                  <i data-lucide="truck" class="category-icon icon-transport" title="Logistics" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% else %}
-                  <i data-lucide="circle" class="category-icon icon-default" title="{{ item.category }}" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
-                {% endif %}
-                
-                <span style="font-weight: 600; line-height: 1;">{{ item.name }}</span>
-              </div>
-            </td>
-
-            <!-- Price -->
-            <td style="padding: 12px;">{{ item.price }} </td>
-            <td style="padding: 12px;">{{ item.unit }}</td>
-
-            <!-- Δ 1 month -->
-            <td style="padding: 12px; color: {% if item.variation_1m > 0 %}red{% elif item.variation_1m  < 0 %}green{% else %}inherit{% endif %};">
-              {% if item.variation_1m > 0 %}▲{% elif item.variation_1m  < 0 %}▼{% else %}inherit{% endif %}
-              {% if item.variation_1m %}{{ item.variation_1m }} %{% else %}—{% endif %}
-            </td>
-
-            <!-- Δ 6 months -->
-            <td style="padding: 12px; color: {% if item.variation_6m  > 0 %}red{% elif item.variation_6m  < 0 %}green{% else %}inherit{% endif %};">
-              {% if item.variation_6m > 0 %}▲{% elif item.variation_6m  < 0 %}▼{% else %}inherit{% endif %}
-              {% if item.variation_6m %}{{ item.variation_6m }} %{% else %}—{% endif %}
-            </td>
-
-            <!-- Δ 1 year -->
-            <td style="padding: 12px; color: {% if item.variation_1y  > 0 %}red{% elif item.variation_1y  < 0 %}green{% else %}inherit{% endif %};">
-              {% if item.variation_1y > 0 %}▲{% elif item.variation_1y  < 0 %}▼{% else %}inherit{% endif %}
-              {% if item.variation_1y %}{{ item.variation_1y }} %{% else %}—{% endif %}
-            </td>
-
-            <!-- Mini chart -->
-            <td style="padding: 12px; width: 120px;">
-              <div id="mini-chart-{{ forloop.counter }}" style="height: 40px;"></div>
-              <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                  setTimeout(function() {
-                    const isDarkMode = document.body.classList.contains('dark-mode');
-                    const chartDiv = document.getElementById('mini-chart-{{ forloop.counter }}');
-                    if (chartDiv && typeof Plotly !== 'undefined') {
-                      Plotly.newPlot(
-                        'mini-chart-{{ forloop.counter }}',
-                        [{
-                          x: {{ item.mini_dates|safe }},
-                          y: {{ item.mini_values|safe }},
-                          mode: 'lines',
-                          line: { 
-                            color: isDarkMode ? '#60a5fa' : '#3b82f6', 
-                            width: 2 
-                          },
-                          hoverinfo: 'skip',
-                          fill: 'tozeroy',
-                          fillcolor: isDarkMode ? 'rgba(96, 165, 250, 0.25)' : 'rgba(59, 130, 246, 0.2)',
-                          type: 'scatter'
-                        }],
-                        {
-                          margin: { l: 0, r: 0, t: 0, b: 0 },
-                          xaxis: { visible: false },
-                          yaxis: { visible: false },
-                          paper_bgcolor: 'rgba(0,0,0,0)',
-                          plot_bgcolor: 'rgba(0,0,0,0)',
-                        },
-                        { staticPlot: true, displayModeBar: false, responsive: true }
-                      );
-                    }
-                  }, 100);
-                });
-              </script>
-            </td>
-
-            <!-- Last update -->
-            <td style="padding: 12px;">{{ item.last_update }}</td>
-
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<!-- SECTION MY INDEXES -->
+<div class="section-title collapsible-header" onclick="toggleSection('indexes')" style="cursor: pointer; user-select: none;">
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <i data-lucide="chart-line" class="section-icon" style="width: 20px; height: 20px; color: #3b82f6;"></i> 
+    <span>My Indexes</span>
+    <i data-lucide="chevron-down" id="indexes-arrow" class="collapse-arrow" style="width: 16px; height: 16px; color: #6b7280; transition: transform 0.3s ease;"></i>
   </div>
 </div>
 
-{% else %}
-  <div class="no-favorites">
-    <p>You haven't selected any favorite indexes yet 🧐</p>
-    <a href="{% url 'main:liste_index' %}" class="button">👉 View index list</a>
-    <p>or use the search bar above 🔍</p>
-  </div>
-{% endif %}
+<div id="indexes-section" class="collapsible-section">
+  {% if charts %}
+  <div class="card shadow-lg" style="border-radius: 16px; padding: 24px; background: white; margin-bottom: 2rem;">
+    <div class="table-responsive" style="overflow-x: auto;">
+      <table class="index-table" style="width: 100%; border-collapse: collapse;">
 
-<!-- NOUVELLE SECTION PRODUITS -->
-{% if product_charts %}
-  <div class="section-title">
-    <i data-lucide="box" class="section-icon" style="width: 20px; height: 20px; color: #f59e0b;"></i> My Products
-  </div>
+        <thead>
+          <tr style="text-align: left; font-weight: 600; background-color: rgba(240, 248, 255, 0.6);">
+            <th style="padding: 12px;">Index</th>
+            <th style="padding: 12px;">Last Value</th>
+            <th style="padding: 12px;">Unit</th>
+            <th style="padding: 12px;">Δ 1 month</th>
+            <th style="padding: 12px;">Δ 6 months</th>
+            <th style="padding: 12px;">Δ 1 year</th>
+            <th style="padding: 12px;">Mini Chart</th>
+            <th style="padding: 12px;">Last Update</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in charts %}
+            <tr class="index-row" onclick="window.location.href='{% url 'main:index_viewer' item.id %}'" style="cursor: pointer;">
+              
+              <!-- Column 1: star + category icon + name -->
+              <td style="padding: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <form method="post"
+                        action="{% url 'main:toggle_favorite' item.id %}"
+                        class="favorite-form"
+                        onsubmit="event.preventDefault(); toggleFavorite(event, {{ item.id }});">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="favorite-btn"
+                            data-index-id="{{ item.id }}"
+                            title="Add or remove from favorites"
+                            style="font-size: 1.2rem; background: none; border: none; cursor: pointer; padding: 0; line-height: 1;">
+                      {% if item.id in favorite_ids %}★{% else %}☆{% endif %}
+                    </button>
+                  </form>
+                  
+                  <!-- 🎨 NOUVELLES ICÔNES HARMONISÉES AVEC LISTE_INDEX -->
+                  {% if item.category == "batiment" %}
+                    <i data-lucide="building-2" class="category-icon icon-building" title="Bâtiment et Construction" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% elif item.category == "energie" %}
+                    <i data-lucide="zap" class="category-icon icon-energy" title="Énergie" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% elif item.category == "matiere_premiere" %}
+                    <i data-lucide="tree-deciduous" class="category-icon icon-raw-material" title="Matières Premières" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% elif item.category == "transport" %}
+                    <i data-lucide="truck" class="category-icon icon-transport" title="Transport et Logistique" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% elif item.category == "main_oeuvre" %}
+                    <i data-lucide="hard-hat" class="category-icon icon-labor" title="Main d'œuvre" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% elif item.category == "equipement" %}
+                    <i data-lucide="settings" class="category-icon icon-equipment" title="Équipement et Machines" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% elif item.category == "service" %}
+                    <i data-lucide="wrench" class="category-icon icon-service" title="Services" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% elif item.category == "agriculture" %}
+                    <i data-lucide="wheat" class="category-icon icon-agriculture" title="Agriculture" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% elif item.category == "metaux" %}
+                    <i data-lucide="hammer" class="category-icon icon-metals" title="Métaux" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% elif item.category == "chimie" %}
+                    <i data-lucide="flask-conical" class="category-icon icon-chemistry" title="Chimie et Pétrochimie" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% elif item.category == "textile" %}
+                    <i data-lucide="shirt" class="category-icon icon-textile" title="Textile" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% elif item.category == "alimentaire" %}
+                    <i data-lucide="utensils" class="category-icon icon-food" title="Industrie Alimentaire" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  
+                  <!-- Support pour les anciennes catégories (rétrocompatibilité) -->
+                  {% elif item.category == "Raw material" %}
+                    <i data-lucide="tree-deciduous" class="category-icon icon-raw-material" title="Raw Material" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% elif item.category == "Inflation" %}
+                    <i data-lucide="trending-up" class="category-icon icon-inflation" title="Inflation" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% elif item.category == "Labour Cost" %}
+                    <i data-lucide="user" class="category-icon icon-labor" title="Labor Cost" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% elif item.category == "Energy" %}
+                    <i data-lucide="zap" class="category-icon icon-energy" title="Energy" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% elif item.category == "Logistic" %}
+                    <i data-lucide="truck" class="category-icon icon-transport" title="Logistics" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% else %}
+                    <i data-lucide="circle" class="category-icon icon-default" title="{{ item.category }}" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  {% endif %}
+                  
+                  <span style="font-weight: 600; line-height: 1;">{{ item.name }}</span>
+                </div>
+              </td>
 
+              <!-- Price -->
+              <td style="padding: 12px;">{{ item.price }} </td>
+              <td style="padding: 12px;">{{ item.unit }}</td>
+
+              <!-- Δ 1 month -->
+              <td style="padding: 12px; color: {% if item.variation_1m > 0 %}red{% elif item.variation_1m  < 0 %}green{% else %}inherit{% endif %};">
+                {% if item.variation_1m > 0 %}▲{% elif item.variation_1m  < 0 %}▼{% else %}inherit{% endif %}
+                {% if item.variation_1m %}{{ item.variation_1m }} %{% else %}—{% endif %}
+              </td>
+
+              <!-- Δ 6 months -->
+              <td style="padding: 12px; color: {% if item.variation_6m  > 0 %}red{% elif item.variation_6m  < 0 %}green{% else %}inherit{% endif %};">
+                {% if item.variation_6m > 0 %}▲{% elif item.variation_6m  < 0 %}▼{% else %}inherit{% endif %}
+                {% if item.variation_6m %}{{ item.variation_6m }} %{% else %}—{% endif %}
+              </td>
+
+              <!-- Δ 1 year -->
+              <td style="padding: 12px; color: {% if item.variation_1y  > 0 %}red{% elif item.variation_1y  < 0 %}green{% else %}inherit{% endif %};">
+                {% if item.variation_1y > 0 %}▲{% elif item.variation_1y  < 0 %}▼{% else %}inherit{% endif %}
+                {% if item.variation_1y %}{{ item.variation_1y }} %{% else %}—{% endif %}
+              </td>
+
+              <!-- Mini chart -->
+              <td style="padding: 12px; width: 120px;">
+                <div id="mini-chart-{{ forloop.counter }}" style="height: 40px;"></div>
+                <script>
+                  document.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(function() {
+                      const isDarkMode = document.body.classList.contains('dark-mode');
+                      const chartDiv = document.getElementById('mini-chart-{{ forloop.counter }}');
+                      if (chartDiv && typeof Plotly !== 'undefined') {
+                        Plotly.newPlot(
+                          'mini-chart-{{ forloop.counter }}',
+                          [{
+                            x: {{ item.mini_dates|safe }},
+                            y: {{ item.mini_values|safe }},
+                            mode: 'lines',
+                            line: { 
+                              color: isDarkMode ? '#60a5fa' : '#3b82f6', 
+                              width: 2 
+                            },
+                            hoverinfo: 'skip',
+                            fill: 'tozeroy',
+                            fillcolor: isDarkMode ? 'rgba(96, 165, 250, 0.25)' : 'rgba(59, 130, 246, 0.2)',
+                            type: 'scatter'
+                          }],
+                          {
+                            margin: { l: 0, r: 0, t: 0, b: 0 },
+                            xaxis: { visible: false },
+                            yaxis: { visible: false },
+                            paper_bgcolor: 'rgba(0,0,0,0)',
+                            plot_bgcolor: 'rgba(0,0,0,0)',
+                          },
+                          { staticPlot: true, displayModeBar: false, responsive: true }
+                        );
+                      }
+                    }, 100);
+                  });
+                </script>
+              </td>
+
+              <!-- Last update -->
+              <td style="padding: 12px;">{{ item.last_update }}</td>
+
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+    <div class="no-favorites">
+      <p>You haven't selected any favorite indexes yet 🧐</p>
+      <a href="{% url 'main:liste_index' %}" class="button">👉 View index list</a>
+      <p>or use the search bar above 🔍</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- SECTION MY PRODUCTS -->
+<div class="section-title collapsible-header" onclick="toggleSection('products')" style="cursor: pointer; user-select: none;">
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <i data-lucide="box" class="section-icon" style="width: 20px; height: 20px; color: #f59e0b;"></i>
+    <span>My Products</span>
+    <i data-lucide="chevron-down" id="products-arrow" class="collapse-arrow" style="width: 16px; height: 16px; color: #6b7280; transition: transform 0.3s ease;"></i>
+  </div>
+</div>
+
+<div id="products-section" class="collapsible-section">
+  {% if product_charts %}
   <div class="card shadow-lg" style="border-radius: 16px; padding: 24px; background: white; margin-bottom: 2rem;">
     <div class="table-responsive" style="overflow-x: auto;">
       <table class="index-table" style="width: 100%; border-collapse: collapse;">
@@ -270,20 +281,62 @@
       </table>
     </div>
   </div>
-
-{% else %}
-  <div class="section-title">
-    <i data-lucide="box" class="section-icon" style="width: 20px; height: 20px; color: #f59e0b;"></i> My Products
-  </div>
-  <div class="no-favorites">
-    <p>You haven't created any products yet 🔧</p>
-    <a href="{% url 'main:prix_indexes' %}" class="button">👉 Create your first product</a>
-    <p>Build products with indexed components!</p>
-  </div>
-{% endif %}
+  {% else %}
+    <div class="no-favorites">
+      <p>You haven't created any products yet 🔧</p>
+      <a href="{% url 'main:prix_indexes' %}" class="button">👉 Create your first product</a>
+      <p>Build products with indexed components!</p>
+    </div>
+  {% endif %}
+</div>
 
 <!-- ✅ AJAX script for favorites -->
 <script>
+  // 🆕 FONCTION POUR REPLIER/DÉPLIER LES SECTIONS
+  function toggleSection(sectionName) {
+    const section = document.getElementById(sectionName + '-section');
+    const arrow = document.getElementById(sectionName + '-arrow');
+    
+    if (section.style.display === 'none') {
+      // Déplier
+      section.style.display = 'block';
+      arrow.style.transform = 'rotate(0deg)';
+      // Sauvegarder l'état
+      localStorage.setItem(sectionName + '-collapsed', 'false');
+    } else {
+      // Replier
+      section.style.display = 'none';
+      arrow.style.transform = 'rotate(-90deg)';
+      // Sauvegarder l'état
+      localStorage.setItem(sectionName + '-collapsed', 'true');
+    }
+  }
+
+  // 🆕 RESTAURER L'ÉTAT DES SECTIONS AU CHARGEMENT
+  document.addEventListener('DOMContentLoaded', function() {
+    // Vérifier l'état des sections
+    const indexesCollapsed = localStorage.getItem('indexes-collapsed') === 'true';
+    const productsCollapsed = localStorage.getItem('products-collapsed') === 'true';
+    
+    if (indexesCollapsed) {
+      const indexesSection = document.getElementById('indexes-section');
+      const indexesArrow = document.getElementById('indexes-arrow');
+      if (indexesSection) {
+        indexesSection.style.display = 'none';
+        indexesArrow.style.transform = 'rotate(-90deg)';
+      }
+    }
+    
+    if (productsCollapsed) {
+      const productsSection = document.getElementById('products-section');
+      const productsArrow = document.getElementById('products-arrow');
+      if (productsSection) {
+        productsSection.style.display = 'none';
+        productsArrow.style.transform = 'rotate(-90deg)';
+      }
+    }
+  });
+
   function toggleFavorite(event, indexId) {
     event.stopPropagation();
     fetch(`/toggle-favorite/${indexId}/`, {
@@ -355,6 +408,32 @@
 </script>
 
 <style>
+/* 🆕 STYLES POUR LES SECTIONS REPLIABLES */
+.collapsible-header {
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+}
+
+.collapsible-header:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+body.dark-mode .collapsible-header:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.collapsible-section {
+  transition: all 0.3s ease;
+  overflow: hidden;
+  margin-bottom: 2rem; /* ✅ ESPACEMENT ENTRE LES SECTIONS */
+}
+
+.collapse-arrow {
+  margin-left: auto;
+}
+
 /* Section icons styling */
 .section-icon {
   flex-shrink: 0;
@@ -363,6 +442,10 @@
 
 body.dark-mode .section-icon {
   filter: brightness(1.2);
+}
+
+body.dark-mode .collapse-arrow {
+  color: #9ca3af !important;
 }
 
 /* 🎨 PALETTE DE COULEURS HARMONISÉE - Identique à liste_index.html */
