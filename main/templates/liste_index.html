@@ -51,47 +51,47 @@
                   </button>
                 </form>
                 
-                <!-- 🚨 NOUVEAU MAPPING DES ICÔNES SELON LES CATÉGORIES DJANGO -->
+                <!-- 🎨 NOUVEAUX MAPPING DES ICÔNES AVEC COULEURS HARMONISÉES -->
                 {% if index.category == "batiment" %}
-                  <i data-lucide="building-2" class="lucide-icon text-orange-600" title="Bâtiment et Construction" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="building-2" class="category-icon icon-building" title="Bâtiment et Construction" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "energie" %}
-                  <i data-lucide="zap" class="lucide-icon text-yellow-600" title="Énergie" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="zap" class="category-icon icon-energy" title="Énergie" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "matiere_premiere" %}
-                  <i data-lucide="tree-deciduous" class="lucide-icon text-green-600" title="Matières Premières" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="tree-deciduous" class="category-icon icon-raw-material" title="Matières Premières" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "transport" %}
-                  <i data-lucide="truck" class="lucide-icon text-purple-600" title="Transport et Logistique" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="truck" class="category-icon icon-transport" title="Transport et Logistique" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "main_oeuvre" %}
-                  <i data-lucide="hard-hat" class="lucide-icon text-blue-600" title="Main d'œuvre" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="hard-hat" class="category-icon icon-labor" title="Main d'œuvre" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "equipement" %}
-                  <i data-lucide="settings" class="lucide-icon text-indigo-600" title="Équipement et Machines" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="settings" class="category-icon icon-equipment" title="Équipement et Machines" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "service" %}
-                  <i data-lucide="wrench" class="lucide-icon text-teal-600" title="Services" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="wrench" class="category-icon icon-service" title="Services" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "agriculture" %}
-                  <i data-lucide="wheat" class="lucide-icon text-emerald-600" title="Agriculture" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="wheat" class="category-icon icon-agriculture" title="Agriculture" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "metaux" %}
-                  <i data-lucide="hammer" class="lucide-icon text-slate-600" title="Métaux" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="hammer" class="category-icon icon-metals" title="Métaux" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "chimie" %}
-                  <i data-lucide="flask-conical" class="lucide-icon text-pink-600" title="Chimie et Pétrochimie" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="flask-conical" class="category-icon icon-chemistry" title="Chimie et Pétrochimie" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "textile" %}
-                  <i data-lucide="shirt" class="lucide-icon text-violet-600" title="Textile" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="shirt" class="category-icon icon-textile" title="Textile" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "alimentaire" %}
-                  <i data-lucide="utensils" class="lucide-icon text-amber-600" title="Industrie Alimentaire" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="utensils" class="category-icon icon-food" title="Industrie Alimentaire" style="width: 16px; height: 16px;"></i>
                 
                 <!-- Support pour les anciennes catégories (rétrocompatibilité) -->
                 {% elif index.category == "Raw material" %}
-                  <i data-lucide="tree-deciduous" class="lucide-icon text-green-600" title="Raw Material" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="tree-deciduous" class="category-icon icon-raw-material" title="Raw Material" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "Inflation" %}
-                  <i data-lucide="trending-up" class="lucide-icon text-red-600" title="Inflation" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="trending-up" class="category-icon icon-inflation" title="Inflation" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "Labour Cost" %}
-                  <i data-lucide="user" class="lucide-icon text-blue-600" title="Labor Cost" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="user" class="category-icon icon-labor" title="Labor Cost" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "Energy" %}
-                  <i data-lucide="zap" class="lucide-icon text-yellow-600" title="Energy" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="zap" class="category-icon icon-energy" title="Energy" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "Logistic" %}
-                  <i data-lucide="truck" class="lucide-icon text-purple-600" title="Logistics" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="truck" class="category-icon icon-transport" title="Logistics" style="width: 16px; height: 16px;"></i>
                 
                 <!-- Catégorie par défaut -->
                 {% else %}
-                  <i data-lucide="circle" class="lucide-icon text-gray-600" title="{{ index.get_category_display }}" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="circle" class="category-icon icon-default" title="{{ index.get_category_display }}" style="width: 16px; height: 16px;"></i>
                 {% endif %}
                 
                 <span style="font-weight: 600;">
@@ -163,6 +163,44 @@
 
 <!-- Custom styles for dark mode -->
 <style>
+  /* 🎨 NOUVELLES COULEURS DES CATÉGORIES - Palette harmonisée */
+  .category-icon {
+    flex-shrink: 0;
+    transition: color 0.2s ease;
+  }
+  
+  /* Mode clair */
+  .icon-building { color: #ea580c; }      /* Orange - Construction */
+  .icon-energy { color: #eab308; }        /* Jaune - Énergie */
+  .icon-raw-material { color: #16a34a; } /* Vert - Matières premières */
+  .icon-transport { color: #7c3aed; }     /* Violet - Transport */
+  .icon-labor { color: #2563eb; }         /* Bleu - Main d'œuvre */
+  .icon-equipment { color: #4f46e5; }     /* Indigo - Équipement */
+  .icon-service { color: #0d9488; }       /* Teal - Services */
+  .icon-agriculture { color: #059669; }   /* Emerald - Agriculture */
+  .icon-metals { color: #64748b; }        /* Slate - Métaux */
+  .icon-chemistry { color: #ec4899; }     /* Pink - Chimie */
+  .icon-textile { color: #8b5cf6; }       /* Violet - Textile */
+  .icon-food { color: #f59e0b; }          /* Amber - Alimentaire */
+  .icon-inflation { color: #dc2626; }     /* Rouge - Inflation */
+  .icon-default { color: #6b7280; }       /* Gris - Par défaut */
+  
+  /* Mode sombre - couleurs plus vives pour contraste */
+  body.dark-mode .icon-building { color: #fb923c !important; }
+  body.dark-mode .icon-energy { color: #fbbf24 !important; }
+  body.dark-mode .icon-raw-material { color: #22c55e !important; }
+  body.dark-mode .icon-transport { color: #a855f7 !important; }
+  body.dark-mode .icon-labor { color: #60a5fa !important; }
+  body.dark-mode .icon-equipment { color: #818cf8 !important; }
+  body.dark-mode .icon-service { color: #14b8a6 !important; }
+  body.dark-mode .icon-agriculture { color: #10b981 !important; }
+  body.dark-mode .icon-metals { color: #94a3b8 !important; }
+  body.dark-mode .icon-chemistry { color: #f472b6 !important; }
+  body.dark-mode .icon-textile { color: #a78bfa !important; }
+  body.dark-mode .icon-food { color: #fbbf24 !important; }
+  body.dark-mode .icon-inflation { color: #f87171 !important; }
+  body.dark-mode .icon-default { color: #9ca3af !important; }
+
   /* Container du tableau avec scroll */
   .table-container {
     position: relative;
@@ -254,63 +292,6 @@
     background-color: rgba(55, 65, 81, 0.5) !important;
   }
   
-  /* Icon colors - mise à jour pour les nouvelles catégories */
-  body.dark-mode .lucide-icon.text-orange-600 {
-    color: #fb923c !important;
-  }
-  
-  body.dark-mode .lucide-icon.text-yellow-600 {
-    color: #fbbf24 !important;
-  }
-  
-  body.dark-mode .lucide-icon.text-green-600 {
-    color: #10b981 !important;
-  }
-  
-  body.dark-mode .lucide-icon.text-purple-600 {
-    color: #c084fc !important;
-  }
-  
-  body.dark-mode .lucide-icon.text-blue-600 {
-    color: #60a5fa !important;
-  }
-  
-  body.dark-mode .lucide-icon.text-indigo-600 {
-    color: #818cf8 !important;
-  }
-  
-  body.dark-mode .lucide-icon.text-teal-600 {
-    color: #14b8a6 !important;
-  }
-  
-  body.dark-mode .lucide-icon.text-emerald-600 {
-    color: #059669 !important;
-  }
-  
-  body.dark-mode .lucide-icon.text-slate-600 {
-    color: #64748b !important;
-  }
-  
-  body.dark-mode .lucide-icon.text-pink-600 {
-    color: #ec4899 !important;
-  }
-  
-  body.dark-mode .lucide-icon.text-violet-600 {
-    color: #8b5cf6 !important;
-  }
-  
-  body.dark-mode .lucide-icon.text-amber-600 {
-    color: #f59e0b !important;
-  }
-  
-  body.dark-mode .lucide-icon.text-red-600 {
-    color: #f87171 !important;
-  }
-  
-  body.dark-mode .lucide-icon.text-gray-600 {
-    color: #9ca3af !important;
-  }
-  
   /* Button styling */
   .favorite-btn {
     transition: all 0.2s ease;
@@ -318,10 +299,6 @@
   
   .favorite-btn:hover {
     transform: scale(1.1);
-  }
-  
-  .lucide-icon {
-    flex-shrink: 0;
   }
   
   /* Sort select styling - adaptation pour sticky header */

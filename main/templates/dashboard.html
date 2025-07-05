@@ -50,19 +50,45 @@
                   </button>
                 </form>
                 
-                <!-- Category icon positioned between star and name -->
-                {% if item.category == "Raw material" %}
-                  <i data-lucide="tree-deciduous" class="lucide-icon" title="Raw Material" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                <!-- 🎨 NOUVELLES ICÔNES HARMONISÉES AVEC LISTE_INDEX -->
+                {% if item.category == "batiment" %}
+                  <i data-lucide="building-2" class="category-icon icon-building" title="Bâtiment et Construction" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                {% elif item.category == "energie" %}
+                  <i data-lucide="zap" class="category-icon icon-energy" title="Énergie" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                {% elif item.category == "matiere_premiere" %}
+                  <i data-lucide="tree-deciduous" class="category-icon icon-raw-material" title="Matières Premières" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                {% elif item.category == "transport" %}
+                  <i data-lucide="truck" class="category-icon icon-transport" title="Transport et Logistique" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                {% elif item.category == "main_oeuvre" %}
+                  <i data-lucide="hard-hat" class="category-icon icon-labor" title="Main d'œuvre" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                {% elif item.category == "equipement" %}
+                  <i data-lucide="settings" class="category-icon icon-equipment" title="Équipement et Machines" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                {% elif item.category == "service" %}
+                  <i data-lucide="wrench" class="category-icon icon-service" title="Services" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                {% elif item.category == "agriculture" %}
+                  <i data-lucide="wheat" class="category-icon icon-agriculture" title="Agriculture" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                {% elif item.category == "metaux" %}
+                  <i data-lucide="hammer" class="category-icon icon-metals" title="Métaux" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                {% elif item.category == "chimie" %}
+                  <i data-lucide="flask-conical" class="category-icon icon-chemistry" title="Chimie et Pétrochimie" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                {% elif item.category == "textile" %}
+                  <i data-lucide="shirt" class="category-icon icon-textile" title="Textile" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                {% elif item.category == "alimentaire" %}
+                  <i data-lucide="utensils" class="category-icon icon-food" title="Industrie Alimentaire" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                
+                <!-- Support pour les anciennes catégories (rétrocompatibilité) -->
+                {% elif item.category == "Raw material" %}
+                  <i data-lucide="tree-deciduous" class="category-icon icon-raw-material" title="Raw Material" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
                 {% elif item.category == "Inflation" %}
-                  <i data-lucide="trending-up" class="lucide-icon" title="Inflation" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  <i data-lucide="trending-up" class="category-icon icon-inflation" title="Inflation" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
                 {% elif item.category == "Labour Cost" %}
-                  <i data-lucide="user" class="lucide-icon" title="Labor Cost" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  <i data-lucide="user" class="category-icon icon-labor" title="Labor Cost" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
                 {% elif item.category == "Energy" %}
-                  <i data-lucide="zap" class="lucide-icon" title="Energy" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  <i data-lucide="zap" class="category-icon icon-energy" title="Energy" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
                 {% elif item.category == "Logistic" %}
-                  <i data-lucide="truck" class="lucide-icon" title="Logistics" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  <i data-lucide="truck" class="category-icon icon-transport" title="Logistics" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
                 {% else %}
-                  <i data-lucide="circle" class="lucide-icon" title="{{ item.category }}" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  <i data-lucide="circle" class="category-icon icon-default" title="{{ item.category }}" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
                 {% endif %}
                 
                 <span style="font-weight: 600; line-height: 1;">{{ item.name }}</span>
@@ -95,27 +121,38 @@
             <td style="padding: 12px; width: 120px;">
               <div id="mini-chart-{{ forloop.counter }}" style="height: 40px;"></div>
               <script>
-                Plotly.newPlot(
-                  'mini-chart-{{ forloop.counter }}',
-                  [{
-                    x: {{ item.mini_dates|safe }},
-                    y: {{ item.mini_values|safe }},
-                    mode: 'lines',
-                    line: { color: '#60a5fa', width: 2 },
-                    hoverinfo: 'skip',
-                    fill: 'tozeroy',
-                    fillcolor: 'rgba(96, 165, 250, 0.2)',
-                    type: 'scatter'
-                  }],
-                  {
-                    margin: { l: 0, r: 0, t: 0, b: 0 },
-                    xaxis: { visible: false },
-                    yaxis: { visible: false },
-                    paper_bgcolor: 'rgba(0,0,0,0)',
-                    plot_bgcolor: 'rgba(0,0,0,0)',
-                  },
-                  { staticPlot: true, displayModeBar: false }
-                );
+                document.addEventListener('DOMContentLoaded', function() {
+                  setTimeout(function() {
+                    const isDarkMode = document.body.classList.contains('dark-mode');
+                    const chartDiv = document.getElementById('mini-chart-{{ forloop.counter }}');
+                    if (chartDiv && typeof Plotly !== 'undefined') {
+                      Plotly.newPlot(
+                        'mini-chart-{{ forloop.counter }}',
+                        [{
+                          x: {{ item.mini_dates|safe }},
+                          y: {{ item.mini_values|safe }},
+                          mode: 'lines',
+                          line: { 
+                            color: isDarkMode ? '#60a5fa' : '#3b82f6', 
+                            width: 2 
+                          },
+                          hoverinfo: 'skip',
+                          fill: 'tozeroy',
+                          fillcolor: isDarkMode ? 'rgba(96, 165, 250, 0.25)' : 'rgba(59, 130, 246, 0.2)',
+                          type: 'scatter'
+                        }],
+                        {
+                          margin: { l: 0, r: 0, t: 0, b: 0 },
+                          xaxis: { visible: false },
+                          yaxis: { visible: false },
+                          paper_bgcolor: 'rgba(0,0,0,0)',
+                          plot_bgcolor: 'rgba(0,0,0,0)',
+                        },
+                        { staticPlot: true, displayModeBar: false, responsive: true }
+                      );
+                    }
+                  }, 100);
+                });
               </script>
             </td>
 
@@ -165,7 +202,7 @@
               <!-- Product name with icon -->
               <td style="padding: 12px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                  <i data-lucide="package" class="lucide-icon" title="Product" style="width: 16px; height: 16px; flex-shrink: 0; color: #f59e0b;"></i>
+                  <i data-lucide="package" class="category-icon icon-product" title="Product" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
                   <span style="font-weight: 600; line-height: 1;">{{ product.name }}</span>
                 </div>
               </td>
@@ -189,27 +226,38 @@
               <td style="padding: 12px; width: 120px;">
                 <div id="product-mini-chart-{{ forloop.counter }}" style="height: 40px;"></div>
                 <script>
-                  Plotly.newPlot(
-                    'product-mini-chart-{{ forloop.counter }}',
-                    [{
-                      x: {{ product.mini_dates|safe }},
-                      y: {{ product.mini_values|safe }},
-                      mode: 'lines',
-                      line: { color: '#f59e0b', width: 2 },
-                      hoverinfo: 'skip',
-                      fill: 'tozeroy',
-                      fillcolor: 'rgba(245, 158, 11, 0.2)',
-                      type: 'scatter'
-                    }],
-                    {
-                      margin: { l: 0, r: 0, t: 0, b: 0 },
-                      xaxis: { visible: false },
-                      yaxis: { visible: false },
-                      paper_bgcolor: 'rgba(0,0,0,0)',
-                      plot_bgcolor: 'rgba(0,0,0,0)',
-                    },
-                    { staticPlot: true, displayModeBar: false }
-                  );
+                  document.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(function() {
+                      const isDarkMode = document.body.classList.contains('dark-mode');
+                      const chartDiv = document.getElementById('product-mini-chart-{{ forloop.counter }}');
+                      if (chartDiv && typeof Plotly !== 'undefined') {
+                        Plotly.newPlot(
+                          'product-mini-chart-{{ forloop.counter }}',
+                          [{
+                            x: {{ product.mini_dates|safe }},
+                            y: {{ product.mini_values|safe }},
+                            mode: 'lines',
+                            line: { 
+                              color: isDarkMode ? '#fbbf24' : '#f59e0b', 
+                              width: 2 
+                            },
+                            hoverinfo: 'skip',
+                            fill: 'tozeroy',
+                            fillcolor: isDarkMode ? 'rgba(251, 191, 36, 0.25)' : 'rgba(245, 158, 11, 0.2)',
+                            type: 'scatter'
+                          }],
+                          {
+                            margin: { l: 0, r: 0, t: 0, b: 0 },
+                            xaxis: { visible: false },
+                            yaxis: { visible: false },
+                            paper_bgcolor: 'rgba(0,0,0,0)',
+                            plot_bgcolor: 'rgba(0,0,0,0)',
+                          },
+                          { staticPlot: true, displayModeBar: false, responsive: true }
+                        );
+                      }
+                    }, 100);
+                  });
                 </script>
               </td>
 
@@ -255,9 +303,98 @@
       }
     });
   }
+
+  // Update charts when dark mode changes
+  function updateChartsForTheme() {
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    
+    // Update index charts
+    document.querySelectorAll('[id^="mini-chart-"]').forEach(chartDiv => {
+      if (typeof Plotly !== 'undefined' && chartDiv._fullLayout) {
+        const update = {
+          'line.color': isDarkMode ? '#60a5fa' : '#3b82f6',
+          'fillcolor': isDarkMode ? 'rgba(96, 165, 250, 0.25)' : 'rgba(59, 130, 246, 0.2)'
+        };
+        try {
+          Plotly.restyle(chartDiv, update, 0);
+        } catch (e) {
+          console.log('Chart update skipped:', e);
+        }
+      }
+    });
+    
+    // Update product charts
+    document.querySelectorAll('[id^="product-mini-chart-"]').forEach(chartDiv => {
+      if (typeof Plotly !== 'undefined' && chartDiv._fullLayout) {
+        const update = {
+          'line.color': isDarkMode ? '#fbbf24' : '#f59e0b',
+          'fillcolor': isDarkMode ? 'rgba(251, 191, 36, 0.25)' : 'rgba(245, 158, 11, 0.2)'
+        };
+        try {
+          Plotly.restyle(chartDiv, update, 0);
+        } catch (e) {
+          console.log('Chart update skipped:', e);
+        }
+      }
+    });
+  }
+  
+  // Listen for theme changes on body class
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.attributeName === 'class' && mutation.target === document.body) {
+        updateChartsForTheme();
+      }
+    });
+  });
+  
+  observer.observe(document.body, {
+    attributes: true,
+    attributeFilter: ['class']
+  });
 </script>
 
 <style>
+/* 🎨 PALETTE DE COULEURS HARMONISÉE - Identique à liste_index.html */
+.category-icon {
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+/* Mode clair */
+.icon-building { color: #ea580c; }      /* Orange - Construction */
+.icon-energy { color: #eab308; }        /* Jaune - Énergie */
+.icon-raw-material { color: #16a34a; } /* Vert - Matières premières */
+.icon-transport { color: #7c3aed; }     /* Violet - Transport */
+.icon-labor { color: #2563eb; }         /* Bleu - Main d'œuvre */
+.icon-equipment { color: #4f46e5; }     /* Indigo - Équipement */
+.icon-service { color: #0d9488; }       /* Teal - Services */
+.icon-agriculture { color: #059669; }   /* Emerald - Agriculture */
+.icon-metals { color: #64748b; }        /* Slate - Métaux */
+.icon-chemistry { color: #ec4899; }     /* Pink - Chimie */
+.icon-textile { color: #8b5cf6; }       /* Violet - Textile */
+.icon-food { color: #f59e0b; }          /* Amber - Alimentaire */
+.icon-inflation { color: #dc2626; }     /* Rouge - Inflation */
+.icon-product { color: #f59e0b; }       /* Amber - Produits */
+.icon-default { color: #6b7280; }       /* Gris - Par défaut */
+
+/* Mode sombre - couleurs plus vives pour contraste */
+body.dark-mode .icon-building { color: #fb923c !important; }
+body.dark-mode .icon-energy { color: #fbbf24 !important; }
+body.dark-mode .icon-raw-material { color: #22c55e !important; }
+body.dark-mode .icon-transport { color: #a855f7 !important; }
+body.dark-mode .icon-labor { color: #60a5fa !important; }
+body.dark-mode .icon-equipment { color: #818cf8 !important; }
+body.dark-mode .icon-service { color: #14b8a6 !important; }
+body.dark-mode .icon-agriculture { color: #10b981 !important; }
+body.dark-mode .icon-metals { color: #94a3b8 !important; }
+body.dark-mode .icon-chemistry { color: #f472b6 !important; }
+body.dark-mode .icon-textile { color: #a78bfa !important; }
+body.dark-mode .icon-food { color: #fbbf24 !important; }
+body.dark-mode .icon-inflation { color: #f87171 !important; }
+body.dark-mode .icon-product { color: #fbbf24 !important; }
+body.dark-mode .icon-default { color: #9ca3af !important; }
+
 /* Dark mode styles for dashboard */
 body.dark-mode .card {
   background: rgba(30, 41, 59, 0.7) !important;
@@ -278,10 +415,6 @@ body.dark-mode .index-table td {
 
 body.dark-mode .index-row:hover {
   background-color: rgba(51, 65, 85, 0.3) !important;
-}
-
-body.dark-mode .lucide-icon {
-  color: #94a3b8 !important;
 }
 
 body.dark-mode .no-favorites {

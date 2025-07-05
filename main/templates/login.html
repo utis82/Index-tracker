@@ -28,26 +28,30 @@
     </p>
   </div>
 </div>
-
 <style>
-/* Keep banner text and icons white like in home.html */
+/* Mode clair (par défaut) - Texte noir pour une bonne lisibilité */
 .hero-title {
-  color: white;
+  color: #1f2937; /* Noir/gris foncé en mode clair */
+}
+.hero-subtitle {
+  color: #4b5563; /* Gris moyen en mode clair */
 }
 
-.hero-subtitle {
-  color: white;
+/* Mode sombre - Texte blanc */
+body.dark-mode .hero-title {
+  color: #f1f5f9; /* Blanc en mode sombre */
+}
+body.dark-mode .hero-subtitle {
+  color: #e2e8f0; /* Blanc légèrement grisé en mode sombre */
 }
 
 /* Force navbar text and icons to be white in dark mode */
 body.dark-mode .navbar a {
   color: white !important;
 }
-
 body.dark-mode .navbar a i {
   color: white !important;
 }
-
 body.dark-mode .logo-image {
   filter: brightness(0) invert(1);
 }
@@ -57,41 +61,33 @@ body.dark-mode .hero-container {
   background: var(--bg-dark, #0f172a);
   color: var(--text-dark, #f1f5f9);
 }
-
 body.dark-mode .login-card {
   background: var(--card-dark, #1e293b);
   border: 1px solid var(--border-dark, #334155);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
-
 body.dark-mode .form-group label {
   color: var(--text-dark, #f1f5f9);
 }
-
 body.dark-mode .form-input {
   background: var(--input-dark, #334155);
   border: 1px solid var(--border-dark, #475569);
   color: var(--text-dark, #f1f5f9);
 }
-
 body.dark-mode .form-input:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
-
 body.dark-mode .cta-button {
   background: #3b82f6;
   color: white;
 }
-
 body.dark-mode .cta-button:hover {
   background: #2563eb;
 }
-
 body.dark-mode a {
   color: #60a5fa !important;
 }
-
 body.dark-mode a:hover {
   color: #93c5fd !important;
 }
