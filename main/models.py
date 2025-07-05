@@ -22,7 +22,6 @@ class Product(models.Model):
         return f"📦 {self.name}"
 
 
-# 🧱 Modèle Part avec prix de référence
 class Part(models.Model):
     product = models.ForeignKey(Product,
                                 on_delete=models.CASCADE,
@@ -37,12 +36,55 @@ class Part(models.Model):
 
 
 class Index(models.Model):
+    # 🚨 CORRECTION : Catégories avec des choices prédéfinies
+    CATEGORY_CHOICES = [
+        ('batiment', 'Bâtiment et Construction'),
+        ('energie', 'Énergie'),
+        ('matiere_premiere', 'Matières Premières'),
+        ('transport', 'Transport et Logistique'),
+        ('main_oeuvre', 'Main d\'œuvre'),
+        ('equipement', 'Équipement et Machines'),
+        ('service', 'Services'),
+        ('agriculture', 'Agriculture'),
+        ('metaux', 'Métaux'),
+        ('chimie', 'Chimie et Pétrochimie'),
+        ('textile', 'Textile'),
+        ('alimentaire', 'Industrie Alimentaire'),
+        ('Inflation', 'Inflation'),
+        ('autre', 'Autre'),
+    ]
+
     name = models.CharField(max_length=100)
     unit = models.CharField(max_length=20, default="€/t")
-    category = models.CharField(max_length=255, default="Autre")
+    category = models.CharField(
+        max_length=50,
+        choices=CATEGORY_CHOICES,
+        default='autre',
+        help_text="Catégorie de l'index"
+    )
 
     def __str__(self):
         return self.name
+
+    def get_category_display_with_emoji(self):
+        """Retourne la catégorie avec un emoji pour l'affichage"""
+        emoji_map = {
+            'batiment': '🏗️',
+            'energie': '⚡',
+            'matiere_premiere': '🏭',
+            'transport': '🚛',
+            'main_oeuvre': '👷',
+            'equipement': '⚙️',
+            'service': '🔧',
+            'agriculture': '🌾',
+            'metaux': '🔩',
+            'chimie': '🧪',
+            'textile': '🧵',
+            'alimentaire': '🍞',
+            'autre': '📋',
+        }
+        emoji = emoji_map.get(self.category, '📋')
+        return f"{emoji} {self.get_category_display()}"
 
 
 class IndexValue(models.Model):
@@ -57,8 +99,6 @@ class IndexValue(models.Model):
     def __str__(self):
         return f"{self.index.name} - {self.date}: {self.value}"
 
-        # Dans votre models.py, remplacez la classe UserProfile par :
-
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -72,10 +112,7 @@ class UserProfile(models.Model):
                                          choices=PLAN_CHOICES,
                                          default='free')
     favorite_indexes = models.ManyToManyField(Index, blank=True)
-    # NOUVEAU : Compteur spécifique aux favoris
     favorite_changes_count = models.PositiveIntegerField(default=0)
-
-    # SUPPRIMÉ : primary_index et primary_index_change_count
 
     def index_limit(self):
         return {
@@ -100,7 +137,6 @@ class UserProfile(models.Model):
         return self.favorite_changes_count < self.change_limit()
 
 
-# 🧩 Modèle Slice
 class Slice(models.Model):
     part = models.ForeignKey(Part,
                              on_delete=models.CASCADE,
@@ -152,3 +188,61 @@ class EmailVerification(models.Model):
         if not self.verification_code:
             self.verification_code = self.generate_code()
         super().save(*args, **kwargs)
+
+
+# 🚨 FONCTION UTILITAIRE POUR LE MAPPING DES CATÉGORIES EXCEL
+def map_excel_category_to_django(excel_category):
+    """
+    Mappe les catégories du fichier Excel vers les catégories Django
+    """
+    if not excel_category:
+        return 'autre'
+
+    # Normaliser la catégorie Excel (minuscules, sans accents, etc.)
+    category = excel_category.lower().strip()
+
+    # 🚨 MAPPING EXACT POUR VOTRE FICHIER EXCEL
+    mapping = {
+        # Catégories exactes de votre fichier Excel
+        'raw material': 'matiere_premiere',
+        'energy': 'energie',
+        'labour cost': 'main_oeuvre',
+        'logistic': 'transport',
+        'inflation': 'Inflation',
+
+        # Variantes (rétrocompatibilité)
+        'raw materials': 'matiere_premiere',
+        'labour': 'main_oeuvre',
+        'labor': 'main_oeuvre',
+        'labor cost': 'main_oeuvre',
+        'logistics': 'transport',
+        'logistique': 'transport',
+
+        # Autres mappings existants
+        'bâtiment': 'batiment',
+        'batiment': 'batiment',
+        'construction': 'batiment',
+        'building': 'batiment',
+        'énergie': 'energie',
+        'energie': 'energie',
+        'électricité': 'energie',
+        'gaz': 'energie',
+        'transport': 'transport',
+        'main d\'œuvre': 'main_oeuvre',
+        'main d\'oeuvre': 'main_oeuvre',
+        'équipement': 'equipement',
+        'equipement': 'equipement',
+        'service': 'service',
+        'services': 'service',
+        'agriculture': 'agriculture',
+        'métaux': 'metaux',
+        'metaux': 'metaux',
+        'acier': 'metaux',
+        'chimie': 'chimie',
+        'textile': 'textile',
+        'alimentaire': 'alimentaire',
+        'autre': 'autre',
+        'autres': 'autre',
+    }
+
+    return mapping.get(category, 'autre')

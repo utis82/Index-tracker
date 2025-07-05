@@ -10,6 +10,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib import messages
 from django.utils import timezone
+from main.models import Index, IndexValue, Product, Part, Slice, EmailVerification, map_excel_category_to_django
 
 # Imports de votre app
 from main.models import Index, IndexValue, Product, Part, Slice, EmailVerification
@@ -66,17 +67,28 @@ def dashboard(request):
         val_1y = get_value_x_days_ago(365)
 
         charts.append({
-            "id": index.id,
-            "name": index.name,
-            "price": round(current_price, 2),
-            "variation_1m": variation(val_1m),
-            "variation_6m": variation(val_6m),
-            "variation_1y": variation(val_1y),
-            "mini_dates": json.dumps([d.strftime("%Y-%m-%d") for d in dates[-30:]]),
-            "mini_values": json.dumps(val[-30:]),
-            "last_update": latest_date.strftime("%Y-%m-%d"),
-            "unit": index.unit,
-            "category": index.category,
+            "id":
+            index.id,
+            "name":
+            index.name,
+            "price":
+            round(current_price, 2),
+            "variation_1m":
+            variation(val_1m),
+            "variation_6m":
+            variation(val_6m),
+            "variation_1y":
+            variation(val_1y),
+            "mini_dates":
+            json.dumps([d.strftime("%Y-%m-%d") for d in dates[-30:]]),
+            "mini_values":
+            json.dumps(val[-30:]),
+            "last_update":
+            latest_date.strftime("%Y-%m-%d"),
+            "unit":
+            index.unit,
+            "category":
+            index.category,
         })
 
     # === PRODUCT CHARTS (nouveau) ===
@@ -110,24 +122,31 @@ def dashboard(request):
         last_update = get_product_last_update(product, index_data)
 
         product_charts.append({
-            "id": product.id,
-            "name": product.name,
-            "reference_price": round(reference_price, 2) if reference_price else 0,
-            "current_price": round(current_price, 2),
-            "reference_date": product.reference_date.strftime("%Y-%m-%d"),
-            "variation_since_ref": variation_since_ref,
-            "mini_dates": json.dumps(mini_dates),
-            "mini_values": json.dumps(mini_values),
-            "last_update": last_update,
+            "id":
+            product.id,
+            "name":
+            product.name,
+            "reference_price":
+            round(reference_price, 2) if reference_price else 0,
+            "current_price":
+            round(current_price, 2),
+            "reference_date":
+            product.reference_date.strftime("%Y-%m-%d"),
+            "variation_since_ref":
+            variation_since_ref,
+            "mini_dates":
+            json.dumps(mini_dates),
+            "mini_values":
+            json.dumps(mini_values),
+            "last_update":
+            last_update,
         })
 
     # Favoris IDs pour les étoiles
     favorite_ids = [index.id for index in favorites]
 
     return render(
-        request,
-        "dashboard.html",
-        {
+        request, "dashboard.html", {
             "charts": charts,
             "product_charts": product_charts,
             "subscription": user_profile.subscription_plan,
@@ -153,7 +172,8 @@ def calculate_part_price_at_date(part, target_date, index_data):
     total_price = 0
 
     for slice_obj in part.slices.all():
-        slice_reference_value = part.reference_price * (slice_obj.percentage / 100)
+        slice_reference_value = part.reference_price * (slice_obj.percentage /
+                                                        100)
 
         if slice_obj.component_type == 'indexed' and slice_obj.index_id and slice_obj.percentage:
             # Calcul pour tranches indexées
@@ -213,7 +233,8 @@ def generate_product_mini_chart_data(product, index_data):
             if current_date.month == 12:
                 current_date = datetime_date(current_date.year + 1, 1, 1)
             else:
-                current_date = datetime_date(current_date.year, current_date.month + 1, 1)
+                current_date = datetime_date(current_date.year,
+                                             current_date.month + 1, 1)
 
         return dates, values
 
@@ -278,7 +299,10 @@ def contact_view(request):
         # Validation basique
         if not all([name, email, subject, message]):
             return JsonResponse(
-                {'status': 'error', 'message': 'Tous les champs sont requis'},
+                {
+                    'status': 'error',
+                    'message': 'Tous les champs sont requis'
+                },
                 status=400)
 
         # Construction du message email
@@ -308,13 +332,20 @@ Utilisateur connecté: {request.user.username if request.user.is_authenticated e
         )
 
         return JsonResponse({
-            'status': 'success',
-            'message': 'Votre message a été envoyé avec succès!'
+            'status':
+            'success',
+            'message':
+            'Votre message a été envoyé avec succès!'
         })
 
     except Exception as e:
         return JsonResponse(
-            {'status': 'error', 'message': 'Une erreur est survenue lors de l\'envoi. Veuillez réessayer.'},
+            {
+                'status':
+                'error',
+                'message':
+                'Une erreur est survenue lors de l\'envoi. Veuillez réessayer.'
+            },
             status=500)
 
 
@@ -328,7 +359,8 @@ def login_view(request):
             login(request, user)
             return redirect("main:dashboard")
         else:
-            return render(request, "login.html", {"error": "Identifiants invalides."})
+            return render(request, "login.html",
+                          {"error": "Identifiants invalides."})
 
     return render(request, "login.html")
 
@@ -351,14 +383,17 @@ def upload_excel(request):
 
             # Vérifier l'extension du fichier
             if not excel_file.name.endswith(('.xlsx', '.xls')):
-                messages.error(request, "Le fichier doit être un fichier Excel (.xlsx ou .xls).")
+                messages.error(
+                    request,
+                    "Le fichier doit être un fichier Excel (.xlsx ou .xls).")
                 return render(request, "admin/import_excel.html")
 
             # Option pour remplacer les données existantes
             replace_existing = request.POST.get('replace_existing', False)
 
             # Traiter le fichier
-            result = process_excel_file_optimized(excel_file, replace_existing=replace_existing)
+            result = process_excel_file_optimized(
+                excel_file, replace_existing=replace_existing)
 
             if result['success']:
                 message = f"✅ Import réussi ! {result['indexes_count']} index"
@@ -368,7 +403,8 @@ def upload_excel(request):
                     message += f" et {result['values_count']} valeurs importées."
                 messages.success(request, message)
             else:
-                messages.error(request, f"❌ Erreur lors de l'import : {result['error']}")
+                messages.error(
+                    request, f"❌ Erreur lors de l'import : {result['error']}")
 
         except Exception as e:
             logger.error(f"Erreur upload Excel: {e}")
@@ -380,147 +416,82 @@ def upload_excel(request):
 def process_excel_file_optimized(excel_file, replace_existing=False):
     """
     Traite un fichier Excel et importe les données d'index de manière optimisée
-
-    Args:
-        excel_file: Fichier Excel à traiter
-        replace_existing: Si True, remplace les valeurs existantes. Si False, les ignore.
+    AVEC MAPPING CORRECT DES CATÉGORIES
     """
     try:
         import time
         start_time = time.time()
 
-        if replace_existing:
-            print("🔄 MODE REMPLACEMENT: Les valeurs existantes seront mises à jour")
-        else:
-            print("➕ MODE AJOUT: Seules les nouvelles valeurs seront ajoutées")
-
-        # Analyser les noms d'index existants en base
-        print(f"\n🔍 ANALYSE DES INDEX EXISTANTS EN BASE:")
-        existing_indexes = Index.objects.all()
-        print(f"   Total index en base: {existing_indexes.count()}")
-
-        # Créer un mapping des noms existants pour faciliter la correspondance
-        existing_names = {}
-        for idx in existing_indexes:
-            value_count = IndexValue.objects.filter(index=idx).count()
-            existing_names[idx.name] = value_count
-
-        # Montrer quelques exemples d'index existants pour comparaison
-        sample_existing = list(existing_indexes[:10])
-        print(f"   Exemples d'index existants:")
-        for i, idx in enumerate(sample_existing):
-            value_count = existing_names[idx.name]
-            print(f"      {i+1}. '{idx.name}' → {value_count} valeurs")
-
-        # Analyser les patterns de noms pour identifier la logique
-        print(f"\n🔍 ANALYSE DES PATTERNS DE NOMS:")
-        bdsv_examples = [name for name in existing_names.keys() if 'BDSV' in name]
-        caef_examples = [name for name in existing_names.keys() if 'CAEF' in name]
-        almag_examples = [name for name in existing_names.keys() if 'ALMAG' in name]
-
-        if bdsv_examples:
-            print(f"   BDSV examples: {bdsv_examples[:3]}")
-        if caef_examples:
-            print(f"   CAEF examples: {caef_examples[:3]}")
-        if almag_examples:
-            print(f"   ALMAG examples: {almag_examples[:3]}")
+        print(
+            f"🚀 DÉBUT DE L'IMPORT - Mode: {'REMPLACEMENT' if replace_existing else 'AJOUT'}"
+        )
 
         # Lire le fichier Excel (feuille "1. BDD")
         df = pd.read_excel(excel_file, sheet_name="1. BDD", header=0)
         print(f"📄 Fichier lu: {len(df)} lignes, {len(df.columns)} colonnes")
 
-        # DEBUG: Analyser AU MOINS LA MOITIÉ des lignes pour voir le problème
-        debug_lines = max(10, len(df) // 2)  # Au moins 10, ou la moitié du fichier
-        print(f"\n🔍 DIAGNOSTIC DE {debug_lines} LIGNES (sur {len(df)}):")
-        for i in range(min(debug_lines, len(df))):
+        # Analyser la structure pour trouver la colonne de catégories
+        def find_category_column(df):
+            """Trouve la colonne qui contient les catégories"""
+            headers = df.columns.tolist()
+
+            print(f"🔍 ANALYSE DES COLONNES:")
+            for i, header in enumerate(
+                    headers[:10]):  # Montrer les 10 premières
+                print(f"   Colonne {i}: '{header}'")
+
+            # Chercher une colonne avec des mots-clés de catégorie
+            for i, header in enumerate(headers):
+                if header and isinstance(header, str):
+                    header_lower = header.lower()
+                    if any(keyword in header_lower for keyword in [
+                            'catégorie', 'categorie', 'category', 'type',
+                            'classe'
+                    ]):
+                        print(
+                            f"✅ Colonne de catégories trouvée: {i} ('{header}')"
+                        )
+                        return i
+
+            print(
+                f"⚠️ Aucune colonne de catégories détectée, utilisation de la colonne 4 par défaut"
+            )
+            return 4
+
+        category_col_index = find_category_column(df)
+
+        # Analyser quelques exemples pour debugging
+        print(f"\n🔍 ANALYSE DE 5 LIGNES EXEMPLE:")
+        for i in range(min(5, len(df))):
             row = df.iloc[i]
 
-            # Extraire les métadonnées comme dans le code principal
-            index_type = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ""
-            index_subtype = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else ""
+            # Métadonnées de base
+            index_type = str(row.iloc[0]).strip() if pd.notna(
+                row.iloc[0]) else ""
+            index_subtype = str(row.iloc[1]).strip() if pd.notna(
+                row.iloc[1]) else ""
             source = str(row.iloc[2]).strip() if pd.notna(row.iloc[2]) else ""
-            designation = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
-            unit = str(row.iloc[7]).strip() if pd.notna(row.iloc[7]) else "€/t"
+            designation = str(row.iloc[3]).strip() if pd.notna(
+                row.iloc[3]) else ""
 
-            # Construire le nom comme dans le code principal
-            base_name = f"{source} - {designation}" if source else designation
-
-            if index_type and index_subtype:
-                category = f"{index_type} - {index_subtype}"
-                index_name = f"{base_name} ({category})" if category != "Raw material - Brass" else base_name
-            elif index_type:
-                category = index_type
-                index_name = base_name
-            else:
-                category = "Autre"
-                index_name = base_name
-
-            # Vérifier pourquoi cette ligne serait ignorée
-            will_be_ignored = not designation or designation.lower() in ['nan', '', 'none']
+            # Catégorie depuis la colonne dédiée
+            excel_category_raw = str(
+                row.iloc[category_col_index]).strip() if pd.notna(
+                    row.iloc[category_col_index]) and len(
+                        row) > category_col_index else ""
 
             print(f"   Ligne {i+1}:")
-            print(f"      Type: '{index_type}' | Type2: '{index_subtype}'")
+            print(f"      Type: '{index_type}' | Subtype: '{index_subtype}'")
             print(f"      Source: '{source}' | Designation: '{designation}'")
-            print(f"      Unit: '{unit}' | Category: '{category}'")
-            print(f"      Index name final: '{index_name}'")
-            print(f"      SERA IGNORÉE: {will_be_ignored} {'❌' if will_be_ignored else '✅'}")
-
-            # Détecter les problèmes de métadonnées
-            problems = []
-            if unit == "€/t":  # Valeur par défaut = problème
-                problems.append("UNITÉ PAR DÉFAUT")
-            if category == "Autre":  # Catégorie par défaut = problème
-                problems.append("CATÉGORIE PAR DÉFAUT") 
-            if not source:
-                problems.append("PAS DE SOURCE")
-            if not index_type:
-                problems.append("PAS DE TYPE")
-
-            if problems:
-                print(f"      ⚠️ PROBLÈMES DÉTECTÉS: {', '.join(problems)}")
-
-            # Compter les valeurs non vides pour cette ligne
-            if not will_be_ignored:
-                non_empty_values = 0
-                for col_idx in range(8, min(len(row), 20)):  # Tester les 12 premières colonnes de dates
-                    if pd.notna(row.iloc[col_idx]) and row.iloc[col_idx] != "" and row.iloc[col_idx] != 0:
-                        non_empty_values += 1
-                print(f"      Valeurs non vides (12 premières dates): {non_empty_values}")
-                if non_empty_values == 0:
-                    print(f"      ❌ AUCUNE VALEUR → INDEX VIDE !")
-            print()
+            print(
+                f"      Catégorie colonne {category_col_index}: '{excel_category_raw}'"
+            )
 
         # Colonnes de valeurs (à partir de la colonne 8)
         date_columns = df.columns[8:].tolist()
-        date_columns = [col for col in date_columns if col and str(col).strip()]
-
-        # Compter combien de lignes seront vraiment traitées
-        valid_lines = 0
-        ignored_lines = 0
-        ignored_reasons = {"no_designation": 0, "short_row": 0, "other": 0}
-
-        for row_index, row in df.iterrows():
-            if len(row) < 8:
-                ignored_lines += 1
-                ignored_reasons["short_row"] += 1
-                continue
-
-            designation = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
-
-            if not designation or designation.lower() in ['nan', '', 'none']:
-                ignored_lines += 1
-                ignored_reasons["no_designation"] += 1
-                continue
-
-            valid_lines += 1
-
-        print(f"📊 RÉSUMÉ AVANT TRAITEMENT:")
-        print(f"   Total lignes fichier: {len(df)}")
-        print(f"   Lignes valides: {valid_lines}")
-        print(f"   Lignes ignorées: {ignored_lines}")
-        print(f"      - Trop courtes: {ignored_reasons['short_row']}")
-        print(f"      - Sans désignation: {ignored_reasons['no_designation']}")
-        print(f"   Dates à traiter: {len(date_columns)}")
+        date_columns = [
+            col for col in date_columns if col and str(col).strip()
+        ]
 
         # Parser toutes les dates françaises une seule fois
         parsed_dates = {}
@@ -528,11 +499,14 @@ def process_excel_file_optimized(excel_file, replace_existing=False):
             parsed_dates[date_col] = parse_french_date_clean(date_col)
 
         valid_dates = len([d for d in parsed_dates.values() if d])
-        print(f"   Dates valides parsées: {valid_dates}/{len(date_columns)}")
+        print(f"📅 Dates trouvées: {len(date_columns)}, parsées: {valid_dates}")
 
         # Préparer tous les objets en mémoire
         indexes_to_create = []
         values_to_create = []
+
+        # Statistiques de mapping des catégories
+        category_stats = {}
 
         # Traiter chaque ligne
         processed_lines = 0
@@ -543,70 +517,57 @@ def process_excel_file_optimized(excel_file, replace_existing=False):
                     continue
 
                 # Extraction des métadonnées
-                index_type = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ""
-                index_subtype = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else ""
-                source = str(row.iloc[2]).strip() if pd.notna(row.iloc[2]) else ""
-                designation = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
-                unit = str(row.iloc[7]).strip() if pd.notna(row.iloc[7]) else "€/t"
+                index_type = str(row.iloc[0]).strip() if pd.notna(
+                    row.iloc[0]) else ""
+                index_subtype = str(row.iloc[1]).strip() if pd.notna(
+                    row.iloc[1]) else ""
+                source = str(row.iloc[2]).strip() if pd.notna(
+                    row.iloc[2]) else ""
+                designation = str(row.iloc[3]).strip() if pd.notna(
+                    row.iloc[3]) else ""
+                unit = str(row.iloc[7]).strip() if pd.notna(
+                    row.iloc[7]) else "€/t"
 
                 # Ignorer les lignes sans désignation valide
-                if not designation or designation.lower() in ['nan', '', 'none']:
+                if not designation or designation.lower() in [
+                        'nan', '', 'none'
+                ]:
                     continue
 
-                # Essayer de matcher les noms existants d'abord
+                # 🚨 RÉCUPÉRER ET MAPPER LA CATÉGORIE DEPUIS LA COLONNE A
+                excel_category = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ""
+                category = map_excel_category_to_django(excel_category)
 
-                # Tentative 1: Nom exact de la désignation
+                # Statistiques de mapping
+                if excel_category not in category_stats:
+                    category_stats[excel_category] = {'count': 0, 'mapped_to': category}
+                category_stats[excel_category]['count'] += 1
+
+                # DEBUG: Afficher le mapping pour les premières lignes
+                if processed_lines < 10:
+                    print(f"      📂 Ligne {row_index+1}: Colonne A '{excel_category}' → Django '{category}'")
+
+                # Construction du nom d'index (logique existante)
+                base_name = f"{source} - {designation}" if source else designation
+
+                # Tentatives de matching avec les index existants
                 candidate_names = [designation]
-
-                # Tentative 2: Source + désignation (si source pas déjà dans désignation)
                 if source and not designation.startswith(source):
                     candidate_names.append(f"{source} - {designation}")
 
-                # Tentative 3: Variantes courantes observées
-                if source and designation.startswith(source):
-                    # Enlever le préfixe source dupliqué
-                    clean_designation = designation[len(source):].strip(' -')
-                    candidate_names.append(f"{source} - {clean_designation}")
+                # Utiliser le premier candidat comme nom final
+                index_name = candidate_names[0]
 
-                # Chercher une correspondance exacte avec les index existants
-                index_name = None
-                for candidate in candidate_names:
-                    if candidate in existing_names:
-                        index_name = candidate
-                        if processed_lines < 100:  # Debug pour les premières lignes
-                            print(f"      ✅ MATCH TROUVÉ: '{candidate}' existe déjà avec {existing_names[candidate]} valeurs")
-                        break
-
-                # Si aucun match, utiliser le premier candidat
-                if not index_name:
-                    index_name = candidate_names[0]
-                    if processed_lines < 5:
-                        print(f"      ➕ NOUVEAU: '{index_name}'")
-
-                # Définir la catégorie
-                if index_type and index_subtype and index_subtype != "Brass":
-                    category = f"{index_type} - {index_subtype}"
-                elif index_type:
-                    category = index_type
-                else:
-                    category = "Autre"
-
-                # DEBUG: Montrer la transformation pour les premiers exemples
-                if processed_lines < 5:
-                    print(f"      🔄 Candidats testés: {candidate_names}")
-                    print(f"      📂 Nom final: '{index_name}'")
-                    print(f"      📂 Catégorie: '{category}'")
-
-                # Stocker les données d'index
+                # Stocker les données d'index avec la bonne catégorie
                 index_data = {
                     'name': index_name,
                     'unit': unit,
-                    'category': category,
+                    'category': category,  # ← Catégorie mappée correctement
                     'row_index': row_index
                 }
                 indexes_to_create.append(index_data)
 
-                # Traitement des valeurs
+                # Traitement des valeurs (logique existante)
                 values_for_this_row = 0
                 for date_col in date_columns:
                     if date_col in df.columns:
@@ -636,78 +597,31 @@ def process_excel_file_optimized(excel_file, replace_existing=False):
                 processed_lines += 1
 
                 # Debug occasionnel
-                if processed_lines <= 5 or processed_lines % 50 == 0:
-                    print(f"   ✅ Ligne {row_index+1}: '{index_name}' → {values_for_this_row} valeurs")
+                if processed_lines <= 5 or processed_lines % 100 == 0:
+                    print(
+                        f"   ✅ Ligne {row_index+1}: '{index_name}' → {values_for_this_row} valeurs, catégorie: '{category}'"
+                    )
 
             except Exception as e:
                 print(f"   ❌ Erreur ligne {row_index + 1}: {e}")
                 continue
 
+        # Afficher les statistiques de mapping des catégories
+        print(f"\n📊 STATISTIQUES DE MAPPING DES CATÉGORIES:")
+        for excel_cat, stats in sorted(category_stats.items(),
+                                       key=lambda x: x[1]['count'],
+                                       reverse=True):
+            count = stats['count']
+            mapped_to = stats['mapped_to']
+            print(f"   '{excel_cat}' → '{mapped_to}' ({count} occurrences)")
+
         elapsed_prep = time.time() - start_time
-        print(f"📊 Préparation terminée: {len(indexes_to_create)} index, {len(values_to_create)} valeurs ({elapsed_prep:.1f}s)")
+        print(
+            f"\n📊 Préparation terminée: {len(indexes_to_create)} index, {len(values_to_create)} valeurs ({elapsed_prep:.1f}s)"
+        )
 
-        # Analyser aussi les problèmes de métadonnées
-        print(f"\n🔍 ANALYSE DES PROBLÈMES DE MÉTADONNÉES:")
-        metadata_issues = {
-            "default_unit": 0,  # Unité par défaut
-            "default_category": 0,  # Catégorie par défaut  
-            "no_source": 0,  # Pas de source
-            "no_type": 0,  # Pas de type
-            "no_values": 0,  # Pas de valeurs
-        }
-
-        for idx_data in indexes_to_create:
-            if idx_data['unit'] == "€/t":
-                metadata_issues["default_unit"] += 1
-            if idx_data['category'] == "Autre":
-                metadata_issues["default_category"] += 1
-
-        # Compter les index sans valeurs
-        index_value_counts = {}
-        for val_data in values_to_create:
-            idx_name = val_data['index_name']
-            index_value_counts[idx_name] = index_value_counts.get(idx_name, 0) + 1
-
-        indexes_without_values = 0
-        for idx_data in indexes_to_create:
-            if idx_data['name'] not in index_value_counts:
-                indexes_without_values += 1
-                metadata_issues["no_values"] += 1
-
-        print(f"   Index avec unité par défaut (€/t): {metadata_issues['default_unit']}")
-        print(f"   Index avec catégorie par défaut (Autre): {metadata_issues['default_category']}")
-        print(f"   Index SANS VALEURS: {metadata_issues['no_values']}")
-
-        # Analyser aussi les doublons potentiels
-        print(f"\n🔍 ANALYSE DES DOUBLONS:")
-        name_counts = {}
-        for idx_data in indexes_to_create:
-            name = idx_data['name']
-            if name not in name_counts:
-                name_counts[name] = []
-            name_counts[name].append(idx_data)
-
-        # Montrer les doublons détectés
-        duplicates_found = 0
-        for name, occurrences in name_counts.items():
-            if len(occurrences) > 1:
-                duplicates_found += 1
-                if duplicates_found <= 10:  # Montrer les 10 premiers doublons
-                    print(f"   DOUBLON '{name}': {len(occurrences)} occurrences")
-                    for i, occ in enumerate(occurrences[:3]):  # Max 3 par doublon
-                        print(f"      {i+1}. Ligne {occ['row_index']+1}: unit='{occ['unit']}', category='{occ['category']}'")
-
-        print(f"   Total doublons détectés: {duplicates_found}")
-        unique_names = len(name_counts)
-        print(f"   Noms uniques: {unique_names}")
-        print(f"   Ratio de déduplication: {len(indexes_to_create)} → {unique_names} ({(1-unique_names/len(indexes_to_create))*100:.1f}% supprimés)")
-
-        # Import en base avec bulk_create
+        # Import en base avec bulk_create (logique existante)
         with transaction.atomic():
-            # Étape 1: Créer tous les index
-            index_objects = {}
-            indexes_created = 0
-
             # Déduplication en mémoire
             unique_indexes = {}
             for idx_data in indexes_to_create:
@@ -721,15 +635,20 @@ def process_excel_file_optimized(excel_file, replace_existing=False):
             if replace_existing:
                 print("🗑️ Suppression des anciennes valeurs...")
                 deleted_count = 0
-                for idx_name, index_obj in existing_names.items():
-                    if idx_name in unique_indexes:
-                        try:
-                            index_instance = Index.objects.get(name=idx_name)
-                            deleted = IndexValue.objects.filter(index=index_instance).delete()
-                            deleted_count += deleted[0] if deleted[0] else 0
-                        except Index.DoesNotExist:
-                            pass
+                for idx_name in unique_indexes.keys():
+                    try:
+                        index_instance = Index.objects.get(name=idx_name)
+                        deleted = IndexValue.objects.filter(
+                            index=index_instance).delete()
+                        deleted_count += deleted[0] if deleted[0] else 0
+                    except Index.DoesNotExist:
+                        pass
                 print(f"   📊 {deleted_count} anciennes valeurs supprimées")
+
+            # Créer ou mettre à jour tous les index
+            index_objects = {}
+            indexes_created = 0
+            indexes_updated = 0
 
             for idx_name, idx_data in unique_indexes.items():
                 index_obj, created = Index.objects.get_or_create(
@@ -737,130 +656,129 @@ def process_excel_file_optimized(excel_file, replace_existing=False):
                     defaults={
                         'unit': idx_data['unit'],
                         'category': idx_data['category']
-                    }
-                )
+                    })
+
+                # Si l'index existe déjà, mettre à jour sa catégorie si elle a changé
+                if not created and index_obj.category != idx_data['category']:
+                    index_obj.category = idx_data['category']
+                    index_obj.unit = idx_data[
+                        'unit']  # Mettre à jour l'unité aussi
+                    index_obj.save()
+                    indexes_updated += 1
+                    print(
+                        f"   🔄 Index mis à jour: '{idx_name}' → catégorie: '{idx_data['category']}'"
+                    )
+
                 index_objects[idx_name] = index_obj
                 if created:
                     indexes_created += 1
 
-            # Étape 2: Préparer toutes les valeurs
+            print(
+                f"📦 Index: {indexes_created} créés, {indexes_updated} mis à jour"
+            )
+
+            # Préparer toutes les valeurs
             index_value_objects = []
             for val_data in values_to_create:
                 if val_data['index_name'] in index_objects:
                     index_value_objects.append(
-                        IndexValue(
-                            index=index_objects[val_data['index_name']],
-                            value=val_data['value'],
-                            date=val_data['date']
-                        )
-                    )
+                        IndexValue(index=index_objects[val_data['index_name']],
+                                   value=val_data['value'],
+                                   date=val_data['date']))
 
-            # Étape 3: Import en masse avec possibilité de mise à jour
+            # Import en masse des valeurs
             values_created = 0
             values_updated = 0
             batch_size = 1000
 
-            print(f"📦 Import de {len(index_value_objects)} valeurs par batch de {batch_size}...")
+            print(
+                f"📦 Import de {len(index_value_objects)} valeurs par batch de {batch_size}..."
+            )
 
-            if replace_existing:
-                # Mode remplacement: créer directement (anciennes valeurs déjà supprimées)
-                for i in range(0, len(index_value_objects), batch_size):
-                    batch = index_value_objects[i:i + batch_size]
-                    created_objects = IndexValue.objects.bulk_create(batch, ignore_conflicts=False)
+            for i in range(0, len(index_value_objects), batch_size):
+                batch = index_value_objects[i:i + batch_size]
+
+                if replace_existing:
+                    # Mode remplacement: créer directement
+                    created_objects = IndexValue.objects.bulk_create(
+                        batch, ignore_conflicts=False)
                     values_created += len(created_objects)
-                    if i % 5000 == 0:
-                        print(f"   📊 Batch {i//batch_size + 1}: {len(created_objects)} valeurs créées")
-            else:
-                # Mode ajout: gestion des conflits
-                for i in range(0, len(index_value_objects), batch_size):
-                    batch = index_value_objects[i:i + batch_size]
-
-                    # Essayer bulk_create sans ignore_conflicts d'abord
+                else:
+                    # Mode ajout: gestion des conflits
                     try:
-                        created_objects = IndexValue.objects.bulk_create(batch, ignore_conflicts=False)
+                        created_objects = IndexValue.objects.bulk_create(
+                            batch, ignore_conflicts=True)
                         values_created += len(created_objects)
-                        if i % 5000 == 0:
-                            print(f"   📊 Batch {i//batch_size + 1}: {len(created_objects)} nouvelles valeurs")
-                    except Exception as e:
-                        print(f"   ⚠️ Conflits détectés dans le batch {i//batch_size + 1}, passage en mode mise à jour...")
-                        # Si il y a des conflits, traiter individuellement
+                    except Exception:
+                        # Si conflits, traiter individuellement
                         for value_obj in batch:
                             existing_value = IndexValue.objects.filter(
                                 index=value_obj.index,
-                                date=value_obj.date
-                            ).first()
+                                date=value_obj.date).first()
 
                             if existing_value:
-                                # Mettre à jour la valeur existante
                                 existing_value.value = value_obj.value
                                 existing_value.save()
                                 values_updated += 1
                             else:
-                                # Créer une nouvelle valeur
                                 value_obj.save()
                                 values_created += 1
 
-                        if i % 5000 == 0:
-                            print(f"   📊 Batch {i//batch_size + 1}: traitement individuel terminé")
-
-            print(f"📊 Résultat final: {values_created} créées, {values_updated} mises à jour")
+                if i % 5000 == 0:
+                    print(
+                        f"   📊 Batch {i//batch_size + 1}: traitement en cours..."
+                    )
 
         total_time = time.time() - start_time
-        print(f"✅ Import terminé: {indexes_created} index, {values_created} valeurs créées, {values_updated} mises à jour en {total_time:.1f}s")
+        print(
+            f"✅ Import terminé: {indexes_created} index créés, {indexes_updated} index mis à jour, {values_created} valeurs créées, {values_updated} mises à jour en {total_time:.1f}s"
+        )
 
-        # Vérifier quels index restent vides après l'import
-        print(f"\n🔍 VÉRIFICATION POST-IMPORT:")
-        empty_indexes = []
-        filled_indexes = []
+        # Afficher le résumé final des catégories
+        print(f"\n📊 RÉSUMÉ FINAL DES CATÉGORIES:")
+        final_category_counts = {}
+        for idx_data in unique_indexes.values():
+            cat = idx_data['category']
+            final_category_counts[cat] = final_category_counts.get(cat, 0) + 1
 
-        for idx_name, index_obj in index_objects.items():
-            value_count = IndexValue.objects.filter(index=index_obj).count()
-            if value_count == 0:
-                empty_indexes.append(idx_name)
-            else:
-                filled_indexes.append((idx_name, value_count))
-
-        print(f"   📊 Index avec valeurs: {len(filled_indexes)}")
-        print(f"   ❌ Index vides: {len(empty_indexes)}")
-
-        if empty_indexes:
-            print(f"\n❌ INDEX RESTÉS VIDES (premiers 10):")
-            for i, idx_name in enumerate(empty_indexes[:10]):
-                print(f"   {i+1}. {idx_name}")
-            if len(empty_indexes) > 10:
-                print(f"   ... et {len(empty_indexes) - 10} autres")
-
-        if filled_indexes:
-            print(f"\n✅ INDEX REMPLIS (premiers 5):")
-            for i, (idx_name, count) in enumerate(filled_indexes[:5]):
-                print(f"   {i+1}. {idx_name}: {count} valeurs")
+        for category, count in sorted(final_category_counts.items(),
+                                      key=lambda x: x[1],
+                                      reverse=True):
+            print(f"   {category}: {count} index")
 
         return {
             'success': True,
             'indexes_count': indexes_created,
+            'indexes_updated': indexes_updated,
             'values_created': values_created,
             'values_updated': values_updated,
             'values_count': values_created + values_updated,
-            'empty_indexes_count': len(empty_indexes),
-            'filled_indexes_count': len(filled_indexes)
+            'category_mapping': category_stats
         }
 
     except Exception as e:
         print(f"❌ ERREUR: {e}")
         import traceback
         traceback.print_exc()
-        return {
-            'success': False,
-            'error': str(e)
-        }
+        return {'success': False, 'error': str(e)}
 
 
 def parse_french_date_clean(col_name):
     """Parse une date française (format: mars-21, févr-24, etc.)"""
     try:
         month_mapping = {
-            'janv': 1, 'févr': 2, 'mars': 3, 'avr': 4, 'mai': 5, 'juin': 6,
-            'juil': 7, 'août': 8, 'sept': 9, 'oct': 10, 'nov': 11, 'déc': 12
+            'janv': 1,
+            'févr': 2,
+            'mars': 3,
+            'avr': 4,
+            'mai': 5,
+            'juin': 6,
+            'juil': 7,
+            'août': 8,
+            'sept': 9,
+            'oct': 10,
+            'nov': 11,
+            'déc': 12
         }
 
         col_str = str(col_name).strip()
@@ -900,8 +818,7 @@ def cleanup_duplicate_indexes(request):
                 request,
                 f"✅ Nettoyage terminé ! {result['merged_count']} doublons fusionnés, "
                 f"{result['deleted_count']} index vides supprimés, "
-                f"{result['values_moved']} valeurs déplacées."
-            )
+                f"{result['values_moved']} valeurs déplacées.")
         else:
             messages.error(request, f"❌ Erreur : {result['error']}")
 
@@ -910,11 +827,12 @@ def cleanup_duplicate_indexes(request):
     # Analyser les doublons pour affichage
     duplicates_analysis = analyze_duplicates()
 
-    return render(request, "admin/cleanup_duplicates.html", {
-        "duplicates": duplicates_analysis['duplicates'],
-        "total_duplicates": duplicates_analysis['total_count'],
-        "estimated_cleanup": duplicates_analysis['estimated_cleanup']
-    })
+    return render(
+        request, "admin/cleanup_duplicates.html", {
+            "duplicates": duplicates_analysis['duplicates'],
+            "total_duplicates": duplicates_analysis['total_count'],
+            "estimated_cleanup": duplicates_analysis['estimated_cleanup']
+        })
 
 
 def analyze_duplicates():
@@ -931,24 +849,26 @@ def analyze_duplicates():
             duplicates[clean_name] = []
 
         duplicates[clean_name].append({
-            'id': index.id,
-            'name': index.name,
-            'values_count': IndexValue.objects.filter(index=index).count()
+            'id':
+            index.id,
+            'name':
+            index.name,
+            'values_count':
+            IndexValue.objects.filter(index=index).count()
         })
 
     # Garder seulement les groupes avec plusieurs index
     real_duplicates = {
-        clean_name: indexes 
-        for clean_name, indexes in duplicates.items() 
-        if len(indexes) > 1
+        clean_name: indexes
+        for clean_name, indexes in duplicates.items() if len(indexes) > 1
     }
 
     # Statistiques
     total_count = sum(len(indexes) - 1 for indexes in real_duplicates.values())
     estimated_cleanup = sum(
-        sum(idx['values_count'] for idx in indexes[1:])  # Valeurs des doublons à fusionner
-        for indexes in real_duplicates.values()
-    )
+        sum(idx['values_count']
+            for idx in indexes[1:])  # Valeurs des doublons à fusionner
+        for indexes in real_duplicates.values())
 
     return {
         'duplicates': real_duplicates,
@@ -966,7 +886,7 @@ def clean_index_name(name):
     if match1:
         return f"{match1.group(1)} - {match1.group(2)}"
 
-    # Pattern pour "ALMAG - ALMAG Brass bar" → "ALMAG Brass bar"  
+    # Pattern pour "ALMAG - ALMAG Brass bar" → "ALMAG Brass bar"
     pattern2 = r'^([A-Z]+) - \1 (.+)$'
     match2 = re.match(pattern2, name)
     if match2:
@@ -996,25 +916,26 @@ def perform_cleanup_duplicates():
                 main_index = Index.objects.get(id=main_index_data['id'])
 
                 # Préférer le nom le plus "propre" (le plus court généralement)
-                shortest_name = min(idx['name'] for idx in index_group if idx['values_count'] > 0)
+                shortest_name = min(idx['name'] for idx in index_group
+                                    if idx['values_count'] > 0)
                 if main_index.name != shortest_name:
                     main_index.name = shortest_name
                     main_index.save()
 
                 # Fusionner les doublons dans le principal
                 for duplicate_data in index_group[1:]:
-                    duplicate_index = Index.objects.get(id=duplicate_data['id'])
+                    duplicate_index = Index.objects.get(
+                        id=duplicate_data['id'])
 
                     # Déplacer toutes les valeurs vers l'index principal
-                    values_to_move = IndexValue.objects.filter(index=duplicate_index)
+                    values_to_move = IndexValue.objects.filter(
+                        index=duplicate_index)
                     moved = 0
 
                     for value in values_to_move:
                         # Vérifier qu'il n'y a pas déjà une valeur pour cette date
                         existing = IndexValue.objects.filter(
-                            index=main_index,
-                            date=value.date
-                        ).first()
+                            index=main_index, date=value.date).first()
 
                         if not existing:
                             value.index = main_index
@@ -1040,10 +961,7 @@ def perform_cleanup_duplicates():
             }
 
     except Exception as e:
-        return {
-            'success': False,
-            'error': str(e)
-        }
+        return {'success': False, 'error': str(e)}
 
 
 def register_view(request):
@@ -1055,19 +973,26 @@ def register_view(request):
             user = form.save()
 
             # Créer le code de vérification
-            verification, created = EmailVerification.objects.get_or_create(user=user)
+            verification, created = EmailVerification.objects.get_or_create(
+                user=user)
             if not created:
-                verification.verification_code = EmailVerification.generate_code()
+                verification.verification_code = EmailVerification.generate_code(
+                )
                 verification.created_at = timezone.now()
                 verification.is_verified = False
                 verification.save()
 
             # Envoyer l'email de vérification
             if send_verification_email(user, verification.verification_code):
-                messages.success(request, 'Un code de vérification a été envoyé à votre adresse email.')
+                messages.success(
+                    request,
+                    'Un code de vérification a été envoyé à votre adresse email.'
+                )
                 return redirect('main:verify_email', user_id=user.id)
             else:
-                messages.error(request, 'Erreur lors de l\'envoi de l\'email. Veuillez réessayer.')
+                messages.error(
+                    request,
+                    'Erreur lors de l\'envoi de l\'email. Veuillez réessayer.')
                 user.delete()
 
     else:
@@ -1111,19 +1036,23 @@ def choose_primary_index(request):
             new_index = Index.objects.get(id=new_index_id)
             if user_profile.primary_index != new_index:
                 if user_profile.primary_index_change_count >= max_changes:
-                    return render(request, "choose_primary_index.html", {
-                        "indexes": Index.objects.all(),
-                        "error": "Vous avez atteint la limite de modifications."
-                    })
+                    return render(
+                        request, "choose_primary_index.html", {
+                            "indexes":
+                            Index.objects.all(),
+                            "error":
+                            "Vous avez atteint la limite de modifications."
+                        })
                 user_profile.primary_index = new_index
                 user_profile.primary_index_change_count += 1
                 user_profile.save()
                 return redirect('main:dashboard')
 
-    return render(request, "choose_primary_index.html", {
-        "indexes": Index.objects.all(),
-        "current_index": user_profile.primary_index
-    })
+    return render(
+        request, "choose_primary_index.html", {
+            "indexes": Index.objects.all(),
+            "current_index": user_profile.primary_index
+        })
 
 
 def verify_email(request, user_id):
@@ -1145,7 +1074,8 @@ def verify_email(request, user_id):
             code = form.cleaned_data['verification_code']
 
             if verification.is_expired():
-                messages.error(request, 'Le code a expiré. Demandez un nouveau code.')
+                messages.error(request,
+                               'Le code a expiré. Demandez un nouveau code.')
             elif verification.verification_code == code:
                 # Code correct - activer le compte
                 user.is_active = True
@@ -1153,7 +1083,8 @@ def verify_email(request, user_id):
                 verification.is_verified = True
                 verification.save()
 
-                messages.success(request, 'Votre compte a été vérifié avec succès !')
+                messages.success(request,
+                                 'Votre compte a été vérifié avec succès !')
                 login(request, user)
                 return redirect('main:dashboard')
             else:
@@ -1161,12 +1092,13 @@ def verify_email(request, user_id):
     else:
         form = EmailVerificationForm()
 
-    return render(request, "verify_email.html", {
-        "form": form,
-        "user": user,
-        "email": user.email,
-        "is_expired": verification.is_expired()
-    })
+    return render(
+        request, "verify_email.html", {
+            "form": form,
+            "user": user,
+            "email": user.email,
+            "is_expired": verification.is_expired()
+        })
 
 
 def resend_verification_code(request, user_id):
@@ -1189,9 +1121,12 @@ def resend_verification_code(request, user_id):
 
     # Envoyer le nouveau code
     if send_verification_email(user, verification.verification_code):
-        messages.success(request, 'Un nouveau code a été envoyé à votre adresse email.')
+        messages.success(
+            request, 'Un nouveau code a été envoyé à votre adresse email.')
     else:
-        messages.error(request, 'Erreur lors de l\'envoi de l\'email. Veuillez réessayer.')
+        messages.error(
+            request,
+            'Erreur lors de l\'envoi de l\'email. Veuillez réessayer.')
 
     return redirect('main:verify_email', user_id=user.id)
 
@@ -1273,8 +1208,10 @@ def upgrade_plan_api(request):
 
             if current_favorites > new_limit:
                 return JsonResponse({
-                    'success': False,
-                    'message': f'You have {current_favorites} indexes but the {new_plan} plan only allows {new_limit}. Please remove some indexes first.'
+                    'success':
+                    False,
+                    'message':
+                    f'You have {current_favorites} indexes but the {new_plan} plan only allows {new_limit}. Please remove some indexes first.'
                 })
 
         # Effectuer le changement
@@ -1282,7 +1219,9 @@ def upgrade_plan_api(request):
         user_profile.save()
 
         # Log du changement
-        print(f"User {request.user.username} changed plan from {old_plan} to {new_plan}")
+        print(
+            f"User {request.user.username} changed plan from {old_plan} to {new_plan}"
+        )
 
         return JsonResponse({
             'success': True,
@@ -1298,6 +1237,8 @@ def upgrade_plan_api(request):
         })
     except Exception as e:
         return JsonResponse({
-            'success': False,
-            'message': 'An error occurred while changing your plan'
+            'success':
+            False,
+            'message':
+            'An error occurred while changing your plan'
         })

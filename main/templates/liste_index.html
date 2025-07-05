@@ -51,7 +51,34 @@
                   </button>
                 </form>
                 
-                {% if index.category == "Raw material" %}
+                <!-- 🚨 NOUVEAU MAPPING DES ICÔNES SELON LES CATÉGORIES DJANGO -->
+                {% if index.category == "batiment" %}
+                  <i data-lucide="building-2" class="lucide-icon text-orange-600" title="Bâtiment et Construction" style="width: 16px; height: 16px;"></i>
+                {% elif index.category == "energie" %}
+                  <i data-lucide="zap" class="lucide-icon text-yellow-600" title="Énergie" style="width: 16px; height: 16px;"></i>
+                {% elif index.category == "matiere_premiere" %}
+                  <i data-lucide="tree-deciduous" class="lucide-icon text-green-600" title="Matières Premières" style="width: 16px; height: 16px;"></i>
+                {% elif index.category == "transport" %}
+                  <i data-lucide="truck" class="lucide-icon text-purple-600" title="Transport et Logistique" style="width: 16px; height: 16px;"></i>
+                {% elif index.category == "main_oeuvre" %}
+                  <i data-lucide="hard-hat" class="lucide-icon text-blue-600" title="Main d'œuvre" style="width: 16px; height: 16px;"></i>
+                {% elif index.category == "equipement" %}
+                  <i data-lucide="settings" class="lucide-icon text-indigo-600" title="Équipement et Machines" style="width: 16px; height: 16px;"></i>
+                {% elif index.category == "service" %}
+                  <i data-lucide="wrench" class="lucide-icon text-teal-600" title="Services" style="width: 16px; height: 16px;"></i>
+                {% elif index.category == "agriculture" %}
+                  <i data-lucide="wheat" class="lucide-icon text-emerald-600" title="Agriculture" style="width: 16px; height: 16px;"></i>
+                {% elif index.category == "metaux" %}
+                  <i data-lucide="hammer" class="lucide-icon text-slate-600" title="Métaux" style="width: 16px; height: 16px;"></i>
+                {% elif index.category == "chimie" %}
+                  <i data-lucide="flask-conical" class="lucide-icon text-pink-600" title="Chimie et Pétrochimie" style="width: 16px; height: 16px;"></i>
+                {% elif index.category == "textile" %}
+                  <i data-lucide="shirt" class="lucide-icon text-violet-600" title="Textile" style="width: 16px; height: 16px;"></i>
+                {% elif index.category == "alimentaire" %}
+                  <i data-lucide="utensils" class="lucide-icon text-amber-600" title="Industrie Alimentaire" style="width: 16px; height: 16px;"></i>
+                
+                <!-- Support pour les anciennes catégories (rétrocompatibilité) -->
+                {% elif index.category == "Raw material" %}
                   <i data-lucide="tree-deciduous" class="lucide-icon text-green-600" title="Raw Material" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "Inflation" %}
                   <i data-lucide="trending-up" class="lucide-icon text-red-600" title="Inflation" style="width: 16px; height: 16px;"></i>
@@ -61,8 +88,10 @@
                   <i data-lucide="zap" class="lucide-icon text-yellow-600" title="Energy" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "Logistic" %}
                   <i data-lucide="truck" class="lucide-icon text-purple-600" title="Logistics" style="width: 16px; height: 16px;"></i>
+                
+                <!-- Catégorie par défaut -->
                 {% else %}
-                  <i data-lucide="circle" class="lucide-icon text-gray-600" title="{{ index.category }}" style="width: 16px; height: 16px;"></i>
+                  <i data-lucide="circle" class="lucide-icon text-gray-600" title="{{ index.get_category_display }}" style="width: 16px; height: 16px;"></i>
                 {% endif %}
                 
                 <span style="font-weight: 600;">
@@ -225,25 +254,57 @@
     background-color: rgba(55, 65, 81, 0.5) !important;
   }
   
-  /* Icon colors in dark mode */
-  body.dark-mode .lucide-icon.text-green-600 {
-    color: #10b981 !important;
-  }
-  
-  body.dark-mode .lucide-icon.text-red-600 {
-    color: #f87171 !important;
-  }
-  
-  body.dark-mode .lucide-icon.text-blue-600 {
-    color: #60a5fa !important;
+  /* Icon colors - mise à jour pour les nouvelles catégories */
+  body.dark-mode .lucide-icon.text-orange-600 {
+    color: #fb923c !important;
   }
   
   body.dark-mode .lucide-icon.text-yellow-600 {
     color: #fbbf24 !important;
   }
   
+  body.dark-mode .lucide-icon.text-green-600 {
+    color: #10b981 !important;
+  }
+  
   body.dark-mode .lucide-icon.text-purple-600 {
     color: #c084fc !important;
+  }
+  
+  body.dark-mode .lucide-icon.text-blue-600 {
+    color: #60a5fa !important;
+  }
+  
+  body.dark-mode .lucide-icon.text-indigo-600 {
+    color: #818cf8 !important;
+  }
+  
+  body.dark-mode .lucide-icon.text-teal-600 {
+    color: #14b8a6 !important;
+  }
+  
+  body.dark-mode .lucide-icon.text-emerald-600 {
+    color: #059669 !important;
+  }
+  
+  body.dark-mode .lucide-icon.text-slate-600 {
+    color: #64748b !important;
+  }
+  
+  body.dark-mode .lucide-icon.text-pink-600 {
+    color: #ec4899 !important;
+  }
+  
+  body.dark-mode .lucide-icon.text-violet-600 {
+    color: #8b5cf6 !important;
+  }
+  
+  body.dark-mode .lucide-icon.text-amber-600 {
+    color: #f59e0b !important;
+  }
+  
+  body.dark-mode .lucide-icon.text-red-600 {
+    color: #f87171 !important;
   }
   
   body.dark-mode .lucide-icon.text-gray-600 {

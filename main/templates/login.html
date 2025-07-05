@@ -1,38 +1,108 @@
 {% extends "base.html" %}
 {% load static %}
-
-{% block title %}Connexion{% endblock %}
-
+{% block title %}Login{% endblock %}
 {% block content %}
 <div class="hero-container">
   <div class="hero-content fade-in">
-    <h1 class="hero-title">Connexion à votre espace</h1>
-    <p class="hero-subtitle">Accédez à vos index, vos modèles et bien plus encore.</p>
-
+    <h1 class="hero-title">Login to Your Space</h1>
+    <p class="hero-subtitle">Access your indexes, models and much more.</p>
     {% if error %}
       <p style="color:red; margin-bottom: 1rem;">{{ error }}</p>
     {% endif %}
-
     <div class="login-card">
       <form method="POST" class="login-form">
         {% csrf_token %}
         <div class="form-group">
-          <label for="username">Nom d'utilisateur</label>
+          <label for="username">Username</label>
           <input type="text" name="username" id="username" required class="form-input">
         </div>
-
         <div class="form-group">
-          <label for="password">Mot de passe</label>
+          <label for="password">Password</label>
           <input type="password" name="password" id="password" required class="form-input">
         </div>
-
-        <button type="submit" class="cta-button" style="width: 100%; margin-top: 1rem;">Se connecter</button>
+        <button type="submit" class="cta-button" style="width: 100%; margin-top: 1rem;">Sign In</button>
       </form>
     </div>
-
     <p style="text-align:center; margin-top: 1rem;">
-      Pas encore de compte ? <a href="{% url 'main:register' %}" style="color:#3b82f6; font-weight: 600;">Créer un compte</a>
+      Don't have an account yet? <a href="{% url 'main:register' %}" style="color:#3b82f6; font-weight: 600;">Create an account</a>
     </p>
   </div>
 </div>
+
+<style>
+/* Keep banner text and icons white like in home.html */
+.hero-title {
+  color: white;
+}
+
+.hero-subtitle {
+  color: white;
+}
+
+/* Force navbar text and icons to be white in dark mode */
+body.dark-mode .navbar a {
+  color: white !important;
+}
+
+body.dark-mode .navbar a i {
+  color: white !important;
+}
+
+body.dark-mode .logo-image {
+  filter: brightness(0) invert(1);
+}
+
+/* Dark mode contrast adjustments for login page */
+body.dark-mode .hero-container {
+  background: var(--bg-dark, #0f172a);
+  color: var(--text-dark, #f1f5f9);
+}
+
+body.dark-mode .login-card {
+  background: var(--card-dark, #1e293b);
+  border: 1px solid var(--border-dark, #334155);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .form-group label {
+  color: var(--text-dark, #f1f5f9);
+}
+
+body.dark-mode .form-input {
+  background: var(--input-dark, #334155);
+  border: 1px solid var(--border-dark, #475569);
+  color: var(--text-dark, #f1f5f9);
+}
+
+body.dark-mode .form-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+body.dark-mode .cta-button {
+  background: #3b82f6;
+  color: white;
+}
+
+body.dark-mode .cta-button:hover {
+  background: #2563eb;
+}
+
+body.dark-mode a {
+  color: #60a5fa !important;
+}
+
+body.dark-mode a:hover {
+  color: #93c5fd !important;
+}
+
+/* Error message dark mode */
+body.dark-mode p[style*="color:red"] {
+  color: #f87171 !important;
+  background: rgba(248, 113, 113, 0.1);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(248, 113, 113, 0.2);
+}
+</style>
 {% endblock %}
