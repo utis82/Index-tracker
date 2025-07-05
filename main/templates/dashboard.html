@@ -10,7 +10,7 @@
 
 {% if charts %}
   <div class="section-title">
-    <span class="emoji">⭐</span> Your index tracking
+    <i data-lucide="chart-line" class="section-icon" style="width: 20px; height: 20px; color: #3b82f6;"></i> My Indexes
   </div>
 
 <div class="card shadow-lg" style="border-radius: 16px; padding: 24px; background: white; margin-bottom: 2rem;">
@@ -177,7 +177,7 @@
 <!-- NOUVELLE SECTION PRODUITS -->
 {% if product_charts %}
   <div class="section-title">
-    <span class="emoji">🏗️</span> Your product tracking
+    <i data-lucide="box" class="section-icon" style="width: 20px; height: 20px; color: #f59e0b;"></i> My Products
   </div>
 
   <div class="card shadow-lg" style="border-radius: 16px; padding: 24px; background: white; margin-bottom: 2rem;">
@@ -273,7 +273,7 @@
 
 {% else %}
   <div class="section-title">
-    <span class="emoji">🏗️</span> Your product tracking
+    <i data-lucide="box" class="section-icon" style="width: 20px; height: 20px; color: #f59e0b;"></i> My Products
   </div>
   <div class="no-favorites">
     <p>You haven't created any products yet 🔧</p>
@@ -355,6 +355,16 @@
 </script>
 
 <style>
+/* Section icons styling */
+.section-icon {
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+body.dark-mode .section-icon {
+  filter: brightness(1.2);
+}
+
 /* 🎨 PALETTE DE COULEURS HARMONISÉE - Identique à liste_index.html */
 .category-icon {
   flex-shrink: 0;
