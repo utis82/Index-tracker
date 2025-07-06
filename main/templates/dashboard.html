@@ -184,20 +184,21 @@
 <div class="section-title collapsible-header" onclick="toggleSection('products')" style="cursor: pointer; user-select: none;">
   <div style="display: flex; align-items: center; gap: 8px;">
     <i data-lucide="box" class="section-icon" style="width: 20px; height: 20px; color: #f59e0b;"></i>
-    <span>My Products</span>
+    <span>My Products & Parts</span>
     <i data-lucide="chevron-down" id="products-arrow" class="collapse-arrow" style="width: 16px; height: 16px; color: #6b7280; transition: transform 0.3s ease;"></i>
   </div>
 </div>
 
 <div id="products-section" class="collapsible-section">
-  {% if product_charts %}
+  {% if product_charts or orphan_part_charts %}
   <div class="card shadow-lg" style="border-radius: 16px; padding: 24px; background: white; margin-bottom: 2rem;">
     <div class="table-responsive" style="overflow-x: auto;">
       <table class="index-table" style="width: 100%; border-collapse: collapse;">
 
         <thead>
           <tr style="text-align: left; font-weight: 600; background-color: rgba(240, 248, 255, 0.6);">
-            <th style="padding: 12px;">Product</th>
+            <th style="padding: 12px;">Element</th>
+            <th style="padding: 12px;">Type</th>
             <th style="padding: 12px;">Reference Price</th>
             <th style="padding: 12px;">Last Value</th>
             <th style="padding: 12px;">Reference Date</th>
@@ -217,7 +218,12 @@
                   <span style="font-weight: 600; line-height: 1;">{{ product.name }}</span>
                 </div>
               </td>
-
+              
+              <!-- Type -->
+              <td style="padding: 12px;">
+                <span style="font-size: 0.8rem; background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 12px; font-weight: 500;">Product</span>
+              </td>
+              
               <!-- Reference Price -->
               <td style="padding: 12px;">{{ product.reference_price }} €</td>
               
@@ -277,15 +283,92 @@
 
             </tr>
           {% endfor %}
+          <!-- ✨ NOUVEAU : Afficher les parts orphelines -->
+          {% for part in orphan_part_charts %}
+            <tr class="index-row" onclick="window.location.href='{% url 'main:prix_indexes' %}'" style="cursor: pointer;">
+
+              <!-- Part name with icon -->
+              <td style="padding: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <i data-lucide="file-text" class="category-icon icon-orphan-part" title="Independent Part" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+                  <span style="font-weight: 600; line-height: 1;">{{ part.name }}</span>
+                  <span style="font-size: 0.75rem; color: #6b7280; font-style: italic;">(independent)</span>
+                </div>
+              </td>
+
+              <!-- Type -->
+              <td style="padding: 12px;">
+                <span style="font-size: 0.8rem; background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 12px; font-weight: 500;">Part</span>
+              </td>
+
+              <!-- Reference Price -->
+              <td style="padding: 12px;">{{ part.reference_price }} €</td>
+
+              <!-- Last Value -->
+              <td style="padding: 12px;">{{ part.current_price }} €</td>
+
+              <!-- Reference Date -->
+              <td style="padding: 12px;">{{ part.reference_date }}</td>
+
+              <!-- Δ since reference -->
+              <td style="padding: 12px; color: {% if part.variation_since_ref > 0 %}red{% elif part.variation_since_ref < 0 %}green{% else %}inherit{% endif %};">
+                {% if part.variation_since_ref > 0 %}▲{% elif part.variation_since_ref < 0 %}▼{% endif %}
+                {% if part.variation_since_ref %}{{ part.variation_since_ref }} %{% else %}—{% endif %}
+              </td>
+
+              <!-- Mini chart -->
+              <td style="padding: 12px; width: 120px;">
+                <div id="orphan-part-mini-chart-{{ forloop.counter }}" style="height: 40px;"></div>
+                <script>
+                  document.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(function() {
+                      const isDarkMode = document.body.classList.contains('dark-mode');
+                      const chartDiv = document.getElementById('orphan-part-mini-chart-{{ forloop.counter }}');
+                      if (chartDiv && typeof Plotly !== 'undefined') {
+                        Plotly.newPlot(
+                          'orphan-part-mini-chart-{{ forloop.counter }}',
+                          [{
+                            x: {{ part.mini_dates|safe }},
+                            y: {{ part.mini_values|safe }},
+                            mode: 'lines',
+                            line: { 
+                              color: isDarkMode ? '#34d399' : '#10b981', 
+                              width: 2 
+                            },
+                            hoverinfo: 'skip',
+                            fill: 'tozeroy',
+                            fillcolor: isDarkMode ? 'rgba(52, 211, 153, 0.25)' : 'rgba(16, 185, 129, 0.2)',
+                            type: 'scatter'
+                          }],
+                          {
+                            margin: { l: 0, r: 0, t: 0, b: 0 },
+                            xaxis: { visible: false },
+                            yaxis: { visible: false },
+                            paper_bgcolor: 'rgba(0,0,0,0)',
+                            plot_bgcolor: 'rgba(0,0,0,0)',
+                          },
+                          { staticPlot: true, displayModeBar: false, responsive: true }
+                        );
+                      }
+                    }, 100);
+                  });
+                </script>
+              </td>
+
+              <!-- Last update -->
+              <td style="padding: 12px;">{{ part.last_update }}</td>
+
+            </tr>
+          {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
   {% else %}
     <div class="no-favorites">
-      <p>You haven't created any products yet 🔧</p>
-      <a href="{% url 'main:prix_indexes' %}" class="button">👉 Create your first product</a>
-      <p>Build products with indexed components!</p>
+      <p>You haven't created any products or parts yet 🔧</p>
+      <a href="{% url 'main:prix_indexes' %}" class="button">👉 Create your first product or part</a>
+      <p>Build products with indexed components or create independent parts!</p>
     </div>
   {% endif %}
 </div>
@@ -488,6 +571,24 @@ body.dark-mode .icon-inflation { color: #f87171 !important; }
 body.dark-mode .icon-product { color: #fbbf24 !important; }
 body.dark-mode .icon-default { color: #9ca3af !important; }
 
+  /* Couleur pour les parts indépendantes */
+  .icon-orphan-part { color: #10b981; }
+
+  body.dark-mode .icon-orphan-part { 
+    color: #34d399 !important; 
+  }
+
+  /* Badges de type */
+  body.dark-mode .index-table span[style*="background: #dbeafe"] {
+    background: rgba(59, 130, 246, 0.2) !important;
+    color: #60a5fa !important;
+  }
+
+  body.dark-mode .index-table span[style*="background: #dcfce7"] {
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #34d399 !important;
+  }
+  
 /* Dark mode styles for dashboard */
 body.dark-mode .card {
   background: rgba(30, 41, 59, 0.7) !important;

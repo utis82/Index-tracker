@@ -35,7 +35,6 @@ class ProductForm(forms.ModelForm):
 # 🔹 Part (Partie)
 # ------------------------
 class PartForm(forms.ModelForm):
-
     class Meta:
         model = Part
         fields = ['name', 'reference_date']
@@ -43,6 +42,17 @@ class PartForm(forms.ModelForm):
             'reference_date': forms.DateInput(attrs={'type': 'date'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)  # ← AJOUT : récupérer l'utilisateur
+        super().__init__(*args, **kwargs)
+
+        # AJOUT : champ product optionnel
+        if self.user:
+            self.fields['product'] = forms.ModelChoiceField(
+                queryset=Product.objects.filter(user=self.user),
+                required=False,  # ← Optionnel
+                empty_label="-- Aucun produit (part indépendante) --"
+            )
 
 # ------------------------
 # 🔹 Slice (Tranche)

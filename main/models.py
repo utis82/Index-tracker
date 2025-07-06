@@ -23,16 +23,22 @@ class Product(models.Model):
 
 
 class Part(models.Model):
-    product = models.ForeignKey(Product,
-                                on_delete=models.CASCADE,
-                                related_name='parts')
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='parts',
+        null=True,  # ← AJOUTEZ cette ligne
+        blank=True)  # ← AJOUTEZ cette ligne
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE)  # ← AJOUTEZ cette ligne complète
     name = models.CharField(max_length=100)
     reference_date = models.DateField()
     reference_price = models.FloatField(
         "Prix de référence (€)", help_text="Prix à la date de référence")
 
     def __str__(self):
-        return f"🔹 {self.name} ({self.product.name}) - {self.reference_price}€"
+        product_name = self.product.name if self.product else "Part indépendante"
+        return f"🔹 {self.name} ({product_name}) - {self.reference_price}€"
 
 
 class Index(models.Model):
@@ -56,12 +62,10 @@ class Index(models.Model):
 
     name = models.CharField(max_length=100)
     unit = models.CharField(max_length=20, default="€/t")
-    category = models.CharField(
-        max_length=50,
-        choices=CATEGORY_CHOICES,
-        default='autre',
-        help_text="Catégorie de l'index"
-    )
+    category = models.CharField(max_length=50,
+                                choices=CATEGORY_CHOICES,
+                                default='autre',
+                                help_text="Catégorie de l'index")
 
     def __str__(self):
         return self.name

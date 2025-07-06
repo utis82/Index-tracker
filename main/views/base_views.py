@@ -142,13 +142,62 @@ def dashboard(request):
             last_update,
         })
 
+    # === ✨ NOUVEAU : ORPHAN PART CHARTS ===
+    orphan_parts = Part.objects.filter(
+        user=request.user,
+        product__isnull=True).prefetch_related("slices__index")
+    orphan_part_charts = []
+
+    for part in orphan_parts:
+        # Calculer le prix actuel de la part
+        current_price = calculate_part_current_price_for_dashboard(
+            part, index_data)
+
+        # Calculer la variation depuis la date de référence
+        variation_since_ref = None
+        if part.reference_price and part.reference_price > 0:
+            variation_since_ref = round(
+                ((current_price - part.reference_price) / part.reference_price)
+                * 100, 2)
+
+        # Générer les données pour le mini-graphique
+        mini_dates, mini_values = generate_part_mini_chart_data(
+            part, index_data)
+
+        # Trouver la dernière date de mise à jour
+        last_update = get_part_last_update(part, index_data)
+
+        orphan_part_charts.append({
+            "id":
+            part.id,
+            "name":
+            part.name,
+            "reference_price":
+            round(part.reference_price, 2),
+            "current_price":
+            round(current_price, 2),
+            "reference_date":
+            part.reference_date.strftime("%Y-%m-%d"),
+            "variation_since_ref":
+            variation_since_ref,
+            "mini_dates":
+            json.dumps(mini_dates),
+            "mini_values":
+            json.dumps(mini_values),
+            "last_update":
+            last_update,
+        })
+
     # Favoris IDs pour les étoiles
     favorite_ids = [index.id for index in favorites]
 
     return render(
-        request, "dashboard.html", {
+        request,
+        "dashboard.html",
+        {
             "charts": charts,
             "product_charts": product_charts,
+            "orphan_part_charts": orphan_part_charts,  # ✨ AJOUT
             "subscription": user_profile.subscription_plan,
             "favorite_ids": favorite_ids,
         })
@@ -535,17 +584,23 @@ def process_excel_file_optimized(excel_file, replace_existing=False):
                     continue
 
                 # 🚨 RÉCUPÉRER ET MAPPER LA CATÉGORIE DEPUIS LA COLONNE A
-                excel_category = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ""
+                excel_category = str(row.iloc[0]).strip() if pd.notna(
+                    row.iloc[0]) else ""
                 category = map_excel_category_to_django(excel_category)
 
                 # Statistiques de mapping
                 if excel_category not in category_stats:
-                    category_stats[excel_category] = {'count': 0, 'mapped_to': category}
+                    category_stats[excel_category] = {
+                        'count': 0,
+                        'mapped_to': category
+                    }
                 category_stats[excel_category]['count'] += 1
 
                 # DEBUG: Afficher le mapping pour les premières lignes
                 if processed_lines < 10:
-                    print(f"      📂 Ligne {row_index+1}: Colonne A '{excel_category}' → Django '{category}'")
+                    print(
+                        f"      📂 Ligne {row_index+1}: Colonne A '{excel_category}' → Django '{category}'"
+                    )
 
                 # Construction du nom d'index (logique existante)
                 base_name = f"{source} - {designation}" if source else designation
@@ -1242,3 +1297,105 @@ def upgrade_plan_api(request):
             'message':
             'An error occurred while changing your plan'
         })
+
+
+# ✨ NOUVELLES FONCTIONS POUR LES PARTS ORPHELINES
+
+
+def calculate_part_current_price_for_dashboard(part, index_data):
+    """Calcule le prix actuel d'une part orpheline pour le dashboard"""
+    # Récupérer tous les index utilisés dans cette part
+    part_index_ids = [
+        sl.index_id for sl in part.slices.all()
+        if sl.component_type == "indexed" and sl.index_id
+    ]
+
+    if not part_index_ids or not index_data:
+        return part.reference_price
+
+    # Chercher la date la plus récente avec des données
+    available_dates = set()
+    for index_id in part_index_ids:
+        if index_id in index_data:
+            available_dates.update(index_data[index_id].keys())
+
+    if not available_dates:
+        return part.reference_price
+
+    # Prendre la date la plus récente
+    latest_date = max(available_dates)
+    return calculate_part_price_at_date(part, latest_date, index_data)
+
+
+def generate_part_mini_chart_data(part, index_data):
+    """Génère les données pour le mini-graphique d'une part orpheline"""
+    # Récupérer tous les index utilisés dans cette part
+    part_index_ids = [
+        sl.index_id for sl in part.slices.all()
+        if sl.component_type == "indexed" and sl.index_id
+    ]
+
+    if not part_index_ids or not index_data:
+        # Pas d'index, ligne horizontale depuis la date de référence
+        ref_date = part.reference_date
+        today = datetime_date.today()
+
+        dates = []
+        values = []
+        current_date = ref_date
+
+        # Générer des points mensuels
+        while current_date <= today and len(dates) < 12:
+            dates.append(current_date.strftime("%Y-%m-%d"))
+            values.append(part.reference_price)
+
+            # Passer au mois suivant
+            if current_date.month == 12:
+                current_date = datetime_date(current_date.year + 1, 1, 1)
+            else:
+                current_date = datetime_date(current_date.year,
+                                             current_date.month + 1, 1)
+
+        return dates, values
+
+    # Récupérer toutes les dates disponibles après la date de référence
+    all_dates = set()
+    for index_id in part_index_ids:
+        if index_id in index_data:
+            index_dates = [
+                d for d in index_data[index_id].keys()
+                if d >= part.reference_date
+            ]
+            all_dates.update(index_dates)
+
+    if not all_dates:
+        return [], []
+
+    # Trier et prendre les 12 dernières dates
+    sorted_dates = sorted(all_dates)[-12:]
+
+    dates = []
+    values = []
+
+    for date in sorted_dates:
+        part_price = calculate_part_price_at_date(part, date, index_data)
+        dates.append(date.strftime("%Y-%m-%d"))
+        values.append(round(part_price, 2))
+
+    return dates, values
+
+
+def get_part_last_update(part, index_data):
+    """Trouve la dernière date de mise à jour d'une part orpheline"""
+    latest_date = part.reference_date
+
+    for slice_obj in part.slices.all():
+        if slice_obj.component_type == "indexed" and slice_obj.index_id:
+            if slice_obj.index_id in index_data:
+                index_dates = list(index_data[slice_obj.index_id].keys())
+                if index_dates:
+                    index_latest = max(index_dates)
+                    if index_latest > latest_date:
+                        latest_date = index_latest
+
+    return latest_date.strftime("%Y-%m-%d")

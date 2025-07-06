@@ -186,8 +186,8 @@
   }
 
   .icon-button svg {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     stroke: #0ea5e9;
   }
 
@@ -846,6 +846,104 @@
           {% endfor %}
         {% endfor %}
       {% endfor %}
+      <!-- ✨ PARTS ORPHELINES (indépendantes) -->
+      {% for part in orphan_parts %}
+        <tr class="level-1" data-toggle="orphan-part-{{ part.id }}">
+          <td>
+            {% if part.slices.all %}
+              <span class="toggle-icon">›</span>
+            {% else %}
+              <span style="width: 20px; display: inline-block;"></span>
+            {% endif %}
+            <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-text" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#10b981" stroke-width="1.5" style="margin-right: 10px; vertical-align: middle;">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <path d="M14 2v6h6"/>
+            </svg>
+            <span>{{ part.name }} <em style="color: #6b7280; font-size: 0.8rem;"></em></span>
+          </td>
+          <td>
+            <span style="color: #0284c7; font-weight: 500; font-size: 0.85rem;">{{ part.reference_date }}</span>
+          </td>
+          <td>
+            <span style="color: #059669; font-weight: 600; font-size: 0.9rem;">
+              €{{ part.reference_price|floatformat:0 }}
+            </span>
+          </td>
+          <td>
+            {% with current_prices.orphan_parts|lookup:part.id as part_prices %}
+              <span style="color: {% if part_prices.current > part_prices.reference %}#dc2626{% elif part_prices.current < part_prices.reference %}#059669{% else %}#6b7280{% endif %}; font-weight: 600; font-size: 0.9rem;">
+                €{{ part_prices.current|floatformat:0 }}
+              </span>
+              {% with part_prices.current|sub:part_prices.reference as part_diff %}
+                {% if part_diff != 0 %}
+                  <span style="font-size: 0.75rem; color: {% if part_diff > 0 %}#dc2626{% else %}#059669{% endif %}; margin-left: 4px;">
+                    ({% if part_diff > 0 %}+{% endif %}€{{ part_diff|floatformat:0 }})
+                  </span>
+                {% endif %}
+              {% endwith %}
+            {% endwith %}
+          </td>
+          <td>
+            <div class="actions">
+              <!-- 📈 Chart -->
+              <button class="icon-button view-part-graph-btn" 
+                      data-part-id="{{ part.id }}"
+                      data-part-name="{{ part.name }}"
+                      title="Show chart">
+                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-activity" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+              </button>
+
+              <!-- ✏️ Edit -->
+              <button class="icon-button edit-part-button"
+                      data-part-id="{{ part.id }}"
+                      title="Edit part">
+                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M15 5l4 4L7 21H3v-4L15 5z"/>
+                </svg>
+              </button>
+
+              <!-- 🗑️ Delete -->
+              <button class="icon-button delete-part-button"
+                      data-part-id="{{ part.id }}"
+                      title="Delete part">
+                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-archive-x" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <rect x="3" y="4" width="18" height="5" rx="1"/>
+                  <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
+                  <path d="M10 13l4 4m0-4l-4 4"/>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Afficher les slices de la part orpheline -->
+        {% for slice in part.slices.all %}
+          <tr class="level-3 hidden" data-parent="orphan-part-{{ part.id }}">
+            <td>
+              <span style="width: 48px; display: inline-block;"></span>
+              <div class="slice-badge-container">
+                <div class="slice-badge">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pie-chart" fill="none" viewBox="0 0 24 24" stroke="#6366f1" stroke-width="2">
+                    <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+                    <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+                  </svg>
+                  <span>{{ slice.label }}</span>
+                  <span style="color: #6366f1; font-weight: 600; margin-left: 2px;">{{ slice.percentage }}%</span>
+                  {% if slice.index %}
+                    <span style="color: #94a3b8; margin-left: 3px; font-style: italic;">{{ slice.index.name }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        {% endfor %}
+      {% endfor %}
     </table>
   </div>
 
@@ -960,7 +1058,8 @@
           <tr>
             <th>Associated product</th>
             <td>
-              <select name="product_id" required>
+              <select name="product_id">
+                <option value="">-- Aucun produit (part indépendante) --</option>
                 {% for product in produits %}
                   <option value="{{ product.id }}">{{ product.name }}</option>
                 {% endfor %}
