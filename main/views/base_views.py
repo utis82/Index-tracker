@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.http import require_POST
@@ -10,10 +10,13 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib import messages
 from django.utils import timezone
-from main.models import Index, IndexValue, Product, Part, Slice, EmailVerification, map_excel_category_to_django
+
+# 🆕 AJOUT : Imports pour changement de mot de passe
+from django.contrib.auth.views import PasswordChangeView, PasswordChangeDoneView
+from django.urls import reverse_lazy
 
 # Imports de votre app
-from main.models import Index, IndexValue, Product, Part, Slice, EmailVerification
+from main.models import Index, IndexValue, Product, Part, Slice, EmailVerification, map_excel_category_to_django
 from main.utils import get_user_index_data
 from main.forms import CustomUserCreationForm, ContactForm, EmailVerificationForm, ResendCodeForm
 
@@ -29,6 +32,41 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+# 🆕 NOUVELLES VUES POUR CHANGEMENT DE MOT DE PASSE
+class CustomPasswordChangeView(PasswordChangeView):
+    """Vue personnalisée pour le changement de mot de passe"""
+    template_name = 'auth/password_change_form.html'
+    form_class = PasswordChangeForm
+    success_url = reverse_lazy('main:password_change_done')
+
+    def form_valid(self, form):
+        """Ajouter un message de succès"""
+        messages.success(self.request, 'Votre mot de passe a été modifié avec succès !')
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        """Ajouter le contexte pour cohérence avec vos templates"""
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Changer mon mot de passe'
+        return context
+
+
+class CustomPasswordChangeDoneView(PasswordChangeDoneView):
+    """Vue de confirmation du changement de mot de passe"""
+    template_name = 'auth/password_change_done.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Mot de passe modifié'
+        return context
+
+
+
+
+# ============================================
+# VUES EXISTANTES (inchangées)
+# ============================================
 
 @login_required
 def dashboard(request):
