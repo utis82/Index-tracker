@@ -365,17 +365,90 @@
         min-height: 500px;
         display: flex;
         flex-direction: column;
-        height: 490px; /* Fixed height for alignment */
+        height: 490px;
+    }
+
+    /* Header du chart avec titre et bouton d'export */
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
     }
 
     .chart-title {
         font-size: 1.1em;
         font-weight: 600;
         color: var(--text-primary);
-        margin-bottom: 16px;
         display: flex;
         align-items: center;
         gap: 10px;
+        flex: 1;
+    }
+
+    /* Bouton d'export intégré - style minimaliste et élégant */
+    .chart-export-btn {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 8px;
+        padding: 8px;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: #3b82f6;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .chart-export-btn:hover:not(:disabled) {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        color: #2563eb;
+    }
+
+    .chart-export-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+    }
+
+    .chart-export-btn:disabled {
+        background: rgba(148, 163, 184, 0.1);
+        border-color: rgba(148, 163, 184, 0.2);
+        color: #94a3b8;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .chart-export-btn svg {
+        width: 18px !important;
+        height: 18px !important;
+        stroke-width: 2;
+        transition: transform 0.2s ease;
+    }
+
+    .chart-export-btn:hover:not(:disabled) svg {
+        transform: scale(1.1);
+    }
+
+    /* Animation de pulse pour indiquer qu'on peut exporter */
+    @keyframes exportPulse {
+        0%, 100% { 
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); 
+        }
+        50% { 
+            box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); 
+        }
+    }
+
+    .chart-export-btn.ready {
+        animation: exportPulse 2s infinite;
     }
 
     .base-100-indicator {
@@ -396,8 +469,8 @@
     .metrics-panel {
         display: flex;
         flex-direction: column;
-        height: 540px; /* Same height as chart-container */
-        gap: 8px; /* Constant spacing between cards */
+        height: 540px;
+        gap: 8px;
     }
 
     .metric-card {
@@ -406,7 +479,7 @@
         border-radius: 12px;
         padding: 16px;
         box-shadow: 0 4px 6px -1px var(--shadow-light);
-        height: calc((100% - 16px) / 3); /* (Total height - 2 gaps) / 3 */
+        height: calc((100% - 16px) / 3);
         display: flex;
         flex-direction: column;
         opacity: 0;
@@ -420,7 +493,6 @@
     .metric-card:nth-child(2) { animation-delay: 0.2s; }
     .metric-card:nth-child(3) { animation-delay: 0.3s; }
 
-    /* Empty card for unselected inputs */
     .metric-card.empty {
         background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
         border: 2px dashed var(--border-secondary);
@@ -545,23 +617,12 @@
         min-height: 50px;
     }
 
-    /* 🌙 Dark mode variation section - utilise body.dark-mode */
-    body.dark-mode .variation-section {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        border: 2px solid #334155;
-    }
-
     .variation-title {
         font-size: 0.65em;
         color: #0369a1;
         margin-bottom: 3px;
         font-weight: 500;
         line-height: 1.1;
-    }
-
-    /* 🌙 Dark mode variation title - utilise body.dark-mode */
-    body.dark-mode .variation-title {
-        color: #38bdf8;
     }
 
     .variation-value {
@@ -571,9 +632,8 @@
         line-height: 1;
     }
 
-    /* 🔴 CORRECTION: Color inversion for variations */
-    .variation-positive { color: #dc2626; } /* Red for increases */
-    .variation-negative { color: #059669; } /* Green for decreases */
+    .variation-positive { color: #dc2626; }
+    .variation-negative { color: #059669; }
     .variation-neutral { color: var(--text-secondary); }
 
     .variation-absolute {
@@ -629,6 +689,69 @@
         line-height: 1.5;
     }
 
+    /* Messages toast */
+    .export-toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        border-left: 4px solid #22c55e;
+        min-width: 300px;
+        max-width: 500px;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .export-toast.show {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .export-toast-error {
+        border-left-color: #ef4444;
+    }
+
+    .toast-content {
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .toast-content span {
+        flex: 1;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .toast-close {
+        background: none;
+        border: none;
+        font-size: 18px;
+        font-weight: bold;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .toast-close:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+
     /* Animation for chart lines */
     @keyframes drawLine {
         from {
@@ -639,7 +762,7 @@
         }
     }
 
-    /* 🌙 Styles spécifiques dark mode pour compatibilité avec le système existant */
+    /* Dark mode styles */
     body.dark-mode .dropdown-item.selected {
         background: #475569;
     }
@@ -675,7 +798,39 @@
         color: #64748b;
     }
 
-    /* 🎨 Styles pour les icônes Lucide */
+    body.dark-mode .chart-export-btn {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.3);
+        color: #60a5fa;
+    }
+
+    body.dark-mode .chart-export-btn:hover:not(:disabled) {
+        background: rgba(59, 130, 246, 0.2);
+        border-color: rgba(59, 130, 246, 0.4);
+        color: #3b82f6;
+    }
+
+    body.dark-mode .chart-export-btn:disabled {
+        background: rgba(71, 85, 105, 0.2);
+        border-color: rgba(71, 85, 105, 0.3);
+        color: #64748b;
+    }
+
+    body.dark-mode .variation-section {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        border: 2px solid #334155;
+    }
+
+    body.dark-mode .variation-title {
+        color: #38bdf8;
+    }
+
+    body.dark-mode .export-toast {
+        background: var(--bg-secondary);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Styles pour les icônes Lucide */
     .dropdown-category i[data-lucide] {
         width: 16px !important;
         height: 16px !important;
@@ -706,6 +861,7 @@
         stroke-width: 2;
     }
 
+    /* Responsive */
     @media (max-width: 1200px) {
         .analysis-content {
             grid-template-columns: 1fr;
@@ -726,6 +882,25 @@
             height: 200px;
             flex: 1;
             margin-bottom: 0;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .export-toast {
+            right: 10px;
+            left: 10px;
+            min-width: auto;
+            max-width: none;
+        }
+
+        .chart-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .chart-export-btn {
+            align-self: flex-end;
         }
     }
 </style>
@@ -854,12 +1029,20 @@
         <div class="results-section visible" id="resultsSection">
             <div class="chart-container">
                 {% if series_data and series_data != '[]' %}
-                    <div class="chart-title">
-                        <i data-lucide="line-chart"></i>
-                        Comparative Evolution
-                        {% if selected_indexes|length > 1 %}
-                            <span class="base-100-indicator">Base 100</span>
-                        {% endif %}
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i data-lucide="line-chart"></i>
+                            Comparative Evolution
+                            {% if selected_indexes|length > 1 %}
+                                <span class="base-100-indicator">Base 100</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- NOUVEAU: Bouton d'export intégré -->
+                        <button type="button" class="chart-export-btn" id="exportButton" onclick="exportToExcel()" 
+                                title="Export to Excel">
+                            <i data-lucide="download"></i>
+                        </button>
                     </div>
                     <div id="chart"></div>
                 {% else %}
@@ -1112,6 +1295,8 @@
             analyzeButton.disabled = true;
         }
 
+        updateExportButton();
+        
         checkboxes.forEach(cb => {
             const item = cb.closest('.dropdown-item');
             if (!cb.checked && selectedCount >= maxSelection) {
@@ -1487,6 +1672,146 @@
         {% else %}
             console.log("❌ No series_data available");
         {% endif %}
+    }
+    // MODIFIER AUSSI la fonction exportToExcel pour le nouveau bouton :
+    async function exportToExcel() {
+        const exportButton = document.getElementById('exportButton');
+        const originalHTML = exportButton.innerHTML;
+
+        // Animation de chargement
+        exportButton.disabled = true;
+        exportButton.classList.remove('ready');
+        exportButton.innerHTML = '<i data-lucide="loader-2"></i>';
+
+        // Recréer les icônes pour l'animation de chargement
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        try {
+            // ... le reste du code exportToExcel reste identique ...
+            const formData = new FormData();
+
+            // Ajouter les éléments sélectionnés
+            document.querySelectorAll('input[name="index_id"]:checked').forEach(cb => {
+                formData.append('index_id', cb.value);
+            });
+            document.querySelectorAll('input[name="product_id"]:checked').forEach(cb => {
+                formData.append('product_id', cb.value);
+            });
+            document.querySelectorAll('input[name="part_id"]:checked').forEach(cb => {
+                formData.append('part_id', cb.value);
+            });
+
+            // Ajouter les dates
+            const startA = document.querySelector('input[name="start_a"]').value;
+            const endA = document.querySelector('input[name="end_a"]').value;
+            const startB = document.querySelector('input[name="start_b"]').value;
+            const endB = document.querySelector('input[name="end_b"]').value;
+
+            if (startA) formData.append('start_a', startA);
+            if (endA) formData.append('end_a', endA);
+            if (startB) formData.append('start_b', startB);
+            if (endB) formData.append('end_b', endB);
+
+            // Token CSRF
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            formData.append('csrfmiddlewaretoken', csrfToken);
+
+            // Requête
+            const response = await fetch('/export-analysis-excel/', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'analyse_indexes.xlsx';
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                    if (filenameMatch) {
+                        filename = filenameMatch[1];
+                    }
+                }
+                a.download = filename;
+
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                showExportMessage('✅ Export Excel réussi !', 'success');
+
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Erreur lors de l\'export');
+            }
+
+        } catch (error) {
+            console.error('❌ Erreur export Excel:', error);
+            showExportMessage('❌ Erreur: ' + error.message, 'error');
+        } finally {
+            // Restaurer le bouton
+            exportButton.disabled = false;
+            exportButton.innerHTML = originalHTML;
+
+            // Remettre l'animation si des données sont disponibles
+            if (selectedCount > 0 && {{ series_data|length|default:0 }} > 0) {
+                exportButton.classList.add('ready');
+            }
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+    }
+
+    // Fonction pour afficher les messages d'export
+    function showExportMessage(message, type) {
+        // Créer le message toast
+        const toast = document.createElement('div');
+        toast.className = `export-toast export-toast-${type}`;
+        toast.innerHTML = `
+            <div class="toast-content">
+                <span>${message}</span>
+                <button onclick="this.parentElement.parentElement.remove()" class="toast-close">×</button>
+            </div>
+        `;
+
+        // Ajouter au DOM
+        document.body.appendChild(toast);
+
+        // Animation d'entrée
+        setTimeout(() => toast.classList.add('show'), 100);
+
+        // Suppression automatique après 5 secondes
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+
+    // Mettre à jour l'état du bouton d'export quand la sélection change
+    function updateExportButton() {
+        const exportButton = document.getElementById('exportButton');
+        const hasData = selectedCount > 0 && {{ series_data|length|default:0 }} > 0;
+
+        if (exportButton) {
+            exportButton.disabled = !hasData;
+
+            // Ajouter animation quand prêt
+            if (hasData) {
+                exportButton.classList.add('ready');
+            } else {
+                exportButton.classList.remove('ready');
+            }
+        }
     }
 </script>
 

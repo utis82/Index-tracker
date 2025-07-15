@@ -1,15 +1,14 @@
 # main/urls.py
 from django.urls import path
-from main.views.base_views import (home, login_view, dashboard, register_view,
-                                   upload_excel, logout_view, search_index,
-                                   choose_primary_index, contact_view,
-                                   verify_email, resend_verification_code,
-                                   cleanup_duplicate_indexes,
-                                   CustomPasswordChangeView, CustomPasswordChangeDoneView)
-
+from main.views.base_views import (
+    home, login_view, dashboard, register_view, upload_excel, logout_view,
+    search_index, choose_primary_index, contact_view, verify_email,
+    resend_verification_code, cleanup_duplicate_indexes,
+    CustomPasswordChangeView, CustomPasswordChangeDoneView)
 from main.views.index_views import liste_index_view
 from main.views.chart_views import (index_viewer, toggle_favorite_ajax,
-                                    get_index_data_ajax, export_analysis_data)
+                                    get_index_data_ajax, export_analysis_data,
+                                    export_analysis_excel)  # ← AJOUTER export_analysis_excel ici
 from main.views.user_views import toggle_favorite
 from main.views.prix_indexes_views import prix_indexes_view, delete_structure, get_structure_data
 from main.views import prix_indexes_views, base_views
@@ -25,11 +24,11 @@ urlpatterns = [
          resend_verification_code,
          name='resend_verification_code'),
     path('dashboard/', dashboard, name='dashboard'),
-    path('change-password/', 
-         CustomPasswordChangeView.as_view(), 
+    path('change-password/',
+         CustomPasswordChangeView.as_view(),
          name='password_change'),
-    path('change-password/done/', 
-         CustomPasswordChangeDoneView.as_view(), 
+    path('change-password/done/',
+         CustomPasswordChangeDoneView.as_view(),
          name='password_change_done'),
     path('upload/', upload_excel, name='upload'),
     path('index/import-excel/', upload_excel, name='index_import_excel'),
@@ -74,4 +73,9 @@ urlpatterns = [
     path('tools/cleanup-duplicates/',
          cleanup_duplicate_indexes,
          name='cleanup_duplicates'),
+
+    # ✅ CORRECTION : Utiliser directement la fonction importée
+    path('export-analysis-excel/',
+         export_analysis_excel,  # ← Sans chart_views. devant
+         name='export_analysis_excel'),
 ]
