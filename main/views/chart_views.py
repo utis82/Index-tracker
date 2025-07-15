@@ -52,7 +52,7 @@ def index_viewer(request, index_id=None):
     # Récupération des objets sélectionnés
     selected_indexes = favorites.filter(id__in=selected_index_ids)
     selected_products = Product.objects.filter(id__in=selected_product_ids, user=request.user)
-    selected_parts = Part.objects.filter(id__in=selected_part_ids, product__user=request.user)
+    selected_parts = Part.objects.filter(id__in=selected_part_ids, user=request.user)
 
     # Récupération des paramètres de dates
     start_a = request.GET.get("start_a")
@@ -163,7 +163,9 @@ def index_viewer(request, index_id=None):
 
     # === NOUVEAU : Gestion des PIÈCES ===
     if selected_parts.exists():
+        print(f"🔍 DEBUG - Traitement de {selected_parts.count()} pièces")
         for part in selected_parts:
+            print(f"🔍 DEBUG - Pièce: {part.name}, tranches: {part.slices.count()}")
             part_data_points = []
 
             # Vérifier qu'il y a des tranches
@@ -182,6 +184,7 @@ def index_viewer(request, index_id=None):
                 )
 
                 if part_index_ids:  # La pièce a des tranches indexées
+                    print(f"🔍 DEBUG - Pièce {part.name} a des tranches indexées")
                     all_dates = sorted(set().union(*(index_data.get(i, {}).keys() for i in part_index_ids)))
                     part_reference_date = part.reference_date
 
@@ -192,10 +195,12 @@ def index_viewer(request, index_id=None):
                                 "date": date.strftime("%Y-%m-%d"),
                                 "value": round(part_current_price, 2)
                             })
+
                 elif has_fixed_slices:  # Seulement des tranches fixes
+                    print(f"🔍 DEBUG - Pièce {part.name} a seulement des tranches fixes")
                     part_current_price = calculate_part_price_at_date(part, part.reference_date, index_data)
 
-                    # Points mensuels de la référence à aujourd'hui
+                    # Créer des points mensuels de la référence à aujourd'hui
                     ref_date = part.reference_date
                     today = datetime_date.today()
                     current_date = datetime_date(ref_date.year, ref_date.month, 1)
@@ -206,13 +211,15 @@ def index_viewer(request, index_id=None):
                             "value": round(part_current_price, 2)
                         })
 
-                        # Mois suivant
+                        # Passer au mois suivant
                         if current_date.month == 12:
                             current_date = datetime_date(current_date.year + 1, 1, 1)
                         else:
                             current_date = datetime_date(current_date.year, current_date.month + 1, 1)
 
+                # 🚨 CORRECTION IMPORTANTE : Cette partie doit être au niveau de la boucle for part
                 if part_data_points:
+                    print(f"🔍 DEBUG - Ajout de {len(part_data_points)} points pour {part.name}")
                     dates = [point["date"] for point in part_data_points]
                     values = [point["value"] for point in part_data_points]
                     series_data.append({
@@ -221,7 +228,19 @@ def index_viewer(request, index_id=None):
                         "dates": dates,
                         "values": values,
                         "unit": "€",
+                        "category": "Pièce",
+                        "metadata": {
+                            "source": "Pièce calculée",
+                            "reference_date": part.reference_date,
+                            "reference_price": part.reference_price,
+                            "product": part.product.name if part.product else "Pièce indépendante",
+                            "description": getattr(part, 'description', ''),
+                        }
                     })
+                else:
+                    print(f"🔍 DEBUG - Aucun point de données pour {part.name}")
+            else:
+                print(f"🔍 DEBUG - Pièce {part.name} n'a pas de tranches")
 
     # Calcul des statistiques si toutes les dates sont fournies
     if all([start_a, end_a, start_b, end_b]):
@@ -355,6 +374,7 @@ def index_viewer(request, index_id=None):
         "user_plan": user_profile.subscription_plan,
         "index_limit": user_profile.index_limit(),
         "user": request.user,  # Pour accéder aux produits/pièces dans le template
+         "all_user_parts": Part.objects.filter(user=request.user).select_related('product'),
     }
 
     return render(request, "index_viewer.html", context)
@@ -555,7 +575,7 @@ def export_analysis_excel(request):
         user_profile = request.user.userprofile
         selected_indexes = user_profile.favorite_indexes.filter(id__in=selected_index_ids)
         selected_products = Product.objects.filter(id__in=selected_product_ids, user=request.user)
-        selected_parts = Part.objects.filter(id__in=selected_part_ids, product__user=request.user)
+        selected_parts = Part.objects.filter(id__in=selected_part_ids, user=request.user)
 
         # Récupération des données d'index
         try:

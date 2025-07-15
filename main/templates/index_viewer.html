@@ -949,20 +949,24 @@
                                 {% endfor %}
                             {% endif %}
 
-                            {% if user.products.all %}
+                            {% if all_user_parts %}
                                 <div class="dropdown-category">
                                     <i data-lucide="wrench"></i>
                                     My Parts
                                 </div>
-                                {% for product in user.products.all %}
-                                    {% for part in product.parts.all %}
-                                        <div class="dropdown-item" onclick="toggleSelection(this, 'part', {{ part.id }})">
-                                            <input type="checkbox" name="part_id" value="{{ part.id }}"
-                                                   {% if part in selected_parts %}checked{% endif %}>
-                                            <span class="item-name">{{ part.name }}</span>
-                                            <span class="item-type">({{ product.name }})</span>
-                                        </div>
-                                    {% endfor %}
+                                {% for part in all_user_parts %}
+                                    <div class="dropdown-item" onclick="toggleSelection(this, 'part', {{ part.id }})">
+                                        <input type="checkbox" name="part_id" value="{{ part.id }}"
+                                               {% if part in selected_parts %}checked{% endif %}>
+                                        <span class="item-name">{{ part.name }}</span>
+                                        <span class="item-type">
+                                            {% if part.product %}
+                                                ({{ part.product.name }})
+                                            {% else %}
+                                                (Pièce indépendante)
+                                            {% endif %}
+                                        </span>
+                                    </div>
                                 {% endfor %}
                             {% endif %}
                         </div>
