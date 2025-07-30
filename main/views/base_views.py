@@ -10,6 +10,8 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib import messages
 from django.utils import timezone
+from django.core.mail import send_mail, EmailMessage  # Modifier l'import existant
+import os
 
 # 🆕 AJOUT : Imports pour changement de mot de passe
 from django.contrib.auth.views import PasswordChangeView, PasswordChangeDoneView
@@ -375,63 +377,98 @@ def get_product_last_update(product, index_data):
 
 @require_POST
 def contact_view(request):
-    """Vue pour traiter le formulaire de contact via AJAX"""
+    """View to handle contact form via AJAX with file attachment support"""
     try:
-        # Récupération des données du formulaire
+        # Get form data
         name = request.POST.get('name', '').strip()
         email = request.POST.get('email', '').strip()
         subject = request.POST.get('subject', '').strip()
         message = request.POST.get('message', '').strip()
 
-        # Validation basique
+        # Basic validation
         if not all([name, email, subject, message]):
             return JsonResponse(
                 {
                     'status': 'error',
-                    'message': 'Tous les champs sont requis'
+                    'message': 'All fields are required'
                 },
                 status=400)
 
-        # Construction du message email
+        # Handle file attachment
+        attachment = request.FILES.get('attachment')
+        if attachment:
+            # Validate file size (10MB limit)
+            if attachment.size > 10 * 1024 * 1024:
+                return JsonResponse(
+                    {
+                        'status': 'error',
+                        'message': 'File size must be less than 10MB'
+                    },
+                    status=400)
+
+            # Validate file type
+            allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx', '.txt']
+            file_extension = os.path.splitext(attachment.name)[1].lower()
+            if file_extension not in allowed_extensions:
+                return JsonResponse(
+                    {
+                        'status': 'error',
+                        'message': 'File type not allowed. Please use: images, PDF, DOC, or TXT files'
+                    },
+                    status=400)
+
+        # Build email message
         email_subject = f"[IndexTracker Contact] {subject}"
         email_body = f"""
-Nouveau message de contact depuis IndexTracker
+New contact message from IndexTracker
 
-Nom: {name}
+Name: {name}
 Email: {email}
-Sujet: {subject}
+Subject: {subject}
 
 Message:
 {message}
 
+{f"Attachment: {attachment.name} ({attachment.size} bytes)" if attachment else "No attachment"}
+
 ---
-Envoyé depuis l'application IndexTracker
-Utilisateur connecté: {request.user.username if request.user.is_authenticated else 'Anonyme'}
+Sent from IndexTracker application
+Connected user: {request.user.username if request.user.is_authenticated else 'Anonymous'}
         """
 
-        # Envoi de l'email
-        send_mail(
+        # Create email message with attachment support
+        from django.core.mail import EmailMessage
+
+        email_msg = EmailMessage(
             subject=email_subject,
-            message=email_body,
+            body=email_body,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=['indextracker.contact@gmail.com'],
-            fail_silently=False,
+            to=['indextracker.contact@gmail.com'],
+            reply_to=[email],  # Allow direct reply to the user
         )
 
+        # Attach file if provided
+        if attachment:
+            email_msg.attach(attachment.name, attachment.read(), attachment.content_type)
+
+        # Send email
+        email_msg.send(fail_silently=False)
+
         return JsonResponse({
-            'status':
-            'success',
-            'message':
-            'Votre message a été envoyé avec succès!'
+            'status': 'success',
+            'message': 'Your message has been sent successfully!'
         })
 
     except Exception as e:
+        # Log the error for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Contact form error: {str(e)}")
+
         return JsonResponse(
             {
-                'status':
-                'error',
-                'message':
-                'Une erreur est survenue lors de l\'envoi. Veuillez réessayer.'
+                'status': 'error',
+                'message': 'An error occurred while sending. Please try again.'
             },
             status=500)
 
