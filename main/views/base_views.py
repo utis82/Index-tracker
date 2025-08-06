@@ -1272,21 +1272,21 @@ def resend_verification_code(request, user_id):
 
 
 def send_verification_email(user, code):
-    """Fonction utilitaire pour envoyer l'email de vérification"""
-    subject = 'Vérification de votre compte IndexTracker'
+    """Utility function to send email verification"""
+    subject = 'Verify Your IndexTracker Account'
     message = f"""
-Bonjour {user.username},
+Hello {user.username},
 
-Merci de vous être inscrit sur IndexTracker !
+Thank you for signing up for IndexTracker!
 
-Votre code de vérification est : {code}
+Your verification code is: {code}
 
-Ce code expire dans 15 minutes.
+This code expires in 15 minutes.
 
-Si vous n'avez pas créé de compte, ignorez cet email.
+If you did not create an account, please ignore this email.
 
-Cordialement,
-L'équipe IndexTracker
+Best regards,
+The IndexTracker Team
     """
 
     try:
@@ -1299,7 +1299,7 @@ L'équipe IndexTracker
         )
         return True
     except Exception as e:
-        print(f"Erreur envoi email: {e}")
+        print(f"Error sending email: {e}")
         return False
 
 
