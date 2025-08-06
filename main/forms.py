@@ -6,6 +6,7 @@ from .models import Product, Part, Slice
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.contrib.auth.forms import SetPasswordForm
 
 
 # ------------------------
@@ -35,6 +36,7 @@ class ProductForm(forms.ModelForm):
 # 🔹 Part (Partie)
 # ------------------------
 class PartForm(forms.ModelForm):
+
     class Meta:
         model = Part
         fields = ['name', 'reference_date']
@@ -43,7 +45,8 @@ class PartForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)  # ← AJOUT : récupérer l'utilisateur
+        self.user = kwargs.pop('user',
+                               None)  # ← AJOUT : récupérer l'utilisateur
         super().__init__(*args, **kwargs)
 
         # AJOUT : champ product optionnel
@@ -51,8 +54,8 @@ class PartForm(forms.ModelForm):
             self.fields['product'] = forms.ModelChoiceField(
                 queryset=Product.objects.filter(user=self.user),
                 required=False,  # ← Optionnel
-                empty_label="-- Aucun produit (part indépendante) --"
-            )
+                empty_label="-- Aucun produit (part indépendante) --")
+
 
 # ------------------------
 # 🔹 Slice (Tranche)
@@ -284,3 +287,87 @@ class CustomUserCreationForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+class PasswordResetRequestForm(forms.Form):
+    """Form for requesting password reset"""
+    email_or_username = forms.CharField(
+        max_length=254,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Enter your email or username',
+            'class': 'form-input'
+        }),
+        label="Email or Username")
+
+    def clean_email_or_username(self):
+        email_or_username = self.cleaned_data['email_or_username']
+
+        # Try to find user by email first, then by username
+        user = None
+        if '@' in email_or_username:
+            # Looks like email
+            try:
+                user = User.objects.get(email=email_or_username,
+                                        is_active=True)
+            except User.DoesNotExist:
+                pass
+        else:
+            # Looks like username
+            try:
+                user = User.objects.get(username=email_or_username,
+                                        is_active=True)
+            except User.DoesNotExist:
+                pass
+
+        if not user:
+            raise forms.ValidationError(
+                "No active account found with this email or username.")
+
+        self.user = user  # Store for later use
+        return email_or_username
+
+
+class PasswordResetCodeForm(forms.Form):
+    """Form for entering the reset code"""
+    reset_code = forms.CharField(
+        max_length=6,
+        min_length=6,
+        widget=forms.TextInput(
+            attrs={
+                'placeholder':
+                '000000',
+                'class':
+                'form-input',
+                'maxlength':
+                '6',
+                'style':
+                'text-align: center; font-size: 1.4rem; letter-spacing: 0.5rem; font-family: monospace;'
+            }),
+        label="Reset Code")
+
+    def clean_reset_code(self):
+        code = self.cleaned_data['reset_code']
+        if not code.isdigit():
+            raise forms.ValidationError("Reset code must contain only digits.")
+        return code
+
+
+class CustomSetPasswordForm(SetPasswordForm):
+    """Custom form for setting new password"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['new_password1'].widget.attrs.update({
+            'class':
+            'form-input',
+            'placeholder':
+            'Enter your new password'
+        })
+        self.fields['new_password2'].widget.attrs.update({
+            'class':
+            'form-input',
+            'placeholder':
+            'Confirm your new password'
+        })
+        self.fields['new_password1'].label = "New Password"
+        self.fields['new_password2'].label = "Confirm New Password"

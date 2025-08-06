@@ -8,7 +8,8 @@ from main.views.base_views import (
 from main.views.index_views import liste_index_view
 from main.views.chart_views import (index_viewer, toggle_favorite_ajax,
                                     get_index_data_ajax, export_analysis_data,
-                                    export_analysis_excel)  # ← AJOUTER export_analysis_excel ici
+                                    export_analysis_excel
+                                    )  # ← AJOUTER export_analysis_excel ici
 from main.views.user_views import toggle_favorite
 from main.views.prix_indexes_views import prix_indexes_view, delete_structure, get_structure_data
 from main.views import prix_indexes_views, base_views
@@ -75,7 +76,20 @@ urlpatterns = [
          name='cleanup_duplicates'),
 
     # ✅ CORRECTION : Utiliser directement la fonction importée
-    path('export-analysis-excel/',
-         export_analysis_excel,  # ← Sans chart_views. devant
-         name='export_analysis_excel'),
+    path(
+        'export-analysis-excel/',
+        export_analysis_excel,  # ← Sans chart_views. devant
+        name='export_analysis_excel'),
+    path('password-reset/',
+         base_views.password_reset_request,
+         name='password_reset_request'),
+    path('password-reset-code/<int:request_id>/',
+         base_views.password_reset_code,
+         name='password_reset_code'),
+    path('password-reset-confirm/<int:request_id>/',
+         base_views.password_reset_confirm,
+         name='password_reset_confirm'),
+    path('resend-reset-code/<int:request_id>/',
+         base_views.resend_password_reset_code,
+         name='resend_password_reset_code'),
 ]

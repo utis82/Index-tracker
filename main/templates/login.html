@@ -22,7 +22,15 @@
         </div>
         <button type="submit" class="cta-button" style="width: 100%; margin-top: 1rem;">Sign In</button>
       </form>
+      
+      <!-- Forgot Password Link -->
+      <div style="text-align: center; margin-top: 1rem;">
+        <a href="{% url 'main:password_reset_request' %}" style="color: #6b7280; font-size: 0.9rem; text-decoration: none;">
+          Forgot your password?
+        </a>
+      </div>
     </div>
+    
     <p style="text-align:center; margin-top: 1rem;">
       Don't have an account yet? <a href="{% url 'main:register' %}" style="color:#3b82f6; font-weight: 600;">Create an account</a>
     </p>
@@ -36,7 +44,6 @@
 .hero-subtitle {
   color: #4b5563; /* Gris moyen en mode clair */
 }
-
 /* Mode sombre - Texte blanc */
 body.dark-mode .hero-title {
   color: #f1f5f9; /* Blanc en mode sombre */
@@ -44,7 +51,6 @@ body.dark-mode .hero-title {
 body.dark-mode .hero-subtitle {
   color: #e2e8f0; /* Blanc légèrement grisé en mode sombre */
 }
-
 /* Force navbar text and icons to be white in dark mode */
 body.dark-mode .navbar a {
   color: white !important;
@@ -55,7 +61,6 @@ body.dark-mode .navbar a i {
 body.dark-mode .logo-image {
   filter: brightness(0) invert(1);
 }
-
 /* Dark mode contrast adjustments for login page */
 body.dark-mode .hero-container {
   background: var(--bg-dark, #0f172a);
@@ -91,7 +96,6 @@ body.dark-mode a {
 body.dark-mode a:hover {
   color: #93c5fd !important;
 }
-
 /* Error message dark mode */
 body.dark-mode p[style*="color:red"] {
   color: #f87171 !important;
@@ -99,6 +103,14 @@ body.dark-mode p[style*="color:red"] {
   padding: 0.75rem;
   border-radius: 0.5rem;
   border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+/* Forgot password link dark mode */
+body.dark-mode a[style*="color: #6b7280"] {
+  color: #9ca3af !important;
+}
+body.dark-mode a[style*="color: #6b7280"]:hover {
+  color: #d1d5db !important;
 }
 </style>
 {% endblock %}

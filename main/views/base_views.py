@@ -12,6 +12,8 @@ from django.contrib import messages
 from django.utils import timezone
 from django.core.mail import send_mail, EmailMessage  # Modifier l'import existant
 import os
+from main.models import PasswordResetRequest
+from main.forms import PasswordResetRequestForm, PasswordResetCodeForm, CustomSetPasswordForm
 
 # 🆕 AJOUT : Imports pour changement de mot de passe
 from django.contrib.auth.views import PasswordChangeView, PasswordChangeDoneView
@@ -44,7 +46,8 @@ class CustomPasswordChangeView(PasswordChangeView):
 
     def form_valid(self, form):
         """Ajouter un message de succès"""
-        messages.success(self.request, 'Votre mot de passe a été modifié avec succès !')
+        messages.success(self.request,
+                         'Votre mot de passe a été modifié avec succès !')
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
@@ -64,11 +67,10 @@ class CustomPasswordChangeDoneView(PasswordChangeDoneView):
         return context
 
 
-
-
 # ============================================
 # VUES EXISTANTES (inchangées)
 # ============================================
+
 
 @login_required
 def dashboard(request):
@@ -407,13 +409,18 @@ def contact_view(request):
                     status=400)
 
             # Validate file type
-            allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx', '.txt']
+            allowed_extensions = [
+                '.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx',
+                '.txt'
+            ]
             file_extension = os.path.splitext(attachment.name)[1].lower()
             if file_extension not in allowed_extensions:
                 return JsonResponse(
                     {
-                        'status': 'error',
-                        'message': 'File type not allowed. Please use: images, PDF, DOC, or TXT files'
+                        'status':
+                        'error',
+                        'message':
+                        'File type not allowed. Please use: images, PDF, DOC, or TXT files'
                     },
                     status=400)
 
@@ -449,14 +456,17 @@ Connected user: {request.user.username if request.user.is_authenticated else 'An
 
         # Attach file if provided
         if attachment:
-            email_msg.attach(attachment.name, attachment.read(), attachment.content_type)
+            email_msg.attach(attachment.name, attachment.read(),
+                             attachment.content_type)
 
         # Send email
         email_msg.send(fail_silently=False)
 
         return JsonResponse({
-            'status': 'success',
-            'message': 'Your message has been sent successfully!'
+            'status':
+            'success',
+            'message':
+            'Your message has been sent successfully!'
         })
 
     except Exception as e:
@@ -1474,3 +1484,177 @@ def get_part_last_update(part, index_data):
                         latest_date = index_latest
 
     return latest_date.strftime("%Y-%m-%d")
+
+
+def password_reset_request(request):
+    """First step: Request password reset with email/username"""
+    if request.user.is_authenticated:
+        return redirect('main:dashboard')
+
+    if request.method == 'POST':
+        form = PasswordResetRequestForm(request.POST)
+        if form.is_valid():
+            user = form.user  # Retrieved from form's clean method
+
+            # Invalidate any existing unused reset requests for this user
+            PasswordResetRequest.objects.filter(
+                user=user, is_used=False).update(is_used=True)
+
+            # Create new reset request
+            reset_request = PasswordResetRequest.objects.create(
+                user=user, email=user.email)
+
+            # Send reset email
+            if send_password_reset_email(user, reset_request.reset_code):
+                messages.success(
+                    request,
+                    'A password reset code has been sent to your email address.'
+                )
+                return redirect('main:password_reset_code',
+                                request_id=reset_request.id)
+            else:
+                messages.error(request,
+                               'Error sending email. Please try again.')
+                reset_request.delete()
+    else:
+        form = PasswordResetRequestForm()
+
+    return render(request, 'auth/password_reset_request.html', {'form': form})
+
+
+def password_reset_code(request, request_id):
+    """Second step: Enter the reset code"""
+    if request.user.is_authenticated:
+        return redirect('main:dashboard')
+
+    try:
+        reset_request = PasswordResetRequest.objects.get(id=request_id,
+                                                         is_used=False)
+    except PasswordResetRequest.DoesNotExist:
+        messages.error(request, 'Invalid or expired reset request.')
+        return redirect('main:password_reset_request')
+
+    if reset_request.is_expired():
+        messages.error(request, 'This reset code has expired.')
+        return redirect('main:password_reset_request')
+
+    if request.method == 'POST':
+        form = PasswordResetCodeForm(request.POST)
+        if form.is_valid():
+            code = form.cleaned_data['reset_code']
+
+            if reset_request.reset_code == code:
+                # Code is correct, redirect to set new password
+                return redirect('main:password_reset_confirm',
+                                request_id=reset_request.id)
+            else:
+                messages.error(request,
+                               'Invalid reset code. Please try again.')
+    else:
+        form = PasswordResetCodeForm()
+
+    return render(
+        request, 'auth/password_reset_code.html', {
+            'form': form,
+            'reset_request': reset_request,
+            'is_expired': reset_request.is_expired()
+        })
+
+
+def password_reset_confirm(request, request_id):
+    """Third step: Set new password"""
+    if request.user.is_authenticated:
+        return redirect('main:dashboard')
+
+    try:
+        reset_request = PasswordResetRequest.objects.get(id=request_id,
+                                                         is_used=False)
+    except PasswordResetRequest.DoesNotExist:
+        messages.error(request, 'Invalid or expired reset request.')
+        return redirect('main:password_reset_request')
+
+    if reset_request.is_expired():
+        messages.error(request, 'This reset request has expired.')
+        return redirect('main:password_reset_request')
+
+    if request.method == 'POST':
+        form = CustomSetPasswordForm(reset_request.user, request.POST)
+        if form.is_valid():
+            # Save new password
+            form.save()
+
+            # Mark reset request as used
+            reset_request.is_used = True
+            reset_request.save()
+
+            messages.success(
+                request,
+                'Your password has been reset successfully! You can now log in with your new password.'
+            )
+            return redirect('main:login')
+    else:
+        form = CustomSetPasswordForm(reset_request.user)
+
+    return render(request, 'auth/password_reset_confirm.html', {
+        'form': form,
+        'reset_request': reset_request
+    })
+
+
+def resend_password_reset_code(request, request_id):
+    """Resend password reset code"""
+    if request.user.is_authenticated:
+        return redirect('main:dashboard')
+
+    try:
+        reset_request = PasswordResetRequest.objects.get(id=request_id,
+                                                         is_used=False)
+    except PasswordResetRequest.DoesNotExist:
+        messages.error(request, 'Invalid reset request.')
+        return redirect('main:password_reset_request')
+
+    # Generate new code
+    reset_request.reset_code = PasswordResetRequest.generate_code()
+    reset_request.created_at = timezone.now()
+    reset_request.save()
+
+    # Send new code
+    if send_password_reset_email(reset_request.user, reset_request.reset_code):
+        messages.success(
+            request, 'A new reset code has been sent to your email address.')
+    else:
+        messages.error(request, 'Error sending email. Please try again.')
+
+    return redirect('main:password_reset_code', request_id=reset_request.id)
+
+
+def send_password_reset_email(user, code):
+    """Utility function to send password reset email"""
+    subject = 'Password Reset - IndexTracker'
+    message = f"""
+Hello {user.username},
+
+You requested to reset your password for your IndexTracker account.
+
+Your password reset code is: {code}
+
+This code expires in 30 minutes.
+
+If you did not request this password reset, please ignore this email.
+
+Best regards,
+The IndexTracker Team
+    """
+
+    try:
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+        return True
+    except Exception as e:
+        print(f"Error sending password reset email: {e}")
+        return False

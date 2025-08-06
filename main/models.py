@@ -250,3 +250,35 @@ def map_excel_category_to_django(excel_category):
     }
 
     return mapping.get(category, 'autre')
+
+
+# Add this to your existing models.py file
+
+
+class PasswordResetRequest(models.Model):
+    """Model to store password reset requests"""
+    user = models.ForeignKey(User,
+                             on_delete=models.CASCADE,
+                             related_name='password_reset_requests')
+    reset_code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+    email = models.EmailField()  # Store email to handle username/email lookup
+
+    def __str__(self):
+        return f"Password Reset {self.user.username} - {self.reset_code}"
+
+    @classmethod
+    def generate_code(cls):
+        """Generate a 6-digit code"""
+        return ''.join(random.choices(string.digits, k=6))
+
+    def is_expired(self):
+        """Check if the code has expired (30 minutes)"""
+        expiry_time = self.created_at + timedelta(minutes=30)
+        return timezone.now() > expiry_time
+
+    def save(self, *args, **kwargs):
+        if not self.reset_code:
+            self.reset_code = self.generate_code()
+        super().save(*args, **kwargs)
