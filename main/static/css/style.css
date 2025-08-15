@@ -783,9 +783,7 @@ background-color: rgba(224, 242, 254, 0.8) !important;
 background-color: rgba(224, 242, 254, 0.4);
 }
 
-.index-table th, .index-table td {
-border-bottom: 1px solid rgba(200, 200, 255, 0.2);
-}
+
 
 .index-table td {
 font-size: 0.95rem;
