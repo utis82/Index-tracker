@@ -979,6 +979,11 @@
                         <i data-lucide="zap"></i>
                         Analyze
                     </button>
+                    {% if advanced_features_blocked %}
+                        <span style="color: #ef4444; font-size: 0.8em; margin-left: 12px; font-weight: 500;">
+                            Non-subscribed index, advanced features limited
+                        </span>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -998,11 +1003,11 @@
                         <div class="date-row">
                             <div class="input-group">
                                 <label>Start</label>
-                                <input type="date" name="start_a" value="{{ start_a|default:'' }}" form="analysisForm">
+                                <input type="date" name="start_a" value="{{ start_a|default:'' }}" form="analysisForm" {% if advanced_features_blocked %}disabled{% endif %}>
                             </div>
                             <div class="input-group">
                                 <label>End</label>
-                                <input type="date" name="end_a" value="{{ end_a|default:'' }}" form="analysisForm">
+                                <input type="date" name="end_a" value="{{ end_a|default:'' }}" form="analysisForm" {% if advanced_features_blocked %}disabled{% endif %}>
                             </div>
                         </div>
                     </div>
@@ -1017,11 +1022,11 @@
                         <div class="date-row">
                             <div class="input-group">
                                 <label>Start</label>
-                                <input type="date" name="start_b" value="{{ start_b|default:'' }}" form="analysisForm">
+                                <input type="date" name="start_b" value="{{ start_a|default:'' }}" form="analysisForm" {% if advanced_features_blocked %}disabled{% endif %}>
                             </div>
                             <div class="input-group">
                                 <label>End</label>
-                                <input type="date" name="end_b" value="{{ end_b|default:'' }}" form="analysisForm">
+                                <input type="date" name="end_b" value="{{ end_a|default:'' }}" form="analysisForm" {% if advanced_features_blocked %}disabled{% endif %}>
                             </div>
                         </div>
                     </div>

@@ -50,7 +50,10 @@ def index_viewer(request, index_id=None):
             selected_part_ids = selected_part_ids[:keep_parts]
 
     # Récupération des objets sélectionnés
+    from main.models import Index
+    all_selected_indexes = Index.objects.filter(id__in=selected_index_ids)
     selected_indexes = favorites.filter(id__in=selected_index_ids)
+    advanced_features_blocked = all_selected_indexes.count() > selected_indexes.count()
     selected_products = Product.objects.filter(id__in=selected_product_ids, user=request.user)
     selected_parts = Part.objects.filter(id__in=selected_part_ids, user=request.user)
 
@@ -72,8 +75,8 @@ def index_viewer(request, index_id=None):
         index_data = {}
 
     # === AJOUT : Gestion des INDEX ===
-    if selected_indexes.exists():
-        for idx in selected_indexes:
+    if all_selected_indexes.exists():
+        for idx in all_selected_indexes:
             values = IndexValue.objects.filter(index=idx).order_by("date")
             if values.exists():
                 dates = [v.date.strftime("%Y-%m-%d") for v in values]
@@ -374,7 +377,8 @@ def index_viewer(request, index_id=None):
         "user_plan": user_profile.subscription_plan,
         "index_limit": user_profile.index_limit(),
         "user": request.user,  # Pour accéder aux produits/pièces dans le template
-         "all_user_parts": Part.objects.filter(user=request.user).select_related('product'),
+        "all_user_parts": Part.objects.filter(user=request.user).select_related('product'),
+        "advanced_features_blocked": advanced_features_blocked,
     }
 
     return render(request, "index_viewer.html", context)
