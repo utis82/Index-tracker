@@ -1381,7 +1381,10 @@
             mutations.forEach(function(mutation) {
                 if (mutation.addedNodes.length > 0) {
                     mutation.addedNodes.forEach(function(node) {
-                        if (node.nodeType === 1 && (node.querySelector('[data-lucide]') || node.hasAttribute('data-lucide'))) {
+                        // Ignorer les modifications causées par Lucide lui-même
+                        if (node.nodeType === 1 && 
+                            (node.querySelector('[data-lucide]') || node.hasAttribute('data-lucide')) &&
+                            !node.closest('.lucide')) { // Exclure les éléments déjà transformés par Lucide
                             shouldUpdateIcons = true;
                         }
                     });
@@ -1396,6 +1399,7 @@
             }
         });
 
+        
         iconObserver.observe(document.body, {
             childList: true,
             subtree: true
@@ -1522,7 +1526,8 @@
                     hovermode: 'x unified',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     paper_bgcolor: colors.paperBg,
-                    
+                    showlegend: true, 
+                        
                     xaxis: { 
                         showgrid: true,
                         showline: true,
@@ -1562,7 +1567,7 @@
                             size: 11,
                             color: colors.titleColor
                         },
-                        showlegend: true 
+                       
                         
                     },
                     shapes: [
