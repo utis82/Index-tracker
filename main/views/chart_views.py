@@ -5,12 +5,111 @@ from main.models import Index, IndexValue, Product, Part
 from main.decorators import subscription_required
 from django.core.serializers.json import DjangoJSONEncoder
 from statistics import mean
-from datetime import datetime, date as datetime_date
+from datetime import datetime, date as datetime_date, timedelta
 import json
 from io import BytesIO
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
+import calendar
+
+
+def get_last_complete_month():
+    """
+    🆕 NOUVEAU: Calcule le dernier mois complet disponible
+    (pour les index mis à jour mensuellement)
+    """
+    today = datetime_date.today()
+    current_year = today.year
+    current_month = today.month
+
+    # Si on est dans le mois en cours, prendre le mois précédent
+    if current_month == 1:
+        return datetime_date(current_year - 1, 12, 1)
+    else:
+        return datetime_date(current_year, current_month - 1, 1)
+
+
+def calculate_period_dates(period_type, is_p1=False):
+    """
+    🆕 NOUVEAU: Calcule les dates de début et fin pour une période donnée
+
+    Args:
+        period_type (str): '1M', '3M', '6M', '1Y'
+        is_p1 (bool): True si c'est pour P1 (période antérieure), False pour P2 (récente)
+
+    Returns:
+        dict: {'start': date, 'end': date} ou None si erreur
+    """
+    last_complete_month = get_last_complete_month()
+    year = last_complete_month.year
+    month = last_complete_month.month
+
+    # Déterminer le nombre de mois
+    period_months = {
+        '1M': 1,
+        '3M': 3,
+        '6M': 6,
+        '1Y': 12
+    }.get(period_type)
+
+    if not period_months:
+        return None
+
+    # Calculer le mois de fin
+    if is_p1:
+        # P1 = période antérieure (finit avant P2)
+        end_month = month - period_months
+        end_year = year
+
+        if end_month <= 0:
+            end_month += 12
+            end_year -= 1
+    else:
+        # P2 = période récente (finit au dernier mois complet)
+        end_month = month
+        end_year = year
+
+    # Calculer le mois de début
+    start_month = end_month - period_months + 1
+    start_year = end_year
+
+    if start_month <= 0:
+        start_month += 12
+        start_year -= 1
+
+    # Créer les dates
+    start_date = datetime_date(start_year, start_month, 1)
+
+    # Dernier jour du mois de fin
+    last_day = calendar.monthrange(end_year, end_month)[1]
+    end_date = datetime_date(end_year, end_month, last_day)
+
+    return {
+        'start': start_date,
+        'end': end_date
+    }
+
+
+def should_auto_fill_periods(selected_indexes, start_a, end_a, start_b, end_b):
+    """
+    🆕 NOUVEAU: Détermine si on doit pré-remplir automatiquement les périodes
+
+    Args:
+        selected_indexes: QuerySet des index sélectionnés
+        start_a, end_a, start_b, end_b: Dates existantes (peuvent être None)
+
+    Returns:
+        bool: True si on doit pré-remplir
+    """
+    # Ne pas pré-remplir s'il y a déjà des dates
+    has_existing_dates = any([start_a, end_a, start_b, end_b])
+    if has_existing_dates:
+        return False
+
+    # Pré-remplir seulement s'il y a des index souscrits sélectionnés
+    has_subscribed_index = selected_indexes.exists()
+    return has_subscribed_index
 
 
 @login_required
@@ -18,7 +117,7 @@ from openpyxl.utils import get_column_letter
 def index_viewer(request, index_id=None):
     """
     Vue principale pour l'analyse d'index avec comparaison de deux périodes
-    MAINTENANT avec support des produits et pièces
+    🆕 NOUVEAU: Avec support des périodes automatiques et raccourcis
     """
     user_profile = request.user.userprofile
     favorites = user_profile.favorite_indexes.all()
@@ -62,6 +161,34 @@ def index_viewer(request, index_id=None):
     end_a = request.GET.get("end_a")
     start_b = request.GET.get("start_b")
     end_b = request.GET.get("end_b")
+
+    # 🆕 NOUVEAU: Auto-remplissage des périodes par défaut
+    auto_fill_triggered = False
+    if should_auto_fill_periods(selected_indexes, start_a, end_a, start_b, end_b):
+        try:
+            # Calculer les trimestres par défaut (3M)
+            p2_dates = calculate_period_dates('3M', is_p1=False)  # Période récente
+            p1_dates = calculate_period_dates('3M', is_p1=True)   # Période antérieure
+
+            if p1_dates and p2_dates:
+                start_a = p1_dates['start'].strftime('%Y-%m-%d')
+                end_a = p1_dates['end'].strftime('%Y-%m-%d')
+                start_b = p2_dates['start'].strftime('%Y-%m-%d')
+                end_b = p2_dates['end'].strftime('%Y-%m-%d')
+                auto_fill_triggered = True
+
+                print(f"🎯 Auto-remplissage activé:")
+                print(f"   P1 (antérieure): {start_a} → {end_a}")
+                print(f"   P2 (récente): {start_b} → {end_b}")
+
+        except Exception as e:
+            print(f"❌ Erreur auto-remplissage: {e}")
+
+    # Conversion des dates en objets date si elles existent
+    date_a_start = datetime.strptime(start_a, "%Y-%m-%d").date() if start_a else None
+    date_a_end = datetime.strptime(end_a, "%Y-%m-%d").date() if end_a else None
+    date_b_start = datetime.strptime(start_b, "%Y-%m-%d").date() if start_b else None
+    date_b_end = datetime.strptime(end_b, "%Y-%m-%d").date() if end_b else None
 
     # Préparation des données pour le graphique
     series_data = []
@@ -246,13 +373,8 @@ def index_viewer(request, index_id=None):
                 print(f"🔍 DEBUG - Pièce {part.name} n'a pas de tranches")
 
     # Calcul des statistiques si toutes les dates sont fournies
-    if all([start_a, end_a, start_b, end_b]):
+    if all([date_a_start, date_a_end, date_b_start, date_b_end]):
         try:
-            date_a_start = datetime.strptime(start_a, "%Y-%m-%d").date()
-            date_a_end = datetime.strptime(end_a, "%Y-%m-%d").date()
-            date_b_start = datetime.strptime(start_b, "%Y-%m-%d").date()
-            date_b_end = datetime.strptime(end_b, "%Y-%m-%d").date()
-
             # Validation des dates
             if date_a_start >= date_a_end or date_b_start >= date_b_end:
                 raise ValueError("Dates invalides")
@@ -360,13 +482,20 @@ def index_viewer(request, index_id=None):
             print(f"❌ Erreur de calcul des périodes : {e}")
             period_stats = {}
 
+    # 🆕 NOUVEAU: Informations sur l'auto-remplissage pour le frontend
+    default_period_info = {
+        'auto_fill_triggered': auto_fill_triggered,
+        'has_subscribed_index': selected_indexes.exists(),
+        'last_complete_month': get_last_complete_month().strftime('%Y-%m-%d'),
+    }
+
     context = {
         "user_favorites": favorites,
         "selected_indexes": selected_indexes,
-        "selected_products": selected_products,  # NOUVEAU
-        "selected_parts": selected_parts,        # NOUVEAU
-        "selected_product_ids": selected_product_ids,  # NOUVEAU
-        "selected_part_ids": selected_part_ids,        # NOUVEAU
+        "selected_products": selected_products,
+        "selected_parts": selected_parts,
+        "selected_product_ids": selected_product_ids,
+        "selected_part_ids": selected_part_ids,
         "series_data": json.dumps(series_data, cls=DjangoJSONEncoder),
         "period_stats": period_stats,
         "start_a": start_a,
@@ -376,9 +505,11 @@ def index_viewer(request, index_id=None):
         "max_indexes": 3,
         "user_plan": user_profile.subscription_plan,
         "index_limit": user_profile.index_limit(),
-        "user": request.user,  # Pour accéder aux produits/pièces dans le template
+        "user": request.user,
         "all_user_parts": Part.objects.filter(user=request.user).select_related('product'),
         "advanced_features_blocked": advanced_features_blocked,
+        # 🆕 NOUVEAU: Informations pour l'auto-remplissage frontend
+        "default_period_info": default_period_info,
     }
 
     return render(request, "index_viewer.html", context)
@@ -793,25 +924,25 @@ def generate_export_data_excel(selected_indexes, selected_products, selected_par
                     else:
                         current_date = datetime_date(current_date.year, current_date.month + 1, 1)
 
-                if part_data_points:
-                    dates = [point["date"] for point in part_data_points]
-                    values = [point["value"] for point in part_data_points]
-                    export_data['series_data'].append({
-                        "name": f"PRT {part.name}",
-                        "type": "part",
-                        "id": f"part_{part.id}",
-                        "dates": dates,
-                        "values": values,
-                        "unit": "€",
-                        "category": "Pièce",
-                        "metadata": {
-                            "source": "Pièce calculée",
-                            "reference_date": part.reference_date,
-                            "reference_price": part.reference_price,
-                            "product": part.product.name,
-                            "description": getattr(part, 'description', ''),
-                        }
-                    })
+            if part_data_points:
+                dates = [point["date"] for point in part_data_points]
+                values = [point["value"] for point in part_data_points]
+                export_data['series_data'].append({
+                    "name": f"PRT {part.name}",
+                    "type": "part",
+                    "id": f"part_{part.id}",
+                    "dates": dates,
+                    "values": values,
+                    "unit": "€",
+                    "category": "Pièce",
+                    "metadata": {
+                        "source": "Pièce calculée",
+                        "reference_date": part.reference_date,
+                        "reference_price": part.reference_price,
+                        "product": part.product.name if part.product else "Pièce indépendante",
+                        "description": getattr(part, 'description', ''),
+                    }
+                })
 
     # === CALCUL DES STATISTIQUES DES PÉRIODES ===
     if all([start_a, end_a, start_b, end_b]):

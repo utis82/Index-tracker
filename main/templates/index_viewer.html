@@ -348,6 +348,83 @@
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
+    /* 🆕 NOUVEAU: Styles pour les raccourcis de périodes */
+    .period-shortcuts {
+        display: flex;
+        gap: 6px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+    }
+
+    .period-btn {
+        background: var(--bg-primary);
+        border: 2px solid var(--border-primary);
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.8em;
+        font-weight: 600;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .period-btn:hover {
+        border-color: var(--border-secondary);
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px var(--shadow-light);
+    }
+
+    .period-btn.active {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border-color: #2563eb;
+        color: white;
+        box-shadow: 
+            0 4px 12px rgba(59, 130, 246, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .period-btn.active:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        border-color: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 
+            0 6px 16px rgba(59, 130, 246, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    .period-btn:active {
+        transform: translateY(0);
+    }
+
+    .period-btn.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Animation pour les boutons de période */
+    @keyframes periodButtonPulse {
+        0%, 100% { 
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); 
+        }
+        50% { 
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0); 
+        }
+    }
+
+    .period-btn.just-activated {
+        animation: periodButtonPulse 0.6s ease;
+    }
+
     .results-section {
         display: flex;
         flex-direction: column;
@@ -830,6 +907,25 @@
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
     }
 
+    /* 🌙 Dark mode pour les nouveaux boutons de période */
+    body.dark-mode .period-btn {
+        background: var(--bg-primary);
+        border-color: var(--border-primary);
+        color: var(--text-secondary);
+    }
+
+    body.dark-mode .period-btn:hover {
+        background: var(--bg-tertiary);
+        border-color: var(--border-secondary);
+        color: var(--text-primary);
+    }
+
+    body.dark-mode .period-btn.active {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border-color: #2563eb;
+        color: white;
+    }
+
     /* Styles pour les icônes Lucide */
     .dropdown-category i[data-lucide] {
         width: 16px !important;
@@ -901,6 +997,10 @@
 
         .chart-export-btn {
             align-self: flex-end;
+        }
+
+        .period-shortcuts {
+            justify-content: center;
         }
     }
 </style>
@@ -1003,12 +1103,22 @@
                         <div class="date-row">
                             <div class="input-group">
                                 <label>Start</label>
-                                <input type="date" name="start_a" value="{{ start_a|default:'' }}" form="analysisForm" {% if advanced_features_blocked %}disabled{% endif %}>
+                                <input type="date" name="start_a" value="{{ start_a|default:'' }}" form="analysisForm" 
+                                       {% if advanced_features_blocked %}disabled{% endif %} id="startA">
                             </div>
                             <div class="input-group">
                                 <label>End</label>
-                                <input type="date" name="end_a" value="{{ end_a|default:'' }}" form="analysisForm" {% if advanced_features_blocked %}disabled{% endif %}>
+                                <input type="date" name="end_a" value="{{ end_a|default:'' }}" form="analysisForm" 
+                                       {% if advanced_features_blocked %}disabled{% endif %} id="endA">
                             </div>
+                        </div>
+
+                        <!-- 🆕 NOUVEAU: Raccourcis de périodes pour P1 -->
+                        <div class="period-shortcuts">
+                            <button type="button" class="period-btn" data-period="1M" data-target="period1" onclick="setPeriod('period1', '1M')">1M</button>
+                            <button type="button" class="period-btn" data-period="3M" data-target="period1" onclick="setPeriod('period1', '3M')">3M</button>
+                            <button type="button" class="period-btn" data-period="6M" data-target="period1" onclick="setPeriod('period1', '6M')">6M</button>
+                            <button type="button" class="period-btn" data-period="1Y" data-target="period1" onclick="setPeriod('period1', '1Y')">1Y</button>
                         </div>
                     </div>
                 </div>
@@ -1022,12 +1132,22 @@
                         <div class="date-row">
                             <div class="input-group">
                                 <label>Start</label>
-                                <input type="date" name="start_b" value="{{ start_a|default:'' }}" form="analysisForm" {% if advanced_features_blocked %}disabled{% endif %}>
+                                <input type="date" name="start_b" value="{{ start_b|default:'' }}" form="analysisForm" 
+                                       {% if advanced_features_blocked %}disabled{% endif %} id="startB">
                             </div>
                             <div class="input-group">
                                 <label>End</label>
-                                <input type="date" name="end_b" value="{{ end_a|default:'' }}" form="analysisForm" {% if advanced_features_blocked %}disabled{% endif %}>
+                                <input type="date" name="end_b" value="{{ end_b|default:'' }}" form="analysisForm" 
+                                       {% if advanced_features_blocked %}disabled{% endif %} id="endB">
                             </div>
+                        </div>
+
+                        <!-- 🆕 NOUVEAU: Raccourcis de périodes pour P2 -->
+                        <div class="period-shortcuts">
+                            <button type="button" class="period-btn" data-period="1M" data-target="period2" onclick="setPeriod('period2', '1M')">1M</button>
+                            <button type="button" class="period-btn" data-period="3M" data-target="period2" onclick="setPeriod('period2', '3M')">3M</button>
+                            <button type="button" class="period-btn" data-period="6M" data-target="period2" onclick="setPeriod('period2', '6M')">6M</button>
+                            <button type="button" class="period-btn" data-period="1Y" data-target="period2" onclick="setPeriod('period2', '1Y')">1Y</button>
                         </div>
                     </div>
                 </div>
@@ -1086,11 +1206,7 @@
                 <div class="metric-card empty">
                     <div class="empty-card-content">
                         <div class="empty-card-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-x">
-                                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
-                                <path d="m9 9 6 6"></path>
-                                <path d="m15 9-6 6"></path>
-                            </svg>
+                            <i data-lucide="square-x"></i>
                         </div>
                         <div class="empty-card-title">Input 2</div>
                         <div class="empty-card-subtitle">Available slot for additional analysis</div>
@@ -1100,11 +1216,7 @@
                 <div class="metric-card empty">
                     <div class="empty-card-content">
                         <div class="empty-card-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-x">
-                                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
-                                <path d="m9 9 6 6"></path>
-                                <path d="m15 9-6 6"></path>
-                            </svg>
+                            <i data-lucide="square-x"></i>
                         </div>
                         <div class="empty-card-title">Input 3</div>
                         <div class="empty-card-subtitle">Available slot for additional analysis</div>
@@ -1161,11 +1273,7 @@
                         <div class="metric-card empty">
                             <div class="empty-card-content">
                                 <div class="empty-card-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <path d="m9,9 6,6"></path>
-                                        <path d="m15,9 -6,6"></path>
-                                    </svg>
+                                    <i data-lucide="info"></i>
                                 </div>
                                 <div class="empty-card-title">Input 2</div>
                                 <div class="empty-card-subtitle">Select another element for comparison</div>
@@ -1177,11 +1285,7 @@
                         <div class="metric-card empty">
                             <div class="empty-card-content">
                                 <div class="empty-card-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <path d="m9,9 6,6"></path>
-                                        <path d="m15,9 -6,6"></path>
-                                    </svg>
+                                    <i data-lucide="info"></i>
                                 </div>
                                 <div class="empty-card-title">Input 3</div>
                                 <div class="empty-card-subtitle">Select another element for comparison</div>
@@ -1203,11 +1307,7 @@
                     <div class="metric-card empty">
                         <div class="empty-card-content">
                             <div class="empty-card-icon">
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <line x1="12" y1="8" x2="12" y2="12"/>
-                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                                </svg>
+                                <i data-lucide="info"></i>
                             </div>
                             <div class="empty-card-title">Input 2</div>
                             <div class="empty-card-subtitle">Select an element to analyze</div>
@@ -1217,11 +1317,7 @@
                     <div class="metric-card empty">
                         <div class="empty-card-content">
                             <div class="empty-card-icon">
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <line x1="12" y1="8" x2="12" y2="12"/>
-                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                                </svg>
+                                <i data-lucide="info"></i>
                             </div>
                             <div class="empty-card-title">Input 3</div>
                             <div class="empty-card-subtitle">Select an element to analyze</div>
@@ -1238,6 +1334,187 @@
     let selectedCount = {{ selected_indexes|length|default:0 }} + {{ selected_products|length|default:0 }} + {{ selected_parts|length|default:0 }};
     const maxSelection = 3;
     let isDropdownOpen = false;
+
+    // 🆕 NOUVEAU: Variables pour gérer les périodes
+    let currentActiveButtons = {
+        period1: null,
+        period2: null
+    };
+
+    // 🆕 NOUVEAU: Fonction pour calculer le dernier mois complet disponible
+    function getLastCompleteMonth() {
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth(); // 0-11
+
+        // Si on est dans le mois en cours, prendre le mois précédent
+        if (currentMonth === 0) {
+            return new Date(currentYear - 1, 11, 1); // Décembre de l'année précédente
+        }
+        return new Date(currentYear, currentMonth - 1, 1);
+    }
+
+    // 🆕 NOUVEAU: Fonction pour calculer les dates selon la période
+    function calculatePeriodDates(period, isP1 = false) {
+        const lastCompleteMonth = getLastCompleteMonth();
+        const year = lastCompleteMonth.getFullYear();
+        const month = lastCompleteMonth.getMonth(); // 0-11
+
+        let periodMonths;
+        switch (period) {
+            case '1M': periodMonths = 1; break;
+            case '3M': periodMonths = 3; break;
+            case '6M': periodMonths = 6; break;
+            case '1Y': periodMonths = 12; break;
+            default: return null;
+        }
+
+        let endMonth, endYear;
+        if (isP1) {
+            // P1 = période antérieure
+            // Si P2 finit en juillet, P1 finit en (juillet - periodMonths)
+            endMonth = month - periodMonths;
+            endYear = year;
+
+            if (endMonth < 0) {
+                endMonth += 12;
+                endYear -= 1;
+            }
+        } else {
+            // P2 = période récente (finit au dernier mois complet)
+            endMonth = month;
+            endYear = year;
+        }
+
+        // Calculer le mois de début
+        let startMonth = endMonth - periodMonths + 1;
+        let startYear = endYear;
+
+        if (startMonth <= 0) {
+            startMonth += 12;
+            startYear -= 1;
+        }
+
+        // Créer les dates
+        const startDate = new Date(startYear, startMonth - 1, 1);
+        const endDate = new Date(endYear, endMonth, 0); // Dernier jour du mois
+
+        return {
+            start: startDate.toISOString().split('T')[0],
+            end: endDate.toISOString().split('T')[0]
+        };
+    }
+
+    // 🆕 NOUVEAU: Fonction pour définir une période
+    function setPeriod(target, period) {
+        console.log(`🎯 Setting ${period} for ${target}`);
+
+        // Désactiver l'ancien bouton actif pour cette période
+        if (currentActiveButtons[target]) {
+            currentActiveButtons[target].classList.remove('active');
+        }
+
+        // Activer le nouveau bouton
+        const clickedButton = event.target;
+        clickedButton.classList.add('active', 'just-activated');
+        currentActiveButtons[target] = clickedButton;
+
+        // Supprimer l'animation après un délai
+        setTimeout(() => {
+            clickedButton.classList.remove('just-activated');
+        }, 600);
+
+        // Calculer les dates
+        const isP1 = (target === 'period1');
+        const dates = calculatePeriodDates(period, isP1);
+
+        if (dates) {
+            if (target === 'period1') {
+                document.getElementById('startA').value = dates.start;
+                document.getElementById('endA').value = dates.end;
+            } else {
+                document.getElementById('startB').value = dates.start;
+                document.getElementById('endB').value = dates.end;
+            }
+
+            console.log(`✅ ${target} set to: ${dates.start} → ${dates.end}`);
+        }
+
+        // 🤖 AUTO-SUGGESTION: Si on définit P1, définir automatiquement P2 (sans popup)
+        if (target === 'period1') {
+            setTimeout(() => {
+                // Définir automatiquement P2 avec la même période (sans confirmation)
+                const p2Buttons = document.querySelectorAll('[data-target="period2"]');
+                const p2Button = Array.from(p2Buttons).find(btn => btn.getAttribute('data-period') === period);
+                if (p2Button) {
+                    // Simuler le clic sur le bouton P2 correspondant
+                    setPeriodProgrammatically('period2', period);
+                }
+            }, 100);
+        }
+    }
+
+    // 🆕 NOUVEAU: Fonction pour pré-remplir les dates par défaut
+    function setDefaultPeriods() {
+        // Vérifier s'il y a déjà des dates saisies
+        const hasExistingDates = document.getElementById('startA').value || 
+                                document.getElementById('endA').value || 
+                                document.getElementById('startB').value || 
+                                document.getElementById('endB').value;
+
+        if (hasExistingDates) {
+            console.log('📅 Dates déjà présentes, pas de pré-remplissage');
+            return;
+        }
+
+        // Vérifier s'il y a un index favori sélectionné
+        const subscribedIndexSelected = document.querySelector('input[name="index_id"]:checked');
+
+        if (subscribedIndexSelected) {
+            console.log('🎯 Index souscrit détecté, pré-remplissage des trimestres');
+
+            // Définir automatiquement P2 sur les 3 derniers mois
+            setPeriodProgrammatically('period2', '3M');
+
+            // Puis P1 sur les 3 mois précédents
+            setTimeout(() => {
+                setPeriodProgrammatically('period1', '3M');
+            }, 100);
+        }
+    }
+
+    // 🆕 NOUVEAU: Fonction pour définir une période par programmation (sans interaction utilisateur)
+    function setPeriodProgrammatically(target, period) {
+        // Calculer les dates
+        const isP1 = (target === 'period1');
+        const dates = calculatePeriodDates(period, isP1);
+
+        if (dates) {
+            if (target === 'period1') {
+                document.getElementById('startA').value = dates.start;
+                document.getElementById('endA').value = dates.end;
+            } else {
+                document.getElementById('startB').value = dates.start;
+                document.getElementById('endB').value = dates.end;
+            }
+
+            // Activer visuellement le bouton correspondant
+            const targetButtons = document.querySelectorAll(`[data-target="${target}"]`);
+            const button = Array.from(targetButtons).find(btn => btn.getAttribute('data-period') === period);
+            if (button) {
+                // Désactiver l'ancien bouton actif
+                if (currentActiveButtons[target]) {
+                    currentActiveButtons[target].classList.remove('active');
+                }
+
+                // Activer le nouveau
+                button.classList.add('active');
+                currentActiveButtons[target] = button;
+            }
+
+            console.log(`✅ ${target} auto-set to: ${dates.start} → ${dates.end}`);
+        }
+    }
 
     function toggleDropdown() {
         const content = document.getElementById('dropdownContent');
@@ -1265,6 +1542,8 @@
 
         if (event.target.type === 'checkbox') {
             updateSelectedCount();
+            // 🆕 NOUVEAU: Déclencher le pré-remplissage après sélection
+            setTimeout(setDefaultPeriods, 100);
             return;
         }
 
@@ -1280,6 +1559,9 @@
             item.classList.remove('selected');
         }
         updateSelectedCount();
+
+        // 🆕 NOUVEAU: Déclencher le pré-remplissage après sélection
+        setTimeout(setDefaultPeriods, 100);
     }
 
     function updateSelectedCount() {
@@ -1305,7 +1587,7 @@
         }
 
         updateExportButton();
-        
+
         checkboxes.forEach(cb => {
             const item = cb.closest('.dropdown-item');
             if (!cb.checked && selectedCount >= maxSelection) {
@@ -1333,10 +1615,26 @@
             cb.closest('.dropdown-item').classList.add('selected');
         });
 
+        // 🆕 NOUVEAU: Pré-remplir les périodes si un index souscrit est sélectionné
+        setDefaultPeriods();
+
         // Listeners for date fields
         document.querySelectorAll('input[type="date"]').forEach(input => {
             input.addEventListener('change', function() {
                 console.log('Date modified:', input.name, input.value);
+
+                // 🆕 NOUVEAU: Désactiver les boutons de période quand l'utilisateur modifie manuellement
+                const isP1Field = input.name === 'start_a' || input.name === 'end_a';
+                const isP2Field = input.name === 'start_b' || input.name === 'end_b';
+
+                if (isP1Field && currentActiveButtons.period1) {
+                    currentActiveButtons.period1.classList.remove('active');
+                    currentActiveButtons.period1 = null;
+                }
+                if (isP2Field && currentActiveButtons.period2) {
+                    currentActiveButtons.period2.classList.remove('active');
+                    currentActiveButtons.period2 = null;
+                }
             });
         });
 
@@ -1344,6 +1642,8 @@
         document.querySelectorAll('#dropdownContent input[type="checkbox"]').forEach(cb => {
             cb.addEventListener('change', function() {
                 updateSelectedCount();
+                // 🆕 NOUVEAU: Pré-remplir après changement de sélection
+                setTimeout(setDefaultPeriods, 100);
             });
         });
 
@@ -1404,7 +1704,7 @@
             }
         });
 
-        
+
         iconObserver.observe(document.body, {
             childList: true,
             subtree: true
@@ -1493,7 +1793,7 @@
                     if (values.length === 0 || dates.length === 0) {
                         return null;
                     }
-                   
+
                     if (shouldNormalize && values.length > 0) {
                         const baseValue = values[0];
                         if (baseValue !== 0) {
@@ -1517,7 +1817,7 @@
                         },
                         hovertemplate: '<b>%{fullData.name}</b><br>%{x}<br>Value: %{y:.2f}<extra></extra>',
                         type: 'scatter'
-                        
+
                     };
                 }).filter(trace => trace !== null);
 
@@ -1532,7 +1832,7 @@
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     paper_bgcolor: colors.paperBg,
                     showlegend: true, 
-                        
+
                     xaxis: { 
                         showgrid: true,
                         showline: true,
@@ -1541,9 +1841,9 @@
                         zeroline: false,
                         tickformat: '%Y-%m-%d',
                         tickfont: { color: colors.textColor, size: 11 }
-                        
-                                  
-                        
+
+
+
                     },
                     yaxis: { 
                         showgrid: true, 
@@ -1572,8 +1872,8 @@
                             size: 11,
                             color: colors.titleColor
                         },
-                       
-                        
+
+
                     },
                     shapes: [
                         {% if start_a and end_a %}
@@ -1690,6 +1990,7 @@
             console.log("❌ No series_data available");
         {% endif %}
     }
+
     // MODIFIER AUSSI la fonction exportToExcel pour le nouveau bouton :
     async function exportToExcel() {
         const exportButton = document.getElementById('exportButton');
