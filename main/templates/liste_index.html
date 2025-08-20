@@ -2,31 +2,106 @@
 {% block title %}Index List{% endblock %}
 
 {% block content %}
-<div class="page-container">
+<div class="page-container">  
   <div class="card shadow-lg" style="border-radius: 16px; padding: 24px; margin-bottom: 2rem;">
+    
+    <!-- Loading indicator -->
+    <div id="loadingIndicator" style="display: none; text-align: center; padding: 40px; color: #6b7280;">
+      <i data-lucide="loader-2" style="width: 24px; height: 24px; animation: spin 1s linear infinite;"></i>
+      <div style="margin-top: 8px;">Searching...</div>
+    </div>
+    
     <!-- Container avec hauteur fixe pour permettre le scroll -->
-    <div class="table-container" style="max-height: 84vh; overflow-y: auto; border-radius: 8px;">
+    <div class="table-container" id="tableContainer" style="max-height: 84vh; overflow-y: auto; border-radius: 8px;">
       <table class="index-table" style="width: 100%; border-collapse: collapse;">
         <thead class="sticky-header">
+          <!-- Ligne de contrôles de recherche et filtres -->
           <tr style="text-align: left; font-weight: 600;">
-            <th style="padding: 12px; position: relative;">
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span>Index</span>
-                <select onchange="applySorting(this.value)" class="sort-select" style="padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 6px; background: white; font-size: 0.875rem;">
-                  <option value="">Sort by...</option>
-                  <option value="name-asc">A → Z</option>
-                  <option value="name-desc">Z → A</option>
-                  <option value="category">By Category</option>
+            <th style="padding: 12px; position: relative;" colspan="5">
+              <div style="display: grid; grid-template-columns: 300px 110px 140px 80px 40px; gap: 60px; align-items: center;">
+                
+                <!-- Barre de recherche -->
+                <div style="position: relative;">
+                  <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search for an index..." 
+                    value="{{ current_search }}"
+                    style="width: 100%; padding: 8px 12px 8px 36px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; background: rgba(255, 255, 255, 0.9);"
+                    onkeyup="debounceSearch()"
+                  >
+                  <i data-lucide="search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #6b7280;"></i>
+                </div>
+                
+                <!-- Filtre par catégorie -->
+                <select 
+                  id="categoryFilter" 
+                  onchange="applyFilters()"
+                >
+                  <option value="">All categories</option>
+                  {% for category in categories %}
+                    <option value="{{ category }}" {% if category == current_category %}selected{% endif %}>
+                      {% if category == "batiment" %}Construction
+                      {% elif category == "energie" %}Energy
+                      {% elif category == "matiere_premiere" %}Raw Materials
+                      {% elif category == "transport" %}Transport
+                      {% elif category == "main_oeuvre" %}Labor
+                      {% elif category == "equipement" %}Equipment
+                      {% elif category == "service" %}Services
+                      {% elif category == "agriculture" %}Agriculture
+                      {% elif category == "metaux" %}Metals
+                      {% elif category == "chimie" %}Chemistry
+                      {% elif category == "textile" %}Textile
+                      {% elif category == "alimentaire" %}Food Industry
+                      {% else %}{{ category|capfirst }}
+                      {% endif %}
+                    </option>
+                  {% endfor %}
                 </select>
+                
+                <!-- Tri -->
+                <select 
+                  id="sortSelect" 
+                  onchange="applyFilters()" 
+                  style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; background: rgba(255, 255, 255, 0.9); font-size: 14px; cursor: pointer; min-width: 120px;"
+                >
+                  <option value="name-asc" {% if current_sort == "name-asc" %}selected{% endif %}>A → Z</option>
+                  <option value="name-desc" {% if current_sort == "name-desc" %}selected{% endif %}>Z → A</option>
+                  <option value="category" {% if current_sort == "category" %}selected{% endif %}>Category</option>
+                  <option value="latest-update" {% if current_sort == "latest-update" %}selected{% endif %}>Recent</option>
+                </select>
+                
+                <!-- Compteur de résultats -->
+                <div id="resultsCounter" style="color: #6b7280; font-size: 13px; white-space: nowrap;">
+                  {{ total_count }} index{% if total_count > 1 %}es{% endif %}
+                </div>
+                
+                <!-- Bouton reset -->
+                <button 
+                  onclick="resetFilters()" 
+                  class="reset-button"
+                  style="padding: 10px; background: linear-gradient(135deg, #f3f4f6, #e5e7eb); border: 1px solid #d1d5db; border-radius: 8px; color: #374151; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;"
+                  title="Clear all filters"
+                  onmouseover="this.style.background='linear-gradient(135deg, #e5e7eb, #d1d5db)'; this.style.transform='translateY(-1px)'"
+                  onmouseout="this.style.background='linear-gradient(135deg, #f3f4f6, #e5e7eb)'; this.style.transform='translateY(0)'"
+                >
+                  <i data-lucide="filter-x" style="width: 16px; height: 16px;"></i>
+                </button>
+                
               </div>
             </th>
+          </tr>
+          
+          <!-- En-têtes de colonnes -->
+          <tr style="text-align: left; font-weight: 600;">
+            <th style="padding: 12px;">Index</th>
             <th style="padding: 12px; text-align: right;">Current Price</th>
             <th style="padding: 12px;">Unit</th>
             <th style="padding: 12px;">Mini Chart</th>
             <th style="padding: 12px;">Last Update</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="indexTableBody">
           {% for entry in indexes %}
             {% with index=entry.index latest=entry.latest %}
             <tr class="index-row transition-colors duration-200" 
@@ -55,7 +130,7 @@
                   </button>
                 </form>
                 
-                <!-- 🎨 NOUVEAUX MAPPING DES ICÔNES AVEC COULEURS HARMONISÉES -->
+                <!-- Icônes de catégories avec couleurs harmonisées -->
                 {% if index.category == "batiment" %}
                   <i data-lucide="building-2" class="category-icon icon-building" title="Bâtiment et Construction" style="width: 16px; height: 16px;"></i>
                 {% elif index.category == "energie" %}
@@ -161,13 +236,26 @@
           {% endfor %}
         </tbody>
       </table>
+      
+      <!-- Message quand aucun résultat -->
+      <div id="noResultsMessage" style="display: none; text-align: center; padding: 60px; color: #6b7280;">
+        <i data-lucide="search-x" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+        <h3 style="margin: 0 0 8px 0; font-size: 18px;">No indexes found</h3>
+        <p style="margin: 0; font-size: 14px;">Try modifying your search criteria</p>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Custom styles for dark mode -->
+<!-- Custom styles -->
 <style>
-  /* 🎨 NOUVELLES COULEURS DES CATÉGORIES - Palette harmonisée */
+  /* Animation pour le loader */
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Couleurs des catégories - Palette harmonisée */
   .category-icon {
     flex-shrink: 0;
     transition: color 0.2s ease;
@@ -305,38 +393,17 @@
     transform: scale(1.1);
   }
   
-  /* Sort select styling - adaptation pour sticky header */
-  .sort-select {
-    font-family: inherit;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(4px);
-  }
-  
-  .sort-select:hover {
-    border-color: #9ca3af;
-  }
-  
-  .sort-select:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-  }
-  
-  body.dark-mode .sort-select {
+  /* Styles pour les contrôles de recherche en mode sombre */
+  body.dark-mode #searchInput,
+  body.dark-mode #categoryFilter,
+  body.dark-mode #sortSelect {
     background: rgba(30, 41, 59, 0.9) !important;
     border-color: #475569 !important;
     color: #e2e8f0 !important;
   }
   
-  body.dark-mode .sort-select:hover {
-    border-color: #64748b !important;
-  }
-  
-  body.dark-mode .sort-select:focus {
-    border-color: #60a5fa !important;
-    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2) !important;
+  body.dark-mode #searchInput::placeholder {
+    color: #94a3b8 !important;
   }
   
   /* Custom scrollbar pour le container */
@@ -370,7 +437,7 @@
     background: rgba(255, 255, 255, 0.5);
   }
 
-  /* NOUVEAU : Style pour le modal d'erreur seulement */
+  /* Style pour le modal d'erreur */
   .modal-content {
     border-radius: 15px;
     border: none;
@@ -381,10 +448,228 @@
     border-radius: 15px 15px 0 0;
     border-bottom: none;
   }
+  #categoryFilter {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    cursor: pointer;
+    min-width: 160px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  #categoryFilter:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
 </style>
 
-<!-- JS global -->
+<!-- JavaScript -->
 <script>
+  let searchTimeout;
+  
+  // Fonction de recherche avec debounce
+  function debounceSearch() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(applyFilters, 300);
+  }
+  
+  // Application des filtres
+  function applyFilters() {
+    const searchValue = document.getElementById('searchInput').value;
+    const categoryValue = document.getElementById('categoryFilter').value;
+    const sortValue = document.getElementById('sortSelect').value;
+    
+    // Construire l'URL avec les paramètres
+    const params = new URLSearchParams();
+    if (searchValue) params.set('search', searchValue);
+    if (categoryValue) params.set('category', categoryValue);
+    if (sortValue) params.set('sort', sortValue);
+    
+    // Afficher le loading
+    showLoading(true);
+    
+    // Faire la requête AJAX
+    fetch(`${window.location.pathname}?${params.toString()}`, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      updateTableContent(data.indexes);
+      updateResultsCounter(data.total_count);
+      showLoading(false);
+      
+      // Mettre à jour l'URL sans recharger la page
+      const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+      window.history.replaceState({}, '', newUrl);
+    })
+    .catch(error => {
+      console.error('Erreur lors du filtrage:', error);
+      showLoading(false);
+    });
+  }
+  
+  // Affichage/masquage du loading
+  function showLoading(show) {
+    const loading = document.getElementById('loadingIndicator');
+    const tableContainer = document.getElementById('tableContainer');
+    
+    if (show) {
+      loading.style.display = 'block';
+      tableContainer.style.opacity = '0.5';
+    } else {
+      loading.style.display = 'none';
+      tableContainer.style.opacity = '1';
+    }
+  }
+  
+  // Mise à jour du contenu du tableau
+  function updateTableContent(indexes) {
+    const tbody = document.getElementById('indexTableBody');
+    const noResultsMsg = document.getElementById('noResultsMessage');
+    
+    if (indexes.length === 0) {
+      tbody.innerHTML = '';
+      noResultsMsg.style.display = 'block';
+      return;
+    }
+    
+    noResultsMsg.style.display = 'none';
+    
+    // Générer le HTML pour chaque index
+    tbody.innerHTML = indexes.map((entry, index) => {
+      const categoryIcon = getCategoryIcon(entry.category);
+      
+      return `
+        <tr class="index-row transition-colors duration-200" 
+            data-url="${entry.url}"
+            style="border-bottom: 1px solid rgba(229, 231, 235, 0.5);">
+          <td style="padding: 12px; display: flex; align-items: center; gap: 8px;">
+            <form method="post" action="/toggle_favorite/${entry.id}/" class="favorite-form" onsubmit="event.preventDefault(); toggleFavorite(event, ${entry.id});">
+              <button type="submit" class="favorite-btn no-redirect" data-index-id="${entry.id}" title="Click to toggle favorite">
+                <i data-lucide="plus-circle" style="width: 18px; height: 18px; color: #0ea5e9; stroke-width: 2;"></i>
+              </button>
+            </form>
+            ${categoryIcon}
+            <span style="font-weight: 600;">${entry.name}</span>
+          </td>
+          <td style="padding: 12px; text-align: right; font-variant-numeric: tabular-nums;">
+            ${entry.latest_value !== "—" ? parseFloat(entry.latest_value).toFixed(2) : "—"}
+          </td>
+          <td style="padding: 12px;">${entry.unit || "—"}</td>
+          <td style="padding: 12px; width: 120px;">
+            <div id="mini-chart-${index}" style="height: 40px;"></div>
+          </td>
+          <td style="padding: 12px;">${entry.latest_date}</td>
+        </tr>
+      `;
+    }).join('');
+    
+    // Réinitialiser les icônes Lucide
+    lucide.createIcons();
+    
+    // Réinitialiser les événements de clic
+    initializeRowClickHandlers();
+    
+    // Regénérer les graphiques
+    setTimeout(() => {
+      indexes.forEach((entry, index) => {
+        if (entry.dates && entry.values && entry.dates.length > 0) {
+          createMiniChart(`mini-chart-${index}`, entry.dates, entry.values);
+        }
+      });
+    }, 100);
+  }
+  
+  // Fonction pour obtenir l'icône de catégorie
+  function getCategoryIcon(category) {
+    const iconMap = {
+      'batiment': '<i data-lucide="building-2" class="category-icon icon-building" title="Bâtiment" style="width: 16px; height: 16px;"></i>',
+      'energie': '<i data-lucide="zap" class="category-icon icon-energy" title="Énergie" style="width: 16px; height: 16px;"></i>',
+      'matiere_premiere': '<i data-lucide="tree-deciduous" class="category-icon icon-raw-material" title="Matières premières" style="width: 16px; height: 16px;"></i>',
+      'transport': '<i data-lucide="truck" class="category-icon icon-transport" title="Transport" style="width: 16px; height: 16px;"></i>',
+      'main_oeuvre': '<i data-lucide="hard-hat" class="category-icon icon-labor" title="Main d\'œuvre" style="width: 16px; height: 16px;"></i>',
+      'equipement': '<i data-lucide="settings" class="category-icon icon-equipment" title="Équipement" style="width: 16px; height: 16px;"></i>',
+      'service': '<i data-lucide="wrench" class="category-icon icon-service" title="Services" style="width: 16px; height: 16px;"></i>',
+      'agriculture': '<i data-lucide="wheat" class="category-icon icon-agriculture" title="Agriculture" style="width: 16px; height: 16px;"></i>',
+      'metaux': '<i data-lucide="hammer" class="category-icon icon-metals" title="Métaux" style="width: 16px; height: 16px;"></i>',
+      'chimie': '<i data-lucide="flask-conical" class="category-icon icon-chemistry" title="Chimie" style="width: 16px; height: 16px;"></i>',
+      'textile': '<i data-lucide="shirt" class="category-icon icon-textile" title="Textile" style="width: 16px; height: 16px;"></i>',
+      'alimentaire': '<i data-lucide="utensils" class="category-icon icon-food" title="Alimentaire" style="width: 16px; height: 16px;"></i>'
+    };
+    
+    return iconMap[category] || '<i data-lucide="circle" class="category-icon icon-default" style="width: 16px; height: 16px;"></i>';
+  }
+  
+  // Mise à jour du compteur de résultats
+  function updateResultsCounter(count) {
+    const counter = document.getElementById('resultsCounter');
+    const text = count === 0 ? 'No indexes' : 
+                 count === 1 ? '1 index' : 
+                 `${count} indexes`;
+    counter.textContent = text;
+  }
+  
+  // Reset des filtres
+  function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('categoryFilter').value = '';
+    document.getElementById('sortSelect').value = 'name-asc';
+    applyFilters();
+  }
+  
+  // Initialisation des handlers de clic sur les lignes
+  function initializeRowClickHandlers() {
+    document.querySelectorAll('.index-row').forEach(row => {
+      row.addEventListener('click', function(event) {
+        if (!event.target.closest('.no-redirect')) {
+          window.location.href = row.dataset.url;
+        }
+      });
+    });
+  }
+  
+  // Création des mini graphiques
+  function createMiniChart(elementId, dates, values) {
+    const chartDiv = document.getElementById(elementId);
+    if (!chartDiv || typeof Plotly === 'undefined' || !dates || !values || dates.length === 0) {
+      return;
+    }
+    
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    
+    Plotly.newPlot(elementId, [{
+      x: dates,
+      y: values,
+      mode: 'lines',
+      line: { 
+        color: isDarkMode ? '#60a5fa' : '#3b82f6', 
+        width: 2 
+      },
+      hoverinfo: 'skip',
+      fill: 'tozeroy',
+      fillcolor: isDarkMode ? 'rgba(96, 165, 250, 0.25)' : 'rgba(59, 130, 246, 0.2)',
+      type: 'scatter'
+    }], {
+      margin: { l: 0, r: 0, t: 0, b: 0 },
+      xaxis: { visible: false },
+      yaxis: { visible: false },
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(0,0,0,0)'
+    }, { 
+      staticPlot: true, 
+      displayModeBar: false,
+      responsive: true
+    });
+  }
+
+  // === FONCTIONS EXISTANTES CONSERVÉES ===
+  
   // Redirection ligne sauf si clic sur bouton
   document.querySelectorAll('.index-row').forEach(row => {
     row.addEventListener('click', function(event) {
@@ -395,66 +680,71 @@
   });
 
   function toggleFavorite(event, indexId) {
-    event.stopPropagation();
-    const button = document.querySelector(`.favorite-btn[data-index-id="${indexId}"]`);
-    const form = button.closest('form');
-    const formData = new FormData(form);
+      event.stopPropagation();
+      const button = document.querySelector(`.favorite-btn[data-index-id="${indexId}"]`);
+      const form = button.closest('form');
+      const formData = new FormData(form);
 
-    fetch(form.action, {
-      method: 'POST',
-      body: formData,
-      headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(response => {
-      console.log('Response status:', response.status);
-      return response.json();
-    })
-    .then(data => {
-      console.log('Parsed data:', data);
+      // Sécurité : Récupérer explicitement le token CSRF
+      const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
 
-      if (data.error) {
-        alert(data.message + (data.upgrade_message ? '\n\n' + data.upgrade_message : ''));
-      } else {
-        // Comportement normal
-        let icon = button.querySelector('i');
-
-        // Si l'icône n'existe pas, la créer
-        if (!icon) {
-          icon = document.createElement('i');
-          button.innerHTML = ''; // Vider le bouton
-          button.appendChild(icon);
+      fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: { 
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': csrfToken
         }
+      })
+      .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+      })
+      .then(data => {
+        console.log('Parsed data:', data);
 
-        if (data.is_favorite) {
-          icon.setAttribute('data-lucide', 'check-circle');
-          icon.style.width = '18px';
-          icon.style.height = '18px';
-          icon.style.color = '#10b981';
-          icon.style.strokeWidth = '2';
-          button.title = 'Subscribed - Click to unsubscribe';
+        if (data.error) {
+          alert(data.message + (data.upgrade_message ? '\n\n' + data.upgrade_message : ''));
         } else {
-          icon.setAttribute('data-lucide', 'plus-circle');
-          icon.style.width = '18px';
-          icon.style.height = '18px';
-          icon.style.color = '#0ea5e9';
-          icon.style.strokeWidth = '2';
-          button.title = 'Click to subscribe';
-        }
+          // Comportement normal
+          let icon = button.querySelector('i');
 
-        // Réinitialiser les icônes Lucide pour le nouvel élément
-        lucide.createIcons();
-        console.log('Success:', data.message);
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('An error occurred. Please try again.');
-    });
+          // Si l'icône n'existe pas, la créer
+          if (!icon) {
+            icon = document.createElement('i');
+            button.innerHTML = '';
+            button.appendChild(icon);
+          }
+
+          if (data.is_favorite) {
+            icon.setAttribute('data-lucide', 'check-circle');
+            icon.style.width = '18px';
+            icon.style.height = '18px';
+            icon.style.color = '#10b981';
+            icon.style.strokeWidth = '2';
+            button.title = 'Subscribed - Click to unsubscribe';
+          } else {
+            icon.setAttribute('data-lucide', 'plus-circle');
+            icon.style.width = '18px';
+            icon.style.height = '18px';
+            icon.style.color = '#0ea5e9';
+            icon.style.strokeWidth = '2';
+            button.title = 'Click to subscribe';
+          }
+
+          // Réinitialiser les icônes Lucide pour le nouvel élément
+          lucide.createIcons();
+          console.log('Success:', data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Une erreur est survenue. Veuillez réessayer.');
+      });
   }
 
-  // NOUVELLE FONCTION : Modal d'erreur pour les limites (simplifiée)
+  // Modal d'erreur pour les limites (simplifiée)
   function showLimitModal(data) {
-    // Pour l'instant, utilisons juste une alert améliorée
     const message = `${data.title}\n\n${data.message}\n\n${data.upgrade_message}\n\nCurrent Plan: ${data.current_plan}\nIndexes Used: ${data.current_count}/${data.max_indexes}`;
     alert(message);
   }
@@ -493,7 +783,7 @@
     attributeFilter: ['class']
   });
   
-  // Simple sorting function
+  // Fonction de tri simple (pour compatibilité avec l'ancien système)
   function applySorting(sortType) {
     if (!sortType) return;
     
@@ -518,8 +808,15 @@
     // Re-append sorted rows
     rows.forEach(row => tbody.appendChild(row));
   }
+  
+  // Initialisation au chargement de la page
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser les handlers de clic
+    initializeRowClickHandlers();
+  });
 </script>
 
 <!-- Plotly -->
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</div> 
 {% endblock %}
