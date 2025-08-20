@@ -50,9 +50,13 @@
                     <button type="submit"
                             class="favorite-btn"
                             data-index-id="{{ item.id }}"
-                            title="Add or remove from favorites"
-                            style="font-size: 1.2rem; background: none; border: none; cursor: pointer; padding: 0; line-height: 1;">
-                      {% if item.id in favorite_ids %}★{% else %}☆{% endif %}
+                            title="{% if item.id in favorite_ids %}Subscribed - Click to unsubscribe{% else %}Click to subscribe{% endif %}"
+                            style="background: none; border: none; cursor: pointer; padding: 2px; line-height: 1;">
+                      {% if item.id in favorite_ids %}
+                        <i data-lucide="check-circle" style="width: 18px; height: 18px; color: #10b981; stroke-width: 2;"></i>
+                      {% else %}
+                        <i data-lucide="plus-circle" style="width: 18px; height: 18px; color: #0ea5e9; stroke-width: 2;"></i>
+                      {% endif %}
                     </button>
                   </form>
                   
@@ -430,12 +434,39 @@
       }
     }).then(res => res.json()).then(data => {
       const btn = document.querySelector(`button[data-index-id='${indexId}']`);
-      if (data.is_favorite) {
-        btn.textContent = "★";
-        btn.classList.add("filled");
+
+      if (data.error) {
+        alert(data.message + (data.upgrade_message ? '\n\n' + data.upgrade_message : ''));
       } else {
-        btn.textContent = "☆";
-        btn.classList.remove("filled");
+        let icon = btn.querySelector('i');
+
+        // Si l'icône n'existe pas, la créer
+        if (!icon) {
+          icon = document.createElement('i');
+          btn.innerHTML = ''; // Vider le bouton
+          btn.appendChild(icon);
+        }
+
+        if (data.is_favorite) {
+          icon.setAttribute('data-lucide', 'check-circle');
+          icon.style.width = '18px';
+          icon.style.height = '18px';
+          icon.style.color = '#10b981';
+          icon.style.strokeWidth = '2';
+          btn.title = 'Subscribed - Click to unsubscribe';
+          btn.classList.add("filled");
+        } else {
+          icon.setAttribute('data-lucide', 'plus-circle');
+          icon.style.width = '18px';
+          icon.style.height = '18px';
+          icon.style.color = '#0ea5e9';
+          icon.style.strokeWidth = '2';
+          btn.title = 'Click to subscribe';
+          btn.classList.remove("filled");
+        }
+
+        // Réinitialiser les icônes Lucide pour le nouvel élément
+        lucide.createIcons();
       }
     });
   }

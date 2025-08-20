@@ -43,11 +43,15 @@
                       onsubmit="event.preventDefault(); toggleFavorite(event, {{ index.id }});">
                   {% csrf_token %}
                   <button type="submit"
-                          class="favorite-btn no-redirect text-yellow-500 hover:text-yellow-400 transition-colors duration-200"
+                          class="favorite-btn no-redirect transition-colors duration-200"
                           data-index-id="{{ index.id }}"
-                          title="Favorite"
-                          style="background: none; border: none; cursor: pointer; font-size: 16px;">
-                    {% if index in favorites %}★{% else %}☆{% endif %}
+                          title="{% if index in favorites %}Subscribed - Click to unsubscribe{% else %}Click to subscribe{% endif %}"
+                          style="background: none; border: none; cursor: pointer; padding: 2px;">
+                    {% if index in favorites %}
+                      <i data-lucide="check-circle" style="width: 18px; height: 18px; color: #10b981; stroke-width: 2;"></i>
+                    {% else %}
+                      <i data-lucide="plus-circle" style="width: 18px; height: 18px; color: #0ea5e9; stroke-width: 2;"></i>
+                    {% endif %}
                   </button>
                 </form>
                 
@@ -390,7 +394,6 @@
     });
   });
 
-  // FONCTION MODIFIÉE : gestion des limites
   function toggleFavorite(event, indexId) {
     event.stopPropagation();
     const button = document.querySelector(`.favorite-btn[data-index-id="${indexId}"]`);
@@ -407,13 +410,39 @@
       return response.json();
     })
     .then(data => {
-      console.log('Response data:', data);
+      console.log('Parsed data:', data);
+
       if (data.error) {
-        // Afficher une alert simple pour l'instant
         alert(data.message + (data.upgrade_message ? '\n\n' + data.upgrade_message : ''));
       } else {
         // Comportement normal
-        button.textContent = data.is_favorite ? "★" : "☆";
+        let icon = button.querySelector('i');
+
+        // Si l'icône n'existe pas, la créer
+        if (!icon) {
+          icon = document.createElement('i');
+          button.innerHTML = ''; // Vider le bouton
+          button.appendChild(icon);
+        }
+
+        if (data.is_favorite) {
+          icon.setAttribute('data-lucide', 'check-circle');
+          icon.style.width = '18px';
+          icon.style.height = '18px';
+          icon.style.color = '#10b981';
+          icon.style.strokeWidth = '2';
+          button.title = 'Subscribed - Click to unsubscribe';
+        } else {
+          icon.setAttribute('data-lucide', 'plus-circle');
+          icon.style.width = '18px';
+          icon.style.height = '18px';
+          icon.style.color = '#0ea5e9';
+          icon.style.strokeWidth = '2';
+          button.title = 'Click to subscribe';
+        }
+
+        // Réinitialiser les icônes Lucide pour le nouvel élément
+        lucide.createIcons();
         console.log('Success:', data.message);
       }
     })
