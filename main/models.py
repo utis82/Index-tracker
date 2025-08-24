@@ -162,6 +162,26 @@ class Slice(models.Model):
         max_length=100,
         help_text="Nom de la tranche (ex: énergie, transport...)")
 
+    # NOUVEAUX CHAMPS POUR LE MODE CRITÈRE FIXE
+    SLICE_MODE_CHOICES = [('percentage', 'Cost Structure (%)'),
+                          ('fixed_criteria', 'Fixed Criteria')]
+    slice_mode = models.CharField(max_length=20,
+                                  choices=SLICE_MODE_CHOICES,
+                                  default='percentage',
+                                  help_text="Mode de calcul de la tranche")
+
+    # Pour le mode critère fixe
+    criteria_value = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Valeur du critère (ex: 2.5 pour 2.5 tonnes)")
+
+    criteria_unit = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text="Unité du critère (ex: tonnes, m², m³, kg...)")
+
     def __str__(self):
         return f"🔸 {self.label} ({self.part.name})"
 

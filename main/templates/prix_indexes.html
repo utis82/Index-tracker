@@ -1,1827 +1,2026 @@
-{% extends "base.html" %}
-{% load crispy_forms_tags %}
-{% load dict_extras %}
-
-{% block title %}Price Indexes{% endblock %}
-
-{% block content %}
-<style>
-  /* 🎛️ MAIN PARAMETER - Modify this value to change row height */
-  :root {
-    --row-height: 20px;
-    --header-height: calc(var(--row-height) - 4px);
-  }
-
-  /* Remove duplicate .card styles - rely on style.css */
-  
-  .icon-button svg:hover {
-    stroke: #1d4ed8;
-  }
-
-  /* Dark mode: icon hover color */
-  body.dark-mode .icon-button svg:hover {
-    stroke: #60a5fa;
-  }
-
-  .btn-primary {
-    background-color: #2563eb;
-    color: white;
-    border: none;
-    padding: 0.4rem 0.8rem;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .btn-primary:hover {
-    background-color: #1d4ed8;
-  }
-
-  .btn-primary:disabled {
-    background-color: #9ca3af;
-    cursor: not-allowed;
-  }
-
-  .btn-secondary {
-    background-color: #f3f4f6;
-    color: #1f2937;
-    border: 1px solid #cbd5e1;
-    padding: 0.4rem 0.8rem;
-    border-radius: 6px;
-    font-weight: 500;
-    cursor: pointer;
-  }
-
-  .btn-secondary:hover {
-    background-color: #e5e7eb;
-  }
-
-  /* Dark mode buttons */
-  body.dark-mode .btn-secondary {
-    background-color: #374151;
-    color: #e5e7eb;
-    border-color: #4b5563;
-  }
-
-  body.dark-mode .btn-secondary:hover {
-    background-color: #4b5563;
-  }
-
-  .modal-card h5, .modal-card h6 {
-    font-weight: 600;
-    color: #1e293b;
-  }
-
-  /* Dark mode modal headers */
-  body.dark-mode .modal-card h5,
-  body.dark-mode .modal-card h6 {
-    color: #e0f2fe;
-  }
-
-  .component-form {
-    background-color: #f9fafb;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-  }
-
-  body.dark-mode .component-form {
-    background-color: #1e293b;
-    border-color: #334155;
-  }
-
-  .modal-overlay {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 1000;
-    padding: 2vh;
-  }
-
-  .modal-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    min-width: 500px;
-    max-width: 800px;
-    max-height: 80vh;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    overflow-y: auto;
-    width: 90%;
-  }
-
-  /* Dark mode modal */
-  body.dark-mode .modal-card {
-    background: #1e293b;
-    color: #e0f2fe;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  }
-
-  .hidden {
-    display: none;
-  }
-
-  .page-layout {
-    display: flex;
-    gap: 1.5rem;
-    margin-top: 1rem;
-    height: calc(100vh - 100px);
-    max-width: 100vw;
-    overflow-x: hidden;
-  }
-
-  .left-panel {
-    flex: 0 0 55%;
-    max-width: 60%;
-    background: white;
-    padding: 1rem 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-    overflow-y: auto;
-    position: relative;
-  }
-
-  /* Dark mode left panel */
-  body.dark-mode .left-panel {
-    background: rgba(30, 41, 59, 0.7);
-    color: #e0f2fe;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  }
-
-  .right-panel {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Override card for right panel */
-  .right-panel .card {
-    background: white;
-    padding: 1rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
-    height: 100%;
-    min-width: 0;
-    overflow: hidden;
-  }
-
-  /* Dark mode right panel card */
-  body.dark-mode .right-panel .card {
-    background: rgba(30, 41, 59, 0.7);
-    color: #e0f2fe;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-  }
-
-  .icon-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 8px;
-  }
-
-  .icon-button svg {
-    width: 20px;
-    height: 20px;
-    stroke: #0ea5e9;
-  }
-
-  body.dark-mode .icon-button svg {
-    stroke: #38bdf8;
-  }
-
-  .icon-button.graph-active {
-    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-    color: white;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-    transform: scale(0.95);
-  }
-
-  .icon-button.graph-active svg {
-    stroke: white;
-  }
-
-  .icon-button.graph-active:hover {
-    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-  }
-
-  table.arbo-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.8rem;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    table-layout: fixed;
-  }
-
-  /* Dark mode table shadow */
-  body.dark-mode table.arbo-table {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  }
-
-  table.arbo-table th,
-  table.arbo-table td {
-    padding: 10px 12px;
-    border: none;
-    text-align: left;
-    height: var(--row-height);
-    vertical-align: middle;
-  }
-
-  table.arbo-table th {
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    font-weight: 600;
-    color: #334155;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    height: var(--header-height);
-  }
-
-  /* Dark mode table headers */
-  body.dark-mode table.arbo-table th {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    color: #cbd5e1;
-  }
-
-  .level-1 {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border-left: 4px solid #0ea5e9;
-  }
-
-  /* Dark mode level-1 */
-  body.dark-mode .level-1 {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    border-left-color: #38bdf8;
-  }
-
-  .level-1 td {
-    font-weight: 600;
-    color: #0284c7;
-    padding: 10px 12px;
-    padding-left: 16px;
-    height: var(--row-height) !important;
-    max-height: var(--row-height) !important;
-    overflow: hidden;
-    font-size: 0.85rem;
-  }
-
-  body.dark-mode .level-1 td {
-    color: #38bdf8;
-  }
-
-  .level-1:hover {
-    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-    transform: translateX(2px);
-    transition: all 0.2s ease;
-  }
-
-  body.dark-mode .level-1:hover {
-    background: linear-gradient(135deg, #334155 0%, #475569 100%);
-  }
-
-  .level-2 {
-    background: #ffffff;
-    border-left: 3px solid #e2e8f0;
-  }
-
-  body.dark-mode .level-2 {
-    background: #1e293b;
-    border-left-color: #475569;
-  }
-
-  .level-2 td {
-    font-weight: 500;
-    color: #475569;
-    padding: 10px 12px;
-    padding-left: 44px !important;
-    height: var(--row-height) !important;
-    max-height: var(--row-height) !important;
-    overflow: hidden;
-    font-size: 0.8rem;
-  }
-
-  body.dark-mode .level-2 td {
-    color: #94a3b8;
-  }
-
-  .level-2:hover {
-    background: #f0f9ff;
-    border-left: 3px solid #0ea5e9;
-    transition: all 0.2s ease;
-  }
-
-  body.dark-mode .level-2:hover {
-    background: #334155;
-    border-left-color: #38bdf8;
-  }
-
-  .level-3 {
-    background: #f8fafc;
-    border-left: 2px solid #cbd5e1;
-  }
-
-  body.dark-mode .level-3 {
-    background: #0f172a;
-    border-left-color: #334155;
-  }
-
-  .level-3 td {
-    font-size: 0.75rem;
-    color: #64748b;
-    padding: 3px 12px !important;
-    padding-left: 72px !important;
-    font-weight: 400;
-    height: 22px !important;
-    max-height: 22px !important;
-    vertical-align: middle;
-    line-height: 1.1;
-    overflow: hidden;
-  }
-
-  body.dark-mode .level-3 td {
-    color: #94a3b8;
-  }
-
-  .level-3:hover {
-    background: #f0f9ff;
-    border-left: 2px solid #0ea5e9;
-    transition: all 0.2s ease;
-  }
-
-  body.dark-mode .level-3:hover {
-    background: #1e293b;
-    border-left-color: #38bdf8;
-  }
-
-  .slice-badge {
-    display: inline-flex;
-    align-items: center;
-    background: #f1f5f9;
-    padding: 1px 4px;
-    border-radius: 3px;
-    border: 1px solid #e2e8f0;
-    height: 16px !important;
-    max-height: 16px !important;
-    line-height: 1;
-    font-size: 0.65rem;
-    white-space: nowrap;
-    position: relative;
-    z-index: 10;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  }
-
-  body.dark-mode .slice-badge {
-    background: #334155;
-    border-color: #475569;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-  }
-
-  .slice-badge svg {
-    margin-right: 2px;
-    flex-shrink: 0;
-    width: 8px !important;
-    height: 8px !important;
-  }
-
-  .slice-badge span {
-    white-space: nowrap;
-    line-height: 1;
-    display: inline-block;
-  }
-
-  .slice-badge-container {
-    position: relative;
-    overflow: visible !important;
-    z-index: 10;
-  }
-
-  .level-3 td:first-child {
-    position: relative;
-    overflow: visible !important;
-    z-index: 10;
-  }
-
-  .actions {
-    display: flex;
-    gap: 0.3rem;
-  }
-
-  .toggle-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    margin-right: 8px;
-    color: #64748b;
-    font-size: 0.8rem;
-    width: 14px;
-    height: 14px;
-    border-radius: 2px;
-    background: #e2e8f0;
-    transform: rotate(0deg);
-  }
-
-  body.dark-mode .toggle-icon {
-    background: #475569;
-    color: #94a3b8;
-  }
-
-  .toggle-icon:hover {
-    background: #cbd5e1;
-    color: #475569;
-  }
-
-  body.dark-mode .toggle-icon:hover {
-    background: #64748b;
-    color: #e2e8f0;
-  }
-
-  .expanded .toggle-icon {
-    transform: rotate(90deg);
-    background: #0ea5e9;
-    color: white;
-  }
-
-  body.dark-mode .expanded .toggle-icon {
-    background: #38bdf8;
-  }
-
-  .collapse-target {
-    display: table-row-group;
-  }
-
-  .collapse-target.hidden {
-    display: none;
-  }
-
-  .top-actions {
-    position: absolute;
-    top: 1rem;
-    right: 1.5rem;
-    display: flex;
-    gap: 0.8rem;
-  }
-
-  .graph-placeholder {
-    flex: 1;
-    background: repeating-linear-gradient(
-      -45deg,
-      #e5e7eb,
-      #e5e7eb 10px,
-      #f1f5f9 10px,
-      #f1f5f9 20px
-    );
-    border-radius: 8px;
-  }
-
-  @keyframes drawLine {
-    from {
-      stroke-dashoffset: 1000;
-    }
-    to {
-      stroke-dashoffset: 0;
-    }
-  }
-
-  .form-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 1rem;
-  }
-
-  .form-table th,
-  .form-table td {
-    padding: 0.75rem;
-    border-bottom: 1px solid #dbeafe;
-    text-align: left;
-  }
-
-  body.dark-mode .form-table th,
-  body.dark-mode .form-table td {
-    border-bottom-color: #334155;
-  }
-
-  .form-table th {
-    width: 30%;
-    font-weight: 600;
-  }
-
-  body.dark-mode .form-table th {
-    color: #cbd5e1;
-  }
-
-  .form-table input,
-  .form-table select {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-  }
-
-  body.dark-mode .form-table input,
-  body.dark-mode .form-table select {
-    background-color: #0f172a;
-    color: #e0f2fe;
-    border-color: #475569;
-  }
-
-  .slice-row td {
-    padding: 0.5rem;
-    border-bottom: 1px solid #f1f5f9;
-  }
-
-  body.dark-mode .slice-row td {
-    border-bottom-color: #334155;
-  }
-
-  .slice-row input,
-  .slice-row select {
-    width: 100%;
-    padding: 0.4rem;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-    font-size: 0.85rem;
-  }
-
-  body.dark-mode .slice-row input,
-  body.dark-mode .slice-row select {
-    background-color: #0f172a;
-    color: #e0f2fe;
-    border-color: #475569;
-  }
-
-  .slice-row select:disabled {
-    background-color: #f9fafb;
-    color: #9ca3af;
-  }
-
-  body.dark-mode .slice-row select:disabled {
-    background-color: #1e293b;
-    color: #64748b;
-  }
-
-  .delete-slice-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
-  }
-
-  .delete-slice-btn:hover {
-    background-color: #fef2f2;
-  }
-
-  body.dark-mode .delete-slice-btn:hover {
-    background-color: #7f1d1d;
-  }
-
-  .delete-slice-btn svg {
-    stroke: #dc2626;
-  }
-
-  body.dark-mode .delete-slice-btn svg {
-    stroke: #ef4444;
-  }
-
-  .opacity-50 {
-    opacity: 0.5;
-  }
-
-  /* Chart empty state dark mode */
-  body.dark-mode #priceChart {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
-  }
-
-  body.dark-mode #emptyState {
-    color: #94a3b8;
-  }
-
-  body.dark-mode #emptyState svg {
-    stroke: #64748b;
-  }
-
-  /* Form backgrounds dark mode */
-  body.dark-mode div[style*="background-color: #f8fafc"] {
-    background-color: #1e293b !important;
-  }
-
-  body.dark-mode div[style*="background-color: #f1f5f9"] {
-    background-color: #0f172a !important;
-  }
-
-  /* Slice table dark mode */
-  body.dark-mode #slicesTable {
-    background: #1e293b !important;
-  }
-
-  body.dark-mode #slicesTable thead {
-    background-color: #0f172a !important;
-  }
-
-  body.dark-mode #slicesTable th {
-    border-bottom-color: #334155 !important;
-    color: #cbd5e1 !important;
-  }
-
-  /* Total percentage box dark mode */
-  body.dark-mode div[style*="background: white"] {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-  }
-
-  /* Section title dark mode */
-  body.dark-mode .section-title {
-    background: linear-gradient(90deg, #1e293b, #334155);
-    color: #e0f2fe;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  }
-</style>
-
-<div class="page-layout">
-  <!-- 📦 Your products -->
-  <div class="left-panel">
-    <h3 class="section-title">
-      <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-hexagon" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73z"/>
-      </svg>
-      Your products
-    </h3>
-
-    <div class="top-actions">
-      <!-- Create a product -->
-      <button class="icon-button" id="openProductModal" title="Create a product">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2">
-          <path d="M12 17v-6m3 3h-6M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/>
-        </svg>
-      </button>
-
-      <!-- Create a part -->
-      <button class="icon-button" id="openPartModal" title="Create a Part">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2">
-          <path d="M12 18v-6m3 3h-6M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <path d="M14 2v6h6"/>
-        </svg>
-      </button>
-    </div>
-
-    <table class="arbo-table">
-      <thead>
-        <tr>
-          <th>Element</th>
-          <th>Ref. date</th>
-          <th>Reference price</th>
-          <th>Current price</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      {% for product in produits %}
-        <tr class="level-1" data-toggle="product-{{ product.id }}">
-          <td>
-            <span class="toggle-icon">›</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-hexagon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="margin-right: 10px; vertical-align: middle;">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73z"/>
-            </svg>
-            <span>{{ product.name }}</span>
-          </td>
-          <td>
-            <span style="color: #0284c7; font-weight: 500; font-size: 0.85rem;">{{ product.reference_date }}</span>
-          </td>
-          <td>
-            {% with current_prices|lookup:product.id as product_prices %}
-              <span style="color: #059669; font-weight: 600; font-size: 0.9rem;">
-                €{{ product_prices.reference|floatformat:0 }}
-              </span>
-            {% endwith %}
-          </td>
-          <td>
-            {% with current_prices|lookup:product.id as product_prices %}
-              <span style="color: {% if product_prices.current > product_prices.reference %}#dc2626{% elif product_prices.current < product_prices.reference %}#059669{% else %}#6b7280{% endif %}; font-weight: 600; font-size: 0.9rem;">
-                €{{ product_prices.current|floatformat:0 }}
-              </span>
-              {% with product_prices.current|sub:product_prices.reference as price_diff %}
-                {% if price_diff != 0 %}
-                  <span style="font-size: 0.75rem; color: {% if price_diff > 0 %}#dc2626{% else %}#059669{% endif %}; margin-left: 4px;">
-                    ({% if price_diff > 0 %}+{% endif %}€{{ price_diff|floatformat:0 }})
-                  </span>
-                {% endif %}
-              {% endwith %}
-            {% endwith %}
-          </td>
-          <td>
-            <div class="actions">
-              <!-- 📈 Chart -->
-              <button class="icon-button view-graph-btn" 
-                      data-product-id="{{ product.id }}"
-                      data-product-name="{{ product.name }}"
-                      title="Show chart">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-line-chart" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                  <path d="M3 3v18h18"/>
-                  <path d="M4 14.5 8 10l5 5 5-6"/>
-                </svg>
-              </button>
-
-              <!-- ✏️ Edit -->
-              <button class="icon-button edit-product"
-                data-product-id="{{ product.id }}"
-                data-product-name="{{ product.name }}"
-                title="Edit">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                  <path d="M15 5 19 9M5 19l4-1 9-9a2.828 2.828 0 1 0-4-4l-9 9-1 4z"/>
-                </svg>
-              </button>
-
-              <!-- 🗑️ Delete -->
-              <button class="icon-button delete-product" data-product-id="{{ product.id }}" title="Delete">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-archive-x" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                  <rect x="3" y="4" width="18" height="5" rx="1"/>
-                  <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
-                  <path d="M10 13l4 4m0-4l-4 4"/>
-                </svg>
-              </button>
-            </div>
-          </td>
-        </tr>
-
-        {% for part in product.parts.all %}
-          <tr class="level-2 hidden" data-parent="product-{{ product.id }}" data-toggle="part-{{ part.id }}">
-            <td>
-              {% if part.slices.all %}
-                <span class="toggle-icon">›</span>
-              {% else %}
-                <span style="width: 20px; display: inline-block;"></span>
-              {% endif %}
-              <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-text" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#64748b" stroke-width="1.5" style="margin-right: 8px; vertical-align: middle;">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <path d="M14 2v6h6"/>
+        {% extends "base.html" %}
+        {% load crispy_forms_tags %}
+        {% load dict_extras %}
+
+        {% block title %}Price Indexes{% endblock %}
+
+        {% block content %}
+        <style>
+          /* 🎛️ MAIN PARAMETER - Modify this value to change row height */
+          :root {
+            --row-height: 20px;
+            --header-height: calc(var(--row-height) - 4px);
+          }
+
+          /* Remove duplicate .card styles - rely on style.css */
+
+          .icon-button svg:hover {
+            stroke: #1d4ed8;
+          }
+
+          /* Dark mode: icon hover color */
+          body.dark-mode .icon-button svg:hover {
+            stroke: #60a5fa;
+          }
+
+          .btn-primary {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+          }
+
+          .btn-primary:hover {
+            background-color: #1d4ed8;
+          }
+
+          .btn-primary:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+          }
+
+          .btn-secondary {
+            background-color: #f3f4f6;
+            color: #1f2937;
+            border: 1px solid #cbd5e1;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+          }
+
+          .btn-secondary:hover {
+            background-color: #e5e7eb;
+          }
+
+          /* Dark mode buttons */
+          body.dark-mode .btn-secondary {
+            background-color: #374151;
+            color: #e5e7eb;
+            border-color: #4b5563;
+          }
+
+          body.dark-mode .btn-secondary:hover {
+            background-color: #4b5563;
+          }
+
+          .modal-card h5, .modal-card h6 {
+            font-weight: 600;
+            color: #1e293b;
+          }
+
+          /* Dark mode modal headers */
+          body.dark-mode .modal-card h5,
+          body.dark-mode .modal-card h6 {
+            color: #e0f2fe;
+          }
+
+          .component-form {
+            background-color: #f9fafb;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+          }
+
+          body.dark-mode .component-form {
+            background-color: #1e293b;
+            border-color: #334155;
+          }
+
+          .modal-overlay {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            padding: 2vh;
+          }
+
+          .modal-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            min-width: 500px;
+            max-width: 800px;
+            max-height: 80vh;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            overflow-y: auto;
+            width: 90%;
+          }
+
+          /* Dark mode modal */
+          body.dark-mode .modal-card {
+            background: #1e293b;
+            color: #e0f2fe;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+          }
+
+          .hidden {
+            display: none;
+          }
+
+          .page-layout {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            height: calc(100vh - 100px);
+            max-width: 100vw;
+            overflow-x: hidden;
+          }
+
+          .left-panel {
+            flex: 0 0 55%;
+            max-width: 60%;
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+            overflow-y: auto;
+            position: relative;
+          }
+
+          /* Dark mode left panel */
+          body.dark-mode .left-panel {
+            background: rgba(30, 41, 59, 0.7);
+            color: #e0f2fe;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+          }
+
+          .right-panel {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+          }
+
+          /* Override card for right panel */
+          .right-panel .card {
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+            height: 100%;
+            min-width: 0;
+            overflow: hidden;
+          }
+
+          /* Dark mode right panel card */
+          body.dark-mode .right-panel .card {
+            background: rgba(30, 41, 59, 0.7);
+            color: #e0f2fe;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+          }
+
+          .icon-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+          }
+
+          .icon-button svg {
+            width: 20px;
+            height: 20px;
+            stroke: #0ea5e9;
+          }
+
+          body.dark-mode .icon-button svg {
+            stroke: #38bdf8;
+          }
+
+          .icon-button.graph-active {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+            transform: scale(0.95);
+          }
+
+          .icon-button.graph-active svg {
+            stroke: white;
+          }
+
+          .icon-button.graph-active:hover {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+          }
+
+          table.arbo-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            table-layout: fixed;
+          }
+
+          /* Dark mode table shadow */
+          body.dark-mode table.arbo-table {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+          }
+
+          table.arbo-table th,
+          table.arbo-table td {
+            padding: 10px 12px;
+            border: none;
+            text-align: left;
+            height: var(--row-height);
+            vertical-align: middle;
+          }
+
+          table.arbo-table th {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            font-weight: 600;
+            color: #334155;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            height: var(--header-height);
+          }
+
+          /* Dark mode table headers */
+          body.dark-mode table.arbo-table th {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: #cbd5e1;
+          }
+
+          .level-1 {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-left: 4px solid #0ea5e9;
+          }
+
+          /* Dark mode level-1 */
+          body.dark-mode .level-1 {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-left-color: #38bdf8;
+          }
+
+          .level-1 td {
+            font-weight: 600;
+            color: #0284c7;
+            padding: 10px 12px;
+            padding-left: 16px;
+            height: var(--row-height) !important;
+            max-height: var(--row-height) !important;
+            overflow: hidden;
+            font-size: 0.85rem;
+          }
+
+          body.dark-mode .level-1 td {
+            color: #38bdf8;
+          }
+
+          .level-1:hover {
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            transform: translateX(2px);
+            transition: all 0.2s ease;
+          }
+
+          body.dark-mode .level-1:hover {
+            background: linear-gradient(135deg, #334155 0%, #475569 100%);
+          }
+
+          .level-2 {
+            background: #ffffff;
+            border-left: 3px solid #e2e8f0;
+          }
+
+          body.dark-mode .level-2 {
+            background: #1e293b;
+            border-left-color: #475569;
+          }
+
+          .level-2 td {
+            font-weight: 500;
+            color: #475569;
+            padding: 10px 12px;
+            padding-left: 44px !important;
+            height: var(--row-height) !important;
+            max-height: var(--row-height) !important;
+            overflow: hidden;
+            font-size: 0.8rem;
+          }
+
+          body.dark-mode .level-2 td {
+            color: #94a3b8;
+          }
+
+          .level-2:hover {
+            background: #f0f9ff;
+            border-left: 3px solid #0ea5e9;
+            transition: all 0.2s ease;
+          }
+
+          body.dark-mode .level-2:hover {
+            background: #334155;
+            border-left-color: #38bdf8;
+          }
+
+          .level-3 {
+            background: #f8fafc;
+            border-left: 2px solid #cbd5e1;
+          }
+
+          body.dark-mode .level-3 {
+            background: #0f172a;
+            border-left-color: #334155;
+          }
+
+          .level-3 td {
+            font-size: 0.75rem;
+            color: #64748b;
+            padding: 3px 12px !important;
+            padding-left: 72px !important;
+            font-weight: 400;
+            height: 22px !important;
+            max-height: 22px !important;
+            vertical-align: middle;
+            line-height: 1.1;
+            overflow: hidden;
+          }
+
+          body.dark-mode .level-3 td {
+            color: #94a3b8;
+          }
+
+          .level-3:hover {
+            background: #f0f9ff;
+            border-left: 2px solid #0ea5e9;
+            transition: all 0.2s ease;
+          }
+
+          body.dark-mode .level-3:hover {
+            background: #1e293b;
+            border-left-color: #38bdf8;
+          }
+
+          .slice-badge {
+            display: inline-flex;
+            align-items: center;
+            background: #f1f5f9;
+            padding: 1px 4px;
+            border-radius: 3px;
+            border: 1px solid #e2e8f0;
+            height: 16px !important;
+            max-height: 16px !important;
+            line-height: 1;
+            font-size: 0.65rem;
+            white-space: nowrap;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+          }
+
+          body.dark-mode .slice-badge {
+            background: #334155;
+            border-color: #475569;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+          }
+
+          .slice-badge svg {
+            margin-right: 2px;
+            flex-shrink: 0;
+            width: 8px !important;
+            height: 8px !important;
+          }
+
+          .slice-badge span {
+            white-space: nowrap;
+            line-height: 1;
+            display: inline-block;
+          }
+
+          .slice-badge-container {
+            position: relative;
+            overflow: visible !important;
+            z-index: 10;
+          }
+
+          .level-3 td:first-child {
+            position: relative;
+            overflow: visible !important;
+            z-index: 10;
+          }
+
+          .actions {
+            display: flex;
+            gap: 0.3rem;
+          }
+
+          .toggle-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-right: 8px;
+            color: #64748b;
+            font-size: 0.8rem;
+            width: 14px;
+            height: 14px;
+            border-radius: 2px;
+            background: #e2e8f0;
+            transform: rotate(0deg);
+          }
+
+          body.dark-mode .toggle-icon {
+            background: #475569;
+            color: #94a3b8;
+          }
+
+          .toggle-icon:hover {
+            background: #cbd5e1;
+            color: #475569;
+          }
+
+          body.dark-mode .toggle-icon:hover {
+            background: #64748b;
+            color: #e2e8f0;
+          }
+
+          .expanded .toggle-icon {
+            transform: rotate(90deg);
+            background: #0ea5e9;
+            color: white;
+          }
+
+          body.dark-mode .expanded .toggle-icon {
+            background: #38bdf8;
+          }
+
+          .collapse-target {
+            display: table-row-group;
+          }
+
+          .collapse-target.hidden {
+            display: none;
+          }
+
+          .top-actions {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            display: flex;
+            gap: 0.8rem;
+          }
+
+          .graph-placeholder {
+            flex: 1;
+            background: repeating-linear-gradient(
+              -45deg,
+              #e5e7eb,
+              #e5e7eb 10px,
+              #f1f5f9 10px,
+              #f1f5f9 20px
+            );
+            border-radius: 8px;
+          }
+
+          @keyframes drawLine {
+            from {
+              stroke-dashoffset: 1000;
+            }
+            to {
+              stroke-dashoffset: 0;
+            }
+          }
+
+          .form-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+          }
+
+          .form-table th,
+          .form-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #dbeafe;
+            text-align: left;
+          }
+
+          body.dark-mode .form-table th,
+          body.dark-mode .form-table td {
+            border-bottom-color: #334155;
+          }
+
+          .form-table th {
+            width: 30%;
+            font-weight: 600;
+          }
+
+          body.dark-mode .form-table th {
+            color: #cbd5e1;
+          }
+
+          .form-table input,
+          .form-table select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+          }
+
+          body.dark-mode .form-table input,
+          body.dark-mode .form-table select {
+            background-color: #0f172a;
+            color: #e0f2fe;
+            border-color: #475569;
+          }
+
+          .slice-row td {
+            padding: 0.5rem;
+            border-bottom: 1px solid #f1f5f9;
+          }
+
+          body.dark-mode .slice-row td {
+            border-bottom-color: #334155;
+          }
+
+          .slice-row input,
+          .slice-row select {
+            width: 100%;
+            padding: 0.4rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 0.85rem;
+          }
+
+          body.dark-mode .slice-row input,
+          body.dark-mode .slice-row select {
+            background-color: #0f172a;
+            color: #e0f2fe;
+            border-color: #475569;
+          }
+
+          .slice-row select:disabled {
+            background-color: #f9fafb;
+            color: #9ca3af;
+          }
+
+          body.dark-mode .slice-row select:disabled {
+            background-color: #1e293b;
+            color: #64748b;
+          }
+
+          .delete-slice-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+          }
+
+          .delete-slice-btn:hover {
+            background-color: #fef2f2;
+          }
+
+          body.dark-mode .delete-slice-btn:hover {
+            background-color: #7f1d1d;
+          }
+
+          .delete-slice-btn svg {
+            stroke: #dc2626;
+          }
+
+          body.dark-mode .delete-slice-btn svg {
+            stroke: #ef4444;
+          }
+
+          .opacity-50 {
+            opacity: 0.5;
+          }
+
+          /* Chart empty state dark mode */
+          body.dark-mode #priceChart {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+          }
+
+          body.dark-mode #emptyState {
+            color: #94a3b8;
+          }
+
+          body.dark-mode #emptyState svg {
+            stroke: #64748b;
+          }
+
+          /* Form backgrounds dark mode */
+          body.dark-mode div[style*="background-color: #f8fafc"] {
+            background-color: #1e293b !important;
+          }
+
+          body.dark-mode div[style*="background-color: #f1f5f9"] {
+            background-color: #0f172a !important;
+          }
+
+          /* Slice table dark mode */
+          body.dark-mode #slicesTable {
+            background: #1e293b !important;
+          }
+
+          body.dark-mode #slicesTable thead {
+            background-color: #0f172a !important;
+          }
+
+          body.dark-mode #slicesTable th {
+            border-bottom-color: #334155 !important;
+            color: #cbd5e1 !important;
+          }
+
+          /* Total percentage box dark mode */
+          body.dark-mode div[style*="background: white"] {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+          }
+
+          /* Section title dark mode */
+          /* Section title dark mode */
+          body.dark-mode .section-title {
+            background: linear-gradient(90deg, #1e293b, #334155);
+            color: #e0f2fe;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          }
+
+          /* Toggle Switch Styles */
+          #sliceModeToggle:checked + span {
+            background-color: #2563eb;
+          }
+
+          #sliceModeToggle:checked + span + span {
+            transform: translateX(24px);
+          }
+
+          /* Dark mode toggle */
+          body.dark-mode #sliceModeToggle + span {
+            background-color: #475569;
+          }
+
+          body.dark-mode #sliceModeToggle:checked + span {
+            background-color: #3b82f6;
+          }
+          
+          
+        </style>
+
+        <div class="page-layout">
+          <!-- 📦 Your products -->
+          <div class="left-panel">
+            <h3 class="section-title">
+              <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-hexagon" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73z"/>
               </svg>
-              <span>{{ part.name }}</span>
-            </td>
-            <td>
-              <span style="color: #64748b; font-size: 0.85rem;">{{ part.reference_date }}</span>
-            </td>
-            <td>
-              <span style="color: #059669; font-weight: 500; font-size: 0.85rem;">
-                €{{ part.reference_price|floatformat:0 }}
-              </span>
-            </td>
-            <td>
-              {% with current_prices|lookup:product.id as product_prices %}
-                {% with product_prices.parts|lookup:part.id as part_prices %}
-                  <span style="color: {% if part_prices.current > part_prices.reference %}#dc2626{% elif part_prices.current < part_prices.reference %}#059669{% else %}#6b7280{% endif %}; font-weight: 500; font-size: 0.85rem;">
-                    €{{ part_prices.current|floatformat:0 }}
-                  </span>
-                  {% with part_prices.current|sub:part_prices.reference as part_diff %}
-                    {% if part_diff != 0 %}
-                      <span style="font-size: 0.7rem; color: {% if part_diff > 0 %}#dc2626{% else %}#059669{% endif %}; margin-left: 4px;">
-                        ({% if part_diff > 0 %}+{% endif %}€{{ part_diff|floatformat:0 }})
-                      </span>
-                    {% endif %}
-                  {% endwith %}
-                {% endwith %}
-              {% endwith %}
-            </td>
-            <td class="actions">
-              <!-- Part Chart Button -->
-              <button class="icon-button view-part-graph-btn"
-                      data-part-id="{{ part.id }}"
-                      data-part-name="{{ part.name }}"
-                      title="Show part chart">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-activity" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-                </svg>
-              </button>
-              <!-- Edit Button -->
-              <button class="icon-button edit-part-button"
-                      data-part-id="{{ part.id }}"
-                      title="Edit part">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path d="M15 5l4 4L7 21H3v-4L15 5z"/>
-                </svg>
-              </button>
-              <!-- Delete Button -->
-              <button class="icon-button delete-part-button"
-                      data-part-id="{{ part.id }}"
-                      title="Delete part">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-archive-x" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <rect x="3" y="4" width="18" height="5" rx="1"/>
-                  <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
-                  <path d="M10 13l4 4m0-4l-4 4"/>
-                </svg>
-              </button>
-            </td>
-          </tr>
+              Your products
+            </h3>
 
-          {% for slice in part.slices.all %}
-            <tr class="level-3 hidden" data-parent="part-{{ part.id }}">
-              <td>
-                <span style="width: 48px; display: inline-block;"></span>
-                <div class="slice-badge-container">
-                  <div class="slice-badge">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pie-chart" fill="none" viewBox="0 0 24 24" stroke="#6366f1" stroke-width="2">
-                      <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
-                      <path d="M22 12A10 10 0 0 0 12 2v10z"/>
-                    </svg>
-                    <span>{{ slice.label }}</span>
-                    <span style="color: #6366f1; font-weight: 600; margin-left: 2px;">{{ slice.percentage }}%</span>
-                    {% if slice.index %}
-                      <span style="color: #94a3b8; margin-left: 3px; font-style: italic;">{{ slice.index.name }}</span>
-                    {% endif %}
-                  </div>
-                </div>
-              </td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-            </tr>
-          {% endfor %}
-        {% endfor %}
-      {% endfor %}
-      <!-- ✨ PARTS ORPHELINES (indépendantes) -->
-      {% for part in orphan_parts %}
-        <tr class="level-1" data-toggle="orphan-part-{{ part.id }}">
-          <td>
-            {% if part.slices.all %}
-              <span class="toggle-icon">›</span>
-            {% else %}
-              <span style="width: 20px; display: inline-block;"></span>
-            {% endif %}
-            <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-text" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#10b981" stroke-width="1.5" style="margin-right: 10px; vertical-align: middle;">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <path d="M14 2v6h6"/>
-            </svg>
-            <span>{{ part.name }} <em style="color: #6b7280; font-size: 0.8rem;"></em></span>
-          </td>
-          <td>
-            <span style="color: #0284c7; font-weight: 500; font-size: 0.85rem;">{{ part.reference_date }}</span>
-          </td>
-          <td>
-            <span style="color: #059669; font-weight: 600; font-size: 0.9rem;">
-              €{{ part.reference_price|floatformat:0 }}
-            </span>
-          </td>
-          <td>
-            {% with current_prices.orphan_parts|lookup:part.id as part_prices %}
-              <span style="color: {% if part_prices.current > part_prices.reference %}#dc2626{% elif part_prices.current < part_prices.reference %}#059669{% else %}#6b7280{% endif %}; font-weight: 600; font-size: 0.9rem;">
-                €{{ part_prices.current|floatformat:0 }}
-              </span>
-              {% with part_prices.current|sub:part_prices.reference as part_diff %}
-                {% if part_diff != 0 %}
-                  <span style="font-size: 0.75rem; color: {% if part_diff > 0 %}#dc2626{% else %}#059669{% endif %}; margin-left: 4px;">
-                    ({% if part_diff > 0 %}+{% endif %}€{{ part_diff|floatformat:0 }})
-                  </span>
-                {% endif %}
-              {% endwith %}
-            {% endwith %}
-          </td>
-          <td>
-            <div class="actions">
-              <!-- 📈 Chart -->
-              <button class="icon-button view-part-graph-btn" 
-                      data-part-id="{{ part.id }}"
-                      data-part-name="{{ part.name }}"
-                      title="Show chart">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-activity" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            <div class="top-actions">
+              <!-- Create a product -->
+              <button class="icon-button" id="openProductModal" title="Create a product">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                  <path d="M12 17v-6m3 3h-6M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/>
                 </svg>
               </button>
 
-              <!-- ✏️ Edit -->
-              <button class="icon-button edit-part-button"
-                      data-part-id="{{ part.id }}"
-                      title="Edit part">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path d="M15 5l4 4L7 21H3v-4L15 5z"/>
-                </svg>
-              </button>
-
-              <!-- 🗑️ Delete -->
-              <button class="icon-button delete-part-button"
-                      data-part-id="{{ part.id }}"
-                      title="Delete part">
-                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-archive-x" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <rect x="3" y="4" width="18" height="5" rx="1"/>
-                  <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
-                  <path d="M10 13l4 4m0-4l-4 4"/>
+              <!-- Create a part -->
+              <button class="icon-button" id="openPartModal" title="Create a Part">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2">
+                  <path d="M12 18v-6m3 3h-6M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <path d="M14 2v6h6"/>
                 </svg>
               </button>
             </div>
-          </td>
-        </tr>
 
-        <!-- Afficher les slices de la part orpheline -->
-        {% for slice in part.slices.all %}
-          <tr class="level-3 hidden" data-parent="orphan-part-{{ part.id }}">
-            <td>
-              <span style="width: 48px; display: inline-block;"></span>
-              <div class="slice-badge-container">
-                <div class="slice-badge">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pie-chart" fill="none" viewBox="0 0 24 24" stroke="#6366f1" stroke-width="2">
-                    <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
-                    <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+            <table class="arbo-table">
+              <thead>
+                <tr>
+                  <th>Element</th>
+                  <th>Ref. date</th>
+                  <th>Reference price</th>
+                  <th>Current price</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              {% for product in produits %}
+                <tr class="level-1" data-toggle="product-{{ product.id }}">
+                  <td>
+                    <span class="toggle-icon">›</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-hexagon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="margin-right: 10px; vertical-align: middle;">
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73z"/>
+                    </svg>
+                    <span>{{ product.name }}</span>
+                  </td>
+                  <td>
+                    <span style="color: #0284c7; font-weight: 500; font-size: 0.85rem;">{{ product.reference_date }}</span>
+                  </td>
+                  <td>
+                    {% with current_prices|lookup:product.id as product_prices %}
+                      <span style="color: #059669; font-weight: 600; font-size: 0.9rem;">
+                        €{{ product_prices.reference|floatformat:0 }}
+                      </span>
+                    {% endwith %}
+                  </td>
+                  <td>
+                    {% with current_prices|lookup:product.id as product_prices %}
+                      <span style="color: {% if product_prices.current > product_prices.reference %}#dc2626{% elif product_prices.current < product_prices.reference %}#059669{% else %}#6b7280{% endif %}; font-weight: 600; font-size: 0.9rem;">
+                        €{{ product_prices.current|floatformat:0 }}
+                      </span>
+                      {% with product_prices.current|sub:product_prices.reference as price_diff %}
+                        {% if price_diff != 0 %}
+                          <span style="font-size: 0.75rem; color: {% if price_diff > 0 %}#dc2626{% else %}#059669{% endif %}; margin-left: 4px;">
+                            ({% if price_diff > 0 %}+{% endif %}€{{ price_diff|floatformat:0 }})
+                          </span>
+                        {% endif %}
+                      {% endwith %}
+                    {% endwith %}
+                  </td>
+                  <td>
+                    <div class="actions">
+                      <!-- 📈 Chart -->
+                      <button class="icon-button view-graph-btn" 
+                              data-product-id="{{ product.id }}"
+                              data-product-name="{{ product.name }}"
+                              title="Show chart">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-line-chart" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                          <path d="M3 3v18h18"/>
+                          <path d="M4 14.5 8 10l5 5 5-6"/>
+                        </svg>
+                      </button>
+
+                      <!-- ✏️ Edit -->
+                      <button class="icon-button edit-product"
+                        data-product-id="{{ product.id }}"
+                        data-product-name="{{ product.name }}"
+                        title="Edit">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                          <path d="M15 5 19 9M5 19l4-1 9-9a2.828 2.828 0 1 0-4-4l-9 9-1 4z"/>
+                        </svg>
+                      </button>
+
+                      <!-- 🗑️ Delete -->
+                      <button class="icon-button delete-product" data-product-id="{{ product.id }}" title="Delete">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-archive-x" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                          <rect x="3" y="4" width="18" height="5" rx="1"/>
+                          <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
+                          <path d="M10 13l4 4m0-4l-4 4"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                {% for part in product.parts.all %}
+                  <tr class="level-2 hidden" data-parent="product-{{ product.id }}" data-toggle="part-{{ part.id }}">
+                    <td>
+                      {% if part.slices.all %}
+                        <span class="toggle-icon">›</span>
+                      {% else %}
+                        <span style="width: 20px; display: inline-block;"></span>
+                      {% endif %}
+                      <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-text" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#64748b" stroke-width="1.5" style="margin-right: 8px; vertical-align: middle;">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <path d="M14 2v6h6"/>
+                      </svg>
+                      <span>{{ part.name }}</span>
+                    </td>
+                    <td>
+                      <span style="color: #64748b; font-size: 0.85rem;">{{ part.reference_date }}</span>
+                    </td>
+                    <td>
+                      <span style="color: #059669; font-weight: 500; font-size: 0.85rem;">
+                        €{{ part.reference_price|floatformat:0 }}
+                      </span>
+                    </td>
+                    <td>
+                      {% with current_prices|lookup:product.id as product_prices %}
+                        {% with product_prices.parts|lookup:part.id as part_prices %}
+                          <span style="color: {% if part_prices.current > part_prices.reference %}#dc2626{% elif part_prices.current < part_prices.reference %}#059669{% else %}#6b7280{% endif %}; font-weight: 500; font-size: 0.85rem;">
+                            €{{ part_prices.current|floatformat:0 }}
+                          </span>
+                          {% with part_prices.current|sub:part_prices.reference as part_diff %}
+                            {% if part_diff != 0 %}
+                              <span style="font-size: 0.7rem; color: {% if part_diff > 0 %}#dc2626{% else %}#059669{% endif %}; margin-left: 4px;">
+                                ({% if part_diff > 0 %}+{% endif %}€{{ part_diff|floatformat:0 }})
+                              </span>
+                            {% endif %}
+                          {% endwith %}
+                        {% endwith %}
+                      {% endwith %}
+                    </td>
+                    <td class="actions">
+                      <!-- Part Chart Button -->
+                      <button class="icon-button view-part-graph-btn"
+                              data-part-id="{{ part.id }}"
+                              data-part-name="{{ part.name }}"
+                              title="Show part chart">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-activity" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                      </button>
+                      <!-- Edit Button -->
+                      <button class="icon-button edit-part-button"
+                              data-part-id="{{ part.id }}"
+                              title="Edit part">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path d="M15 5l4 4L7 21H3v-4L15 5z"/>
+                        </svg>
+                      </button>
+                      <!-- Delete Button -->
+                      <button class="icon-button delete-part-button"
+                              data-part-id="{{ part.id }}"
+                              title="Delete part">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-archive-x" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <rect x="3" y="4" width="18" height="5" rx="1"/>
+                          <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
+                          <path d="M10 13l4 4m0-4l-4 4"/>
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+
+                  {% for slice in part.slices.all %}
+                    <tr class="level-3 hidden" data-parent="part-{{ part.id }}">
+                      <td>
+                        <span style="width: 48px; display: inline-block;"></span>
+                        <div class="slice-badge-container">
+                          <div class="slice-badge">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pie-chart" fill="none" viewBox="0 0 24 24" stroke="#6366f1" stroke-width="2">
+                              <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+                              <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+                            </svg>
+                            <span>{{ slice.label }}</span>
+                            <span style="color: #6366f1; font-weight: 600; margin-left: 2px;">{{ slice.percentage }}%</span>
+                            {% if slice.index %}
+                              <span style="color: #94a3b8; margin-left: 3px; font-style: italic;">{{ slice.index.name }}</span>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </td>
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                    </tr>
+                  {% endfor %}
+                {% endfor %}
+              {% endfor %}
+              <!-- ✨ PARTS ORPHELINES (indépendantes) -->
+              {% for part in orphan_parts %}
+                <tr class="level-1" data-toggle="orphan-part-{{ part.id }}">
+                  <td>
+                    {% if part.slices.all %}
+                      <span class="toggle-icon">›</span>
+                    {% else %}
+                      <span style="width: 20px; display: inline-block;"></span>
+                    {% endif %}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-text" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#10b981" stroke-width="1.5" style="margin-right: 10px; vertical-align: middle;">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <path d="M14 2v6h6"/>
+                    </svg>
+                    <span>{{ part.name }} <em style="color: #6b7280; font-size: 0.8rem;"></em></span>
+                  </td>
+                  <td>
+                    <span style="color: #0284c7; font-weight: 500; font-size: 0.85rem;">{{ part.reference_date }}</span>
+                  </td>
+                  <td>
+                    <span style="color: #059669; font-weight: 600; font-size: 0.9rem;">
+                      €{{ part.reference_price|floatformat:0 }}
+                    </span>
+                  </td>
+                  <td>
+                    {% with current_prices.orphan_parts|lookup:part.id as part_prices %}
+                      <span style="color: {% if part_prices.current > part_prices.reference %}#dc2626{% elif part_prices.current < part_prices.reference %}#059669{% else %}#6b7280{% endif %}; font-weight: 600; font-size: 0.9rem;">
+                        €{{ part_prices.current|floatformat:0 }}
+                      </span>
+                      {% with part_prices.current|sub:part_prices.reference as part_diff %}
+                        {% if part_diff != 0 %}
+                          <span style="font-size: 0.75rem; color: {% if part_diff > 0 %}#dc2626{% else %}#059669{% endif %}; margin-left: 4px;">
+                            ({% if part_diff > 0 %}+{% endif %}€{{ part_diff|floatformat:0 }})
+                          </span>
+                        {% endif %}
+                      {% endwith %}
+                    {% endwith %}
+                  </td>
+                  <td>
+                    <div class="actions">
+                      <!-- 📈 Chart -->
+                      <button class="icon-button view-part-graph-btn" 
+                              data-part-id="{{ part.id }}"
+                              data-part-name="{{ part.name }}"
+                              title="Show chart">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-activity" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                      </button>
+
+                      <!-- ✏️ Edit -->
+                      <button class="icon-button edit-part-button"
+                              data-part-id="{{ part.id }}"
+                              title="Edit part">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path d="M15 5l4 4L7 21H3v-4L15 5z"/>
+                        </svg>
+                      </button>
+
+                      <!-- 🗑️ Delete -->
+                      <button class="icon-button delete-part-button"
+                              data-part-id="{{ part.id }}"
+                              title="Delete part">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-archive-x" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <rect x="3" y="4" width="18" height="5" rx="1"/>
+                          <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
+                          <path d="M10 13l4 4m0-4l-4 4"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Afficher les slices de la part orpheline -->
+                {% for slice in part.slices.all %}
+                  <tr class="level-3 hidden" data-parent="orphan-part-{{ part.id }}">
+                    <td>
+                      <span style="width: 48px; display: inline-block;"></span>
+                      <div class="slice-badge-container">
+                        <div class="slice-badge">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pie-chart" fill="none" viewBox="0 0 24 24" stroke="#6366f1" stroke-width="2">
+                            <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+                            <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+                          </svg>
+                          <span>{{ slice.label }}</span>
+                          <span style="color: #6366f1; font-weight: 600; margin-left: 2px;">{{ slice.percentage }}%</span>
+                          {% if slice.index %}
+                            <span style="color: #94a3b8; margin-left: 3px; font-style: italic;">{{ slice.index.name }}</span>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+                {% endfor %}
+              {% endfor %}
+            </table>
+          </div>
+
+          <!-- 📈 Right column — Chart -->
+          <div class="right-panel">
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h4 style="margin: 0; color: #0284c7; display: flex; align-items: center; gap: 8px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-line-chart" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path d="M3 3v18h18"/>
+                    <path d="M4 14.5 8 10l5 5 5-6"/>
                   </svg>
-                  <span>{{ slice.label }}</span>
-                  <span style="color: #6366f1; font-weight: 600; margin-left: 2px;">{{ slice.percentage }}%</span>
-                  {% if slice.index %}
-                    <span style="color: #94a3b8; margin-left: 3px; font-style: italic;">{{ slice.index.name }}</span>
-                  {% endif %}
+                  Price evolution
+                </h4>
+                <div id="selectedProductsInfo" style="font-size: 0.85rem; color: #64748b; text-align: right;">
+                  <div id="selectedCount">0 element selected</div>
+                  <div id="baseMode" style="font-size: 0.75rem; color: #94a3b8;"></div>
                 </div>
               </div>
-            </td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr>
-        {% endfor %}
-      {% endfor %}
-    </table>
-  </div>
-
-  <!-- 📈 Right column — Chart -->
-  <div class="right-panel">
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h4 style="margin: 0; color: #0284c7; display: flex; align-items: center; gap: 8px;">
-          <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-line-chart" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path d="M3 3v18h18"/>
-            <path d="M4 14.5 8 10l5 5 5-6"/>
-          </svg>
-          Price evolution
-        </h4>
-        <div id="selectedProductsInfo" style="font-size: 0.85rem; color: #64748b; text-align: right;">
-          <div id="selectedCount">0 element selected</div>
-          <div id="baseMode" style="font-size: 0.75rem; color: #94a3b8;"></div>
-        </div>
-      </div>
-      <div id="priceChart" style="height: 570px; width: 100%; border-radius: 8px; background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%); display: flex; align-items: center; justify-content: center; color: #94a3b8;">
-        <div style="text-align: center;" id="emptyState">
-          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-bottom: 1rem;">
-            <path d="M3 3v18h18"/>
-            <path d="M4 14.5 8 10l5 5 5-6"/>
-          </svg>
-          <p>Click on the 📈 buttons in the tree<br>to display price curves</p>
-          <p style="font-size: 0.8rem; margin-top: 1rem; color: #cbd5e1;">Maximum 3 simultaneous curves</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- PRODUCT MODAL -->
-<div id="productModal" class="modal-overlay hidden">
-  <div class="modal-card">
-    <form method="POST" id="productForm">
-      {% csrf_token %}
-      <input type="hidden" name="structure_id">
-
-      <h5 style="font-weight:600; margin-bottom:1rem; display:flex; align-items:center; gap:8px;">
-        <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-package-plus" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path d="M12 17v-6m3 3h-6M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/>
-        </svg>
-        New product
-      </h5>
-
-      <table style="width:100%; font-size:0.95rem; border-collapse: collapse;">
-        <tr style="border-bottom: 1px solid #dbeafe;">
-          <td style="width:30%; padding:0.75rem;"><label for="{{ form.name.id_for_label }}">Name</label></td>
-          <td style="padding:0.75rem;">{{ form.name }}</td>
-        </tr>
-        <tr style="border-bottom: 1px solid #dbeafe;">
-          <td style="width:30%; padding:0.75rem;"><label for="{{ form.reference_date.id_for_label }}">Reference date</label></td>
-          <td style="padding:0.75rem;">{{ form.reference_date }}</td>
-        </tr>
-      </table>
-
-      <div class="text-end mt-4" style="display: flex; justify-content: flex-end; gap: 0.5rem;">
-        <button type="button" id="closeProductModal" class="btn btn-secondary" style="display:flex; align-items:center; gap:6px;">
-          <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-x-circle" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M15 9l-6 6M9 9l6 6"/>
-          </svg>
-          Cancel
-        </button>
-
-        <button type="submit" class="btn btn-primary" style="display:flex; align-items:center; gap:6px;">
-          <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-package-plus" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-            <path d="M12 17v-6m3 3h-6M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/>
-          </svg>
-          Apply
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- PART MODAL ENHANCED with slice management -->
-<div id="partModal" class="modal-overlay hidden">
-  <div class="modal-card" style="min-width: 700px; max-width: 800px;">
-    <form method="POST" action="{% url 'main:prix_indexes' %}" id="partForm">
-      {% csrf_token %}
-      <h5 style="font-weight:600; margin-bottom:1rem; display:flex; align-items:center; gap:8px;">
-        <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-plus" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <path d="M14 2v6h6"/>
-          <path d="M12 18v-6m3 3h-6"/>
-        </svg>
-        New part
-      </h5>
-
-      <!-- Hidden field to know if we're in edit mode -->
-      <input type="hidden" name="part_id" id="part-id-input" />
-
-      <!-- Basic part information -->
-      <div class="part-form-section" style="background-color: #f8fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-        <h6 style="font-weight: 600; margin-bottom: 1rem; color: #1e293b;">📋 Basic information</h6>
-        <table class="form-table">
-          <tr>
-            <th>Name</th>
-            <td><input type="text" name="name" required /></td>
-          </tr>
-          <tr>
-            <th>Reference date</th>
-            <td><input type="date" name="reference_date" required /></td>
-          </tr>
-          <tr>
-            <th>Reference price (€)</th>
-            <td><input type="number" name="reference_price" step="0.01" min="0" placeholder="0.00" required /></td>
-          </tr>
-          <tr>
-            <th>Associated product</th>
-            <td>
-              <select name="product_id">
-                <option value="">-- Aucun produit (part indépendante) --</option>
-                {% for product in produits %}
-                  <option value="{{ product.id }}">{{ product.name }}</option>
-                {% endfor %}
-              </select>
-            </td>
-          </tr>
-        </table>
-      </div>
-
-      <!-- Slices Section -->
-      <div class="slice-form-section" style="background-color: #f1f5f9; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <h6 style="font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 8px;">
-            <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pie-chart" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
-              <path d="M22 12A10 10 0 0 0 12 2v10z"/>
-            </svg>
-            Slice distribution
-          </h6>
-          <button type="button" id="addSliceBtn" class="icon-button" title="Add a slice" style="background: #2563eb; border-radius: 6px; padding: 6px;">
-            <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-plus" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
-              <path d="M12 5v14m7-7H5"/>
-            </svg>
-          </button>
+              <div id="priceChart" style="height: 570px; width: 100%; border-radius: 8px; background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%); display: flex; align-items: center; justify-content: center; color: #94a3b8;">
+                <div style="text-align: center;" id="emptyState">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-bottom: 1rem;">
+                    <path d="M3 3v18h18"/>
+                    <path d="M4 14.5 8 10l5 5 5-6"/>
+                  </svg>
+                  <p>Click on the 📈 buttons in the tree<br>to display price curves</p>
+                  <p style="font-size: 0.8rem; margin-top: 1rem; color: #cbd5e1;">Maximum 3 simultaneous curves</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div id="slicesContainer">
-          <table id="slicesTable" style="width: 100%; border-collapse: collapse; background: white; border-radius: 6px; overflow: hidden;">
-            <thead style="background-color: #f8fafc;">
-              <tr>
+        <!-- PRODUCT MODAL -->
+        <div id="productModal" class="modal-overlay hidden">
+          <div class="modal-card">
+            <form method="POST" id="productForm">
+              {% csrf_token %}
+              <input type="hidden" name="structure_id">
+
+              <h5 style="font-weight:600; margin-bottom:1rem; display:flex; align-items:center; gap:8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-package-plus" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M12 17v-6m3 3h-6M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/>
+                </svg>
+                New product
+              </h5>
+
+              <table style="width:100%; font-size:0.95rem; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #dbeafe;">
+                  <td style="width:30%; padding:0.75rem;"><label for="{{ form.name.id_for_label }}">Name</label></td>
+                  <td style="padding:0.75rem;">{{ form.name }}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #dbeafe;">
+                  <td style="width:30%; padding:0.75rem;"><label for="{{ form.reference_date.id_for_label }}">Reference date</label></td>
+                  <td style="padding:0.75rem;">{{ form.reference_date }}</td>
+                </tr>
+              </table>
+
+              <div class="text-end mt-4" style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button type="button" id="closeProductModal" class="btn btn-secondary" style="display:flex; align-items:center; gap:6px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-x-circle" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M15 9l-6 6M9 9l6 6"/>
+                  </svg>
+                  Cancel
+                </button>
+
+                <button type="submit" class="btn btn-primary" style="display:flex; align-items:center; gap:6px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-package-plus" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M12 17v-6m3 3h-6M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/>
+                  </svg>
+                  Apply
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- PART MODAL ENHANCED with slice management -->
+        <div id="partModal" class="modal-overlay hidden">
+          <div class="modal-card" style="min-width: 700px; max-width: 800px;">
+            <form method="POST" action="{% url 'main:prix_indexes' %}" id="partForm">
+              {% csrf_token %}
+              <h5 style="font-weight:600; margin-bottom:1rem; display:flex; align-items:center; gap:8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-plus" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <path d="M14 2v6h6"/>
+                  <path d="M12 18v-6m3 3h-6"/>
+                </svg>
+                New part
+              </h5>
+
+              <!-- Hidden field to know if we're in edit mode -->
+              <input type="hidden" name="part_id" id="part-id-input" />
+
+              <!-- Basic part information -->
+              <div class="part-form-section" style="background-color: #f8fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h6 style="font-weight: 600; margin-bottom: 1rem; color: #1e293b;">📋 Basic information</h6>
+                <table class="form-table">
+                  <tr>
+                    <th>Name</th>
+                    <td><input type="text" name="name" required /></td>
+                  </tr>
+                  <tr>
+                    <th>Reference date</th>
+                    <td><input type="date" name="reference_date" required /></td>
+                  </tr>
+                  <tr>
+                    <th>Reference price (€)</th>
+                    <td><input type="number" name="reference_price" step="0.01" min="0" placeholder="0.00" required /></td>
+                  </tr>
+                  <tr>
+                    <th>Associated product</th>
+                    <td>
+                      <select name="product_id">
+                        <option value="">-- Aucun produit (part indépendante) --</option>
+                        {% for product in produits %}
+                          <option value="{{ product.id }}">{{ product.name }}</option>
+                        {% endfor %}
+                      </select>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- Slices Section -->
+              <div class="slice-form-section" style="background-color: #f1f5f9; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                  <div style="display: flex; align-items: center; gap: 1rem;">
+                    <h6 style="font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 8px; margin: 0;">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pie-chart" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+                        <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+                      </svg>
+                      Slice distribution
+                    </h6>
+
+                    <!-- Toggle Switch -->
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                      <span style="color: #64748b;">Cost Structure</span>
+                      <label style="position: relative; display: inline-block; width: 48px; height: 24px; cursor: pointer;">
+                        <input type="checkbox" id="sliceModeToggle" style="opacity: 0; width: 0; height: 0;">
+                        <span style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; border-radius: 24px; transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);"></span>
+                        <span style="position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span>
+                      </label>
+                      <span style="color: #64748b;">Fixed Criteria</span>
+                    </div>
+                  </div>
+
+                  <button type="button" id="addSliceBtn" class="icon-button" title="Add a slice" style="background: #2563eb; border-radius: 6px; padding: 6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-plus" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
+                      <path d="M12 5v14m7-7H5"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <div id="slicesContainer">
+                  <table id="slicesTable" style="width: 100%; border-collapse: collapse; background: white; border-radius: 6px; overflow: hidden;">
+                    <thead style="background-color: #f8fafc;">
+                      <tr>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Slice name</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Type</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Index</th>
+                        <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">% of price</th>
+                        <th style="padding: 0.75rem; text-align: center; font-weight: 600; border-bottom: 1px solid #e2e8f0; width: 60px;">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="slicesTableBody">
+                      <!-- Slices will be added here dynamically -->
+                    </tbody>
+                  </table>
+
+                  <div id="noSlicesMessage" style="text-align: center; padding: 2rem; color: #64748b; font-style: italic;">
+                    No slices defined. Click the + button to add a slice.
+                  </div>
+                </div>
+
+                <div class="percentage-summary" style="margin-top: 1rem; padding: 0.75rem; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 500;">Total percentages:</span>
+                    <span id="totalPercentage" style="font-weight: 600; color: #dc2626;">0%</span>
+                  </div>
+                  <div id="percentageWarning" class="hidden" style="margin-top: 0.5rem; color: #dc2626; font-size: 0.9rem;">
+                    ⚠️ The sum must equal 100%
+                  </div>
+                </div>
+              </div>
+
+              <div class="text-end mt-4" style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button type="button" id="closePartModal" class="btn btn-secondary">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-x-circle" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M15 9l-6 6M9 9l6 6"/>
+                  </svg>
+                  Cancel
+                </button>
+                <button type="submit" id="submitPartBtn" class="btn btn-primary">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-plus" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <path d="M14 2v6h6"/>
+                    <path d="M12 18v-6m3 3h-6"/>
+                  </svg>
+                  Apply
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Add Dark Mode Specific Styles for JavaScript-controlled elements -->
+        <style>
+          /* Dark mode section backgrounds with !important for inline styles */
+          body.dark-mode .part-form-section {
+            background-color: #1e293b !important;
+          }
+
+          body.dark-mode .slice-form-section {
+            background-color: #0f172a !important;
+          }
+
+          body.dark-mode .percentage-summary {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+          }
+
+          /* Dark mode for dynamic color styles */
+          body.dark-mode span[style*="color: #0284c7"] {
+            color: #38bdf8 !important;
+          }
+
+          body.dark-mode span[style*="color: #64748b"] {
+            color: #94a3b8 !important;
+          }
+
+          body.dark-mode span[style*="color: #059669"] {
+            color: #10b981 !important;
+          }
+
+          body.dark-mode span[style*="color: #dc2626"] {
+            color: #ef4444 !important;
+          }
+
+          body.dark-mode span[style*="color: #6b7280"] {
+            color: #9ca3af !important;
+          }
+
+          body.dark-mode span[style*="color: #6366f1"] {
+            color: #818cf8 !important;
+          }
+
+          body.dark-mode span[style*="color: #94a3b8"] {
+            color: #cbd5e1 !important;
+          }
+
+          /* Dark mode for h4 title in chart */
+          body.dark-mode h4[style*="color: #0284c7"] {
+            color: #38bdf8 !important;
+          }
+
+          /* Dark mode for divs with color styles */
+          body.dark-mode div[style*="color: #64748b"] {
+            color: #94a3b8 !important;
+          }
+
+          body.dark-mode div[style*="color: #94a3b8"] {
+            color: #cbd5e1 !important;
+          }
+        </style>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
+        <script>
+        // Global variables
+        let sliceCounter = 0;
+        const favoriteIndexes = {{ favorite_indexes_json|safe }};
+        const structureGraphs = {{ structure_graphs_json|safe }};
+        const partGraphs = {{ part_graphs_json|safe }};
+        const structuresMeta = {{ structures_meta_json|safe }};
+        let activeItems = new Map();
+        const maxCurves = 3;
+
+        // Script for tree (toggle) with cascading closure
+        document.addEventListener("DOMContentLoaded", function () {
+          document.querySelectorAll("tr[data-toggle]").forEach(row => {
+            row.addEventListener("click", function (e) {
+              if (e.target.closest('.actions')) return;
+
+              const id = this.getAttribute("data-toggle");
+              const icon = this.querySelector(".toggle-icon");
+              const childRows = document.querySelectorAll(`tr[data-parent='${id}']`);
+
+              // Toggle direct children
+              const isExpanded = this.classList.contains('expanded');
+
+              if (isExpanded) {
+                // Closing: also collapse all sub-elements
+                this.classList.remove('expanded');
+                childRows.forEach(child => {
+                  child.classList.add("hidden");
+                  // If child was also expanded, collapse it
+                  if (child.classList.contains('expanded')) {
+                    child.classList.remove('expanded');
+                    const childId = child.getAttribute("data-toggle");
+                    if (childId) {
+                      document.querySelectorAll(`tr[data-parent='${childId}']`).forEach(grandChild => {
+                        grandChild.classList.add("hidden");
+                      });
+                    }
+                  }
+                });
+              } else {
+                // Opening: expand only direct children
+                this.classList.add('expanded');
+                childRows.forEach(child => {
+                  child.classList.remove("hidden");
+                });
+              }
+            });
+          });
+        });
+
+        // Main script
+        document.addEventListener("DOMContentLoaded", () => {
+          // === PRODUCT MODAL ===
+          const productModal = document.getElementById("productModal");
+          const openProductBtn = document.getElementById("openProductModal");
+          const closeProductBtn = document.getElementById("closeProductModal");
+
+          if (openProductBtn && productModal) {
+            openProductBtn.addEventListener("click", () => {
+              productModal.querySelector("h5").innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-package-plus" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M12 17v-6m3 3h-6M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/>
+                </svg>
+                New product`;
+              productModal.querySelector("input[name='name']").value = '';
+              productModal.querySelector("input[name='structure_id']").value = '';
+              productModal.classList.remove("hidden");
+            });
+          }
+
+          if (closeProductBtn && productModal) {
+            closeProductBtn.addEventListener("click", () => {
+              productModal.classList.add("hidden");
+            });
+          }
+
+          // Edit a product
+          document.querySelectorAll(".edit-product").forEach(btn => {
+            btn.addEventListener("click", e => {
+              e.stopPropagation();
+              if (productModal) {
+                productModal.querySelector("input[name='name']").value = btn.dataset.productName;
+                productModal.querySelector("input[name='structure_id']").value = btn.dataset.productId;
+                productModal.querySelector("h5").innerHTML = `
+                  <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path d="M15 5 19 9M5 19l4-1 9-9"/>
+                  </svg>
+                  Edit product`;
+                productModal.classList.remove("hidden");
+              }
+            });
+          });
+
+          // Delete a product
+          document.querySelectorAll(".delete-product").forEach(btn => {
+            btn.addEventListener("click", e => {
+              e.stopPropagation();
+              if (!confirm("Delete this product and all its parts?")) return;
+              fetch("{% url 'main:prix_indexes' %}", {
+                method: "POST",
+                headers: { 
+                  "X-CSRFToken": "{{ csrf_token }}",
+                  "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: new URLSearchParams({ 
+                  product_id: btn.dataset.productId, 
+                  delete_product: "1" 
+                })
+              })
+              .then(res => {
+                if (res.ok) location.reload();
+                else alert("Error deleting");
+              })
+              .catch(() => alert("Error deleting"));
+            });
+          });
+
+          // === CHART MANAGEMENT ===
+          document.querySelectorAll(".view-graph-btn").forEach(btn => {
+            btn.addEventListener("click", e => {
+              e.stopPropagation();
+              const productId = btn.dataset.productId;
+              const productName = btn.dataset.productName;
+              toggleGraph(btn, `product_${productId}`, productName, 'product');
+            });
+          });
+
+          document.querySelectorAll(".view-part-graph-btn").forEach(btn => {
+            btn.addEventListener("click", e => {
+              e.stopPropagation();
+              const partId = btn.dataset.partId;
+              const partName = btn.dataset.partName;
+              toggleGraph(btn, `part_${partId}`, partName, 'part');
+            });
+          });
+
+          function toggleGraph(button, itemId, itemName, itemType) {
+            const isActive = button.classList.contains('graph-active');
+
+            if (isActive) {
+              button.classList.remove('graph-active');
+              activeItems.delete(itemId);
+            } else {
+              if (activeItems.size >= maxCurves) {
+                alert(`Maximum ${maxCurves} simultaneous curves allowed`);
+                return;
+              }
+
+              button.classList.add('graph-active');
+              activeItems.set(itemId, {
+                name: itemName,
+                type: itemType,
+                id: itemId
+              });
+            }
+
+            updateChart();
+          }
+
+          function updateChart() {
+            const chartContainer = document.getElementById('priceChart');
+            let emptyState = document.getElementById('emptyState');
+            const selectedCountEl = document.getElementById('selectedCount');
+            const baseModeEl = document.getElementById('baseMode');
+
+            const count = activeItems.size;
+            selectedCountEl.textContent = `${count} element${count > 1 ? 's' : ''} selected`;
+
+            if (count === 0) {
+              chartContainer.style.transition = 'opacity 0.3s ease';
+              chartContainer.style.opacity = '0';
+
+              setTimeout(() => {
+                chartContainer.innerHTML = '';
+                chartContainer.style.display = 'flex';
+                chartContainer.style.alignItems = 'center';
+                chartContainer.style.justifyContent = 'center';
+
+                // Apply dark mode background if needed
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                chartContainer.style.background = isDarkMode 
+                  ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' 
+                  : 'linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%)';
+
+                if (!emptyState) {
+                  emptyState = document.createElement('div');
+                  emptyState.id = 'emptyState';
+                  emptyState.style.textAlign = 'center';
+                  emptyState.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-bottom: 1rem;">
+                      <path d="M3 3v18h18"/>
+                      <path d="M4 14.5 8 10l5 5 5-6"/>
+                    </svg>
+                    <p>Click on the 📈 buttons in the tree<br>to display price curves</p>
+                    <p style="font-size: 0.8rem; margin-top: 1rem; color: #cbd5e1;">Maximum 3 simultaneous curves</p>
+                  `;
+                }
+
+                chartContainer.appendChild(emptyState);
+                chartContainer.style.opacity = '1';
+                baseModeEl.textContent = '';
+              }, 300);
+              return;
+            }
+
+            emptyState = document.getElementById('emptyState');
+            if (emptyState && emptyState.parentNode) {
+              emptyState.remove();
+            }
+
+            chartContainer.style.removeProperty('display');
+            chartContainer.style.removeProperty('align-items');
+            chartContainer.style.removeProperty('justify-content');
+            chartContainer.style.removeProperty('background');
+
+            const useBase100 = count > 1;
+            baseModeEl.textContent = useBase100 ? 'Base 100 Mode' : '';
+
+            const traces = [];
+            const colors = ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+            let colorIndex = 0;
+
+            for (const [itemId, itemData] of activeItems) {
+              let graphData = null;
+
+              if (itemData.type === 'product') {
+                const productId = itemId.replace('product_', '');
+                graphData = structureGraphs[productId];
+              } else if (itemData.type === 'part') {
+                const partId = itemId.replace('part_', '');
+                graphData = partGraphs[partId];
+              }
+
+              if (!graphData || graphData.length === 0) continue;
+
+              let dates = graphData.map(point => point.date);
+              let values = graphData.map(point => point.value);
+
+              if (useBase100 && values.length > 0) {
+                const baseValue = values[0];
+                if (baseValue !== 0) {
+                  values = values.map(v => (v / baseValue) * 100);
+                }
+              }
+
+              const trace = {
+                x: dates,
+                y: values,
+                mode: 'lines+markers',
+                name: itemData.name,
+                line: { 
+                  shape: 'spline', 
+                  color: colors[colorIndex % colors.length], 
+                  width: 3 
+                },
+                marker: { 
+                  size: 5, 
+                  color: colors[colorIndex % colors.length], 
+                  line: { color: 'white', width: 1.5 } 
+                },
+                hovertemplate: '%{x}<br><b>%{y}</b><extra></extra>',
+                type: 'scatter'
+              };
+
+              traces.push(trace);
+              colorIndex++;
+            }
+
+            if (traces.length === 0) {
+              updateChart();
+              return;
+            }
+
+            // Dark mode detection for chart
+            const isDarkMode = document.body.classList.contains('dark-mode');
+
+            const layout = {
+              height: 580,
+              margin: { l: 60, r: 30, t: 20, b: 50 },
+              hovermode: 'closest',
+              plot_bgcolor: 'rgba(0,0,0,0)',
+              paper_bgcolor: 'rgba(0,0,0,0)',
+              xaxis: { 
+                showgrid: false, 
+                zeroline: false,
+                showline: true,           // Affiche la ligne de l'axe X
+                linecolor: colors.textColor,
+                type: 'date',
+                tickfont: { color: isDarkMode ? '#94a3b8' : '#64748b', size: 11 }
+              },
+              yaxis: { 
+                showgrid: true, 
+                zeroline: false, 
+                showline: true,           // Affiche la ligne de l'axe X
+                linecolor: colors.textColor,
+                gridcolor: isDarkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(14, 165, 233, 0.1)',
+                tickfont: { color: isDarkMode ? '#94a3b8' : '#64748b', size: 11 },
+                title: { 
+                  text: useBase100 ? 'Base 100' : 'Price (€)', 
+                  font: { color: isDarkMode ? '#94a3b8' : '#64748b', size: 12 } 
+                }
+              },
+              font: { color: isDarkMode ? '#cbd5e1' : '#475569' },
+              showlegend: count > 1,
+              legend: {
+                x: 0.02,
+                y: 0.98,
+                bgcolor: isDarkMode ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                bordercolor: isDarkMode ? '#334155' : '#e2e8f0',
+                borderwidth: 1,
+                font: { color: isDarkMode ? '#cbd5e1' : '#475569' }
+              }
+            };
+
+            const config = {
+              responsive: true,
+              displayModeBar: false
+            };
+
+            chartContainer.style.transition = 'opacity 0.3s ease';
+            chartContainer.style.opacity = '0';
+
+            setTimeout(() => {
+              Plotly.newPlot('priceChart', traces, layout, config).then(() => {
+                chartContainer.style.opacity = '1';
+
+                const chart = document.getElementById('priceChart');
+                const lines = chart.querySelectorAll('.scatter .lines path');
+                const markers = chart.querySelectorAll('.scatter .points path');
+
+                lines.forEach(line => {
+                  if (line) {
+                    const length = line.getTotalLength();
+                    line.style.strokeDasharray = length;
+                    line.style.strokeDashoffset = length;
+                    line.style.animation = 'drawLine 1.5s ease-out forwards';
+                  }
+                });
+
+                markers.forEach(m => m.style.opacity = '0');
+
+                setTimeout(() => {
+                  markers.forEach(m => {
+                    m.style.transition = 'opacity 0.4s ease';
+                    m.style.opacity = '1';
+                  });
+                }, 1500);
+              });
+            }, 300);
+          }
+
+          // === PART MODAL ===
+          const partModal = document.getElementById("partModal");
+          const openPartBtn = document.getElementById("openPartModal");
+          const closePartBtn = document.getElementById("closePartModal");
+
+          if (openPartBtn && partModal) {
+            openPartBtn.addEventListener("click", () => {
+              resetPartModal();
+              partModal.classList.remove("hidden");
+            });
+          }
+
+          if (closePartBtn && partModal) {
+            closePartBtn.addEventListener("click", () => {
+              partModal.classList.add("hidden");
+            });
+          }
+
+          document.querySelectorAll(".edit-part-button").forEach(btn => {
+            btn.addEventListener("click", e => {
+              e.stopPropagation();
+              const partId = btn.dataset.partId;
+              loadPartData(partId);
+            });
+          });
+
+          document.querySelectorAll(".delete-part-button").forEach(btn => {
+            btn.addEventListener("click", e => {
+              e.stopPropagation();
+              if (!confirm("Delete this part?")) return;
+              fetch("{% url 'main:prix_indexes' %}", {
+                method: "POST",
+                headers: { 
+                  "X-CSRFToken": "{{ csrf_token }}",
+                  "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: new URLSearchParams({ 
+                  part_id: btn.dataset.partId, 
+                  delete_part: "1" 
+                })
+              })
+              .then(res => {
+                if (res.ok) location.reload();
+                else alert("Error deleting");
+              })
+              .catch(() => alert("Error deleting"));
+            });
+          });
+
+          document.getElementById('addSliceBtn').addEventListener('click', addSliceRow);
+          // Event listener for toggle switch
+          document.getElementById('sliceModeToggle').addEventListener('change', function() {
+            updateTableHeaders();
+            updateReferencePrice();
+
+            // Clear existing slices when switching modes
+            document.getElementById('slicesTableBody').innerHTML = '';
+            document.getElementById('noSlicesMessage').classList.remove('hidden');
+            sliceCounter = 0;
+
+            // Update UI elements visibility
+            const percentageSummary = document.querySelector('.percentage-summary');
+            const submitBtn = document.getElementById('submitPartBtn');
+
+            if (this.checked) {
+              // Fixed Criteria mode
+              percentageSummary.style.display = 'none';
+              submitBtn.disabled = false;
+              submitBtn.classList.remove('opacity-50');
+            } else {
+              // Cost Structure mode
+              percentageSummary.style.display = 'block';
+              submitBtn.disabled = true;
+              submitBtn.classList.add('opacity-50');
+              updateTotalPercentage();
+            }
+          });
+
+          document.getElementById('partForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            // AJOUTEZ CES LIGNES DE DÉBOGAGE :
+            console.log('Form data being sent:');
+            for (let [key, value] of formData.entries()) {
+              console.log(key + ': ' + value);
+            }
+            // FIN DU DÉBOGAGE
+
+            fetch("{% url 'main:prix_indexes' %}", {
+              method: "POST",
+              headers: { 
+                "X-CSRFToken": "{{ csrf_token }}",
+              },
+              body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+              if (data.status === 'success') {
+                location.reload();
+              } else {
+                alert(data.message || 'Error saving');
+              }
+            })
+            .catch(() => alert("Error saving"));
+          });
+
+          function resetPartModal() {
+            partModal.querySelector("h5").innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-plus" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <path d="M14 2v6h6"/>
+                <path d="M12 18v-6m3 3h-6"/>
+              </svg>
+              New part`;
+            partModal.querySelector("input[name='name']").value = '';
+            partModal.querySelector("input[name='reference_date']").value = '';
+            partModal.querySelector("input[name='reference_price']").value = '';
+            partModal.querySelector("select[name='product_id']").selectedIndex = 0;
+            partModal.querySelector("input[name='part_id']").value = '';
+            document.getElementById('slicesTableBody').innerHTML = '';
+            document.getElementById('noSlicesMessage').classList.remove('hidden');
+            sliceCounter = 0;
+
+            // Reset toggle to Cost Structure mode
+            document.getElementById('sliceModeToggle').checked = false;
+            updateTableHeaders();
+            updateReferencePrice();
+
+            // Show percentage summary and reset submit button
+            const percentageSummary = document.querySelector('.percentage-summary');
+            percentageSummary.style.display = 'block';
+
+            // Update percentage after everything is configured
+            updateTotalPercentage();
+          }
+
+          function loadPartData(partId) {
+            fetch(`/get-part-data/${partId}/`, {
+              method: "POST",
+              headers: { 
+                "X-CSRFToken": "{{ csrf_token }}",
+                "Content-Type": "application/x-www-form-urlencoded"
+              }
+            })
+            .then(res => res.json())
+            .then(response => {
+              if (response.status === 'success') {
+                const data = response.data;
+
+                // Pré-remplir les champs de base
+                partModal.querySelector("input[name='name']").value = data.name;
+                partModal.querySelector("input[name='reference_date']").value = data.reference_date;
+                partModal.querySelector("input[name='reference_price']").value = data.reference_price;
+                partModal.querySelector("select[name='product_id']").value = data.product_id;
+                partModal.querySelector("input[name='part_id']").value = partId;
+
+                partModal.querySelector("h5").innerHTML = `
+                  <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path d="M15 5 19 9M5 19l4-1 9-9"/>
+                  </svg>
+                  Edit part`;
+
+                // Détecter le mode en se basant sur les tranches
+                let isFixedCriteria = false;
+                if (data.slices && data.slices.length > 0) {
+                  const firstSlice = data.slices[0];
+                  isFixedCriteria = firstSlice.slice_mode === 'fixed_criteria' || 
+                                  (firstSlice.criteria_value !== undefined && firstSlice.criteria_value > 0);
+                }
+
+                // Positionner le toggle switch selon le mode détecté
+                const toggleSwitch = document.getElementById('sliceModeToggle');
+                toggleSwitch.checked = isFixedCriteria;
+
+                // Déclencher l'événement change pour mettre à jour l'interface
+                updateTableHeaders();
+                updateReferencePrice();
+
+                // Vider les tranches existantes
+                document.getElementById('slicesTableBody').innerHTML = '';
+                sliceCounter = 0;
+
+                // Remplir les tranches
+                if (data.slices && data.slices.length > 0) {
+                  document.getElementById('noSlicesMessage').classList.add('hidden');
+                  data.slices.forEach(slice => {
+                    addSliceRow(slice);
+                  });
+                } else {
+                  document.getElementById('noSlicesMessage').classList.remove('hidden');
+                }
+
+                partModal.classList.remove("hidden");
+
+                // Mettre à jour l'UI selon le mode
+                const percentageSummary = document.querySelector('.percentage-summary');
+                const submitBtn = document.getElementById('submitPartBtn');
+
+                if (isFixedCriteria) {
+                  percentageSummary.style.display = 'none';
+                  submitBtn.disabled = false;
+                  submitBtn.classList.remove('opacity-50');
+                } else {
+                  percentageSummary.style.display = 'block';
+                  updateTotalPercentage();
+                }
+              }
+            })
+            .catch(() => alert("Error loading data"));
+          }
+
+          function addSliceRow(sliceData = null) {
+            const tableBody = document.getElementById('slicesTableBody');
+            const noMessage = document.getElementById('noSlicesMessage');
+            const isFixedCriteria = document.getElementById('sliceModeToggle').checked;
+
+            noMessage.classList.add('hidden');
+
+            const row = document.createElement('tr');
+            row.classList.add('slice-row');
+            row.dataset.sliceId = sliceCounter;
+
+            const indexOptions = favoriteIndexes.map(index => 
+              `<option value="${index.id}" ${sliceData?.index_id === index.id ? 'selected' : ''}>${index.name} (${index.unit})</option>`
+            ).join('');
+
+            if (isFixedCriteria) {
+              // Mode Fixed Criteria
+              row.innerHTML = `
+                <td>
+                  <input type="text" name="slice_label_${sliceCounter}" placeholder="Ex: Steel, Concrete..." value="${sliceData?.label || ''}" required>
+                </td>
+                <td>
+                  <input type="number" name="slice_value_${sliceCounter}" step="0.01" min="0" placeholder="2.5" value="${sliceData?.criteria_value || ''}" required>
+                </td>
+                <td>
+                  <input type="text" name="slice_unit_${sliceCounter}" placeholder="tonnes, m², kg..." value="${sliceData?.criteria_unit || ''}" required>
+                </td>
+                <td>
+                  <select name="slice_index_${sliceCounter}" required>
+                    <option value="">-- Select an index --</option>
+                    ${indexOptions}
+                  </select>
+                </td>
+                <td style="text-align: center;">
+                  <button type="button" class="delete-slice-btn" onclick="removeSliceRow(this)" title="Delete slice">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="5" rx="1"/>
+                      <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
+                      <path d="M10 13l4 4m0-4l-4 4"/>
+                    </svg>
+                  </button>
+                </td>
+              `;
+            } else {
+              // Mode Cost Structure (défaut)
+              row.innerHTML = `
+                <td>
+                  <input type="text" name="slice_label_${sliceCounter}" placeholder="Ex: Energy, Transport..." value="${sliceData?.label || ''}" required>
+                </td>
+                <td>
+                  <select name="slice_type_${sliceCounter}" onchange="toggleIndexSelect(this, ${sliceCounter})" required>
+                    <option value="">-- Choose --</option>
+                    <option value="fixed" ${sliceData?.component_type === 'fixed' ? 'selected' : ''}>Fixed</option>
+                    <option value="indexed" ${sliceData?.component_type === 'indexed' ? 'selected' : ''}>Indexed</option>
+                  </select>
+                </td>
+                <td>
+                  <select name="slice_index_${sliceCounter}" ${sliceData?.component_type !== 'indexed' ? 'disabled' : ''}>
+                    <option value="">-- Select an index --</option>
+                    ${indexOptions}
+                  </select>
+                </td>
+                <td>
+                  <input type="number" name="slice_percentage_${sliceCounter}" step="0.01" min="0" max="100" placeholder="0.00" value="${sliceData?.percentage || ''}" onchange="updateTotalPercentage()" required>
+                </td>
+                <td style="text-align: center;">
+                  <button type="button" class="delete-slice-btn" onclick="removeSliceRow(this)" title="Delete slice">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="5" rx="1"/>
+                      <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
+                      <path d="M10 13l4 4m0-4l-4 4"/>
+                    </svg>
+                  </button>
+                </td>
+              `;
+            }
+
+            tableBody.appendChild(row);
+            sliceCounter++;
+
+            // Enable submit button for Fixed Criteria mode, or update percentage for Cost Structure
+            const submitBtn = document.getElementById('submitPartBtn');
+            if (isFixedCriteria) {
+              submitBtn.disabled = false;
+              submitBtn.classList.remove('opacity-50');
+            } else {
+              updateTotalPercentage();
+            }
+          }
+
+          
+          function updateTableHeaders() {
+            const isFixedCriteria = document.getElementById('sliceModeToggle').checked;
+            const tableHead = document.querySelector('#slicesTable thead tr');
+
+            if (isFixedCriteria) {
+              // Mode Fixed Criteria
+              tableHead.innerHTML = `
+                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Slice name</th>
+                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Value</th>
+                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Unit</th>
+                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Index</th>
+                <th style="padding: 0.75rem; text-align: center; font-weight: 600; border-bottom: 1px solid #e2e8f0; width: 60px;">Actions</th>
+              `;
+            } else {
+              // Mode Cost Structure
+              tableHead.innerHTML = `
                 <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Slice name</th>
                 <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Type</th>
                 <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Index</th>
                 <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">% of price</th>
                 <th style="padding: 0.75rem; text-align: center; font-weight: 600; border-bottom: 1px solid #e2e8f0; width: 60px;">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="slicesTableBody">
-              <!-- Slices will be added here dynamically -->
-            </tbody>
-          </table>
-          
-          <div id="noSlicesMessage" style="text-align: center; padding: 2rem; color: #64748b; font-style: italic;">
-            No slices defined. Click the + button to add a slice.
-          </div>
-        </div>
-
-        <div class="percentage-summary" style="margin-top: 1rem; padding: 0.75rem; background: white; border-radius: 6px; border: 1px solid #e2e8f0;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-weight: 500;">Total percentages:</span>
-            <span id="totalPercentage" style="font-weight: 600; color: #dc2626;">0%</span>
-          </div>
-          <div id="percentageWarning" class="hidden" style="margin-top: 0.5rem; color: #dc2626; font-size: 0.9rem;">
-            ⚠️ The sum must equal 100%
-          </div>
-        </div>
-      </div>
-
-      <div class="text-end mt-4" style="display: flex; justify-content: flex-end; gap: 0.5rem;">
-        <button type="button" id="closePartModal" class="btn btn-secondary">
-          <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-x-circle" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M15 9l-6 6M9 9l6 6"/>
-          </svg>
-          Cancel
-        </button>
-        <button type="submit" id="submitPartBtn" class="btn btn-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-plus" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <path d="M14 2v6h6"/>
-            <path d="M12 18v-6m3 3h-6"/>
-          </svg>
-          Apply
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Add Dark Mode Specific Styles for JavaScript-controlled elements -->
-<style>
-  /* Dark mode section backgrounds with !important for inline styles */
-  body.dark-mode .part-form-section {
-    background-color: #1e293b !important;
-  }
-
-  body.dark-mode .slice-form-section {
-    background-color: #0f172a !important;
-  }
-
-  body.dark-mode .percentage-summary {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-  }
-
-  /* Dark mode for dynamic color styles */
-  body.dark-mode span[style*="color: #0284c7"] {
-    color: #38bdf8 !important;
-  }
-
-  body.dark-mode span[style*="color: #64748b"] {
-    color: #94a3b8 !important;
-  }
-
-  body.dark-mode span[style*="color: #059669"] {
-    color: #10b981 !important;
-  }
-
-  body.dark-mode span[style*="color: #dc2626"] {
-    color: #ef4444 !important;
-  }
-
-  body.dark-mode span[style*="color: #6b7280"] {
-    color: #9ca3af !important;
-  }
-
-  body.dark-mode span[style*="color: #6366f1"] {
-    color: #818cf8 !important;
-  }
-
-  body.dark-mode span[style*="color: #94a3b8"] {
-    color: #cbd5e1 !important;
-  }
-
-  /* Dark mode for h4 title in chart */
-  body.dark-mode h4[style*="color: #0284c7"] {
-    color: #38bdf8 !important;
-  }
-
-  /* Dark mode for divs with color styles */
-  body.dark-mode div[style*="color: #64748b"] {
-    color: #94a3b8 !important;
-  }
-
-  body.dark-mode div[style*="color: #94a3b8"] {
-    color: #cbd5e1 !important;
-  }
-</style>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
-<script>
-// Global variables
-let sliceCounter = 0;
-const favoriteIndexes = {{ favorite_indexes_json|safe }};
-const structureGraphs = {{ structure_graphs_json|safe }};
-const partGraphs = {{ part_graphs_json|safe }};
-const structuresMeta = {{ structures_meta_json|safe }};
-let activeItems = new Map();
-const maxCurves = 3;
-
-// Script for tree (toggle) with cascading closure
-document.addEventListener("DOMContentLoaded", function () {
-  document.querySelectorAll("tr[data-toggle]").forEach(row => {
-    row.addEventListener("click", function (e) {
-      if (e.target.closest('.actions')) return;
-      
-      const id = this.getAttribute("data-toggle");
-      const icon = this.querySelector(".toggle-icon");
-      const childRows = document.querySelectorAll(`tr[data-parent='${id}']`);
-      
-      // Toggle direct children
-      const isExpanded = this.classList.contains('expanded');
-      
-      if (isExpanded) {
-        // Closing: also collapse all sub-elements
-        this.classList.remove('expanded');
-        childRows.forEach(child => {
-          child.classList.add("hidden");
-          // If child was also expanded, collapse it
-          if (child.classList.contains('expanded')) {
-            child.classList.remove('expanded');
-            const childId = child.getAttribute("data-toggle");
-            if (childId) {
-              document.querySelectorAll(`tr[data-parent='${childId}']`).forEach(grandChild => {
-                grandChild.classList.add("hidden");
-              });
+              `;
             }
           }
-        });
-      } else {
-        // Opening: expand only direct children
-        this.classList.add('expanded');
-        childRows.forEach(child => {
-          child.classList.remove("hidden");
-        });
-      }
-    });
-  });
-});
 
-// Main script
-document.addEventListener("DOMContentLoaded", () => {
-  // === PRODUCT MODAL ===
-  const productModal = document.getElementById("productModal");
-  const openProductBtn = document.getElementById("openProductModal");
-  const closeProductBtn = document.getElementById("closeProductModal");
+          function updateReferencePrice() {
+            const isFixedCriteria = document.getElementById('sliceModeToggle').checked;
 
-  if (openProductBtn && productModal) {
-    openProductBtn.addEventListener("click", () => {
-      productModal.querySelector("h5").innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-package-plus" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path d="M12 17v-6m3 3h-6M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"/>
-        </svg>
-        New product`;
-      productModal.querySelector("input[name='name']").value = '';
-      productModal.querySelector("input[name='structure_id']").value = '';
-      productModal.classList.remove("hidden");
-    });
-  }
+            // Trouver la ligne "Reference price" dans le tableau des informations de base
+            const formTable = document.querySelector('.form-table');
+            const rows = formTable.querySelectorAll('tr');
 
-  if (closeProductBtn && productModal) {
-    closeProductBtn.addEventListener("click", () => {
-      productModal.classList.add("hidden");
-    });
-  }
-
-  // Edit a product
-  document.querySelectorAll(".edit-product").forEach(btn => {
-    btn.addEventListener("click", e => {
-      e.stopPropagation();
-      if (productModal) {
-        productModal.querySelector("input[name='name']").value = btn.dataset.productName;
-        productModal.querySelector("input[name='structure_id']").value = btn.dataset.productId;
-        productModal.querySelector("h5").innerHTML = `
-          <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path d="M15 5 19 9M5 19l4-1 9-9"/>
-          </svg>
-          Edit product`;
-        productModal.classList.remove("hidden");
-      }
-    });
-  });
-
-  // Delete a product
-  document.querySelectorAll(".delete-product").forEach(btn => {
-    btn.addEventListener("click", e => {
-      e.stopPropagation();
-      if (!confirm("Delete this product and all its parts?")) return;
-      fetch("{% url 'main:prix_indexes' %}", {
-        method: "POST",
-        headers: { 
-          "X-CSRFToken": "{{ csrf_token }}",
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: new URLSearchParams({ 
-          product_id: btn.dataset.productId, 
-          delete_product: "1" 
-        })
-      })
-      .then(res => {
-        if (res.ok) location.reload();
-        else alert("Error deleting");
-      })
-      .catch(() => alert("Error deleting"));
-    });
-  });
-
-  // === CHART MANAGEMENT ===
-  document.querySelectorAll(".view-graph-btn").forEach(btn => {
-    btn.addEventListener("click", e => {
-      e.stopPropagation();
-      const productId = btn.dataset.productId;
-      const productName = btn.dataset.productName;
-      toggleGraph(btn, `product_${productId}`, productName, 'product');
-    });
-  });
-
-  document.querySelectorAll(".view-part-graph-btn").forEach(btn => {
-    btn.addEventListener("click", e => {
-      e.stopPropagation();
-      const partId = btn.dataset.partId;
-      const partName = btn.dataset.partName;
-      toggleGraph(btn, `part_${partId}`, partName, 'part');
-    });
-  });
-
-  function toggleGraph(button, itemId, itemName, itemType) {
-    const isActive = button.classList.contains('graph-active');
-    
-    if (isActive) {
-      button.classList.remove('graph-active');
-      activeItems.delete(itemId);
-    } else {
-      if (activeItems.size >= maxCurves) {
-        alert(`Maximum ${maxCurves} simultaneous curves allowed`);
-        return;
-      }
-      
-      button.classList.add('graph-active');
-      activeItems.set(itemId, {
-        name: itemName,
-        type: itemType,
-        id: itemId
-      });
-    }
-    
-    updateChart();
-  }
-
-  function updateChart() {
-    const chartContainer = document.getElementById('priceChart');
-    let emptyState = document.getElementById('emptyState');
-    const selectedCountEl = document.getElementById('selectedCount');
-    const baseModeEl = document.getElementById('baseMode');
-    
-    const count = activeItems.size;
-    selectedCountEl.textContent = `${count} element${count > 1 ? 's' : ''} selected`;
-    
-    if (count === 0) {
-      chartContainer.style.transition = 'opacity 0.3s ease';
-      chartContainer.style.opacity = '0';
-      
-      setTimeout(() => {
-        chartContainer.innerHTML = '';
-        chartContainer.style.display = 'flex';
-        chartContainer.style.alignItems = 'center';
-        chartContainer.style.justifyContent = 'center';
-        
-        // Apply dark mode background if needed
-        const isDarkMode = document.body.classList.contains('dark-mode');
-        chartContainer.style.background = isDarkMode 
-          ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' 
-          : 'linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%)';
-        
-        if (!emptyState) {
-          emptyState = document.createElement('div');
-          emptyState.id = 'emptyState';
-          emptyState.style.textAlign = 'center';
-          emptyState.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-bottom: 1rem;">
-              <path d="M3 3v18h18"/>
-              <path d="M4 14.5 8 10l5 5 5-6"/>
-            </svg>
-            <p>Click on the 📈 buttons in the tree<br>to display price curves</p>
-            <p style="font-size: 0.8rem; margin-top: 1rem; color: #cbd5e1;">Maximum 3 simultaneous curves</p>
-          `;
-        }
-        
-        chartContainer.appendChild(emptyState);
-        chartContainer.style.opacity = '1';
-        baseModeEl.textContent = '';
-      }, 300);
-      return;
-    }
-
-    emptyState = document.getElementById('emptyState');
-    if (emptyState && emptyState.parentNode) {
-      emptyState.remove();
-    }
-    
-    chartContainer.style.removeProperty('display');
-    chartContainer.style.removeProperty('align-items');
-    chartContainer.style.removeProperty('justify-content');
-    chartContainer.style.removeProperty('background');
-    
-    const useBase100 = count > 1;
-    baseModeEl.textContent = useBase100 ? 'Base 100 Mode' : '';
-    
-    const traces = [];
-    const colors = ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-    let colorIndex = 0;
-    
-    for (const [itemId, itemData] of activeItems) {
-      let graphData = null;
-      
-      if (itemData.type === 'product') {
-        const productId = itemId.replace('product_', '');
-        graphData = structureGraphs[productId];
-      } else if (itemData.type === 'part') {
-        const partId = itemId.replace('part_', '');
-        graphData = partGraphs[partId];
-      }
-      
-      if (!graphData || graphData.length === 0) continue;
-      
-      let dates = graphData.map(point => point.date);
-      let values = graphData.map(point => point.value);
-      
-      if (useBase100 && values.length > 0) {
-        const baseValue = values[0];
-        if (baseValue !== 0) {
-          values = values.map(v => (v / baseValue) * 100);
-        }
-      }
-      
-      const trace = {
-        x: dates,
-        y: values,
-        mode: 'lines+markers',
-        name: itemData.name,
-        line: { 
-          shape: 'spline', 
-          color: colors[colorIndex % colors.length], 
-          width: 3 
-        },
-        marker: { 
-          size: 5, 
-          color: colors[colorIndex % colors.length], 
-          line: { color: 'white', width: 1.5 } 
-        },
-        hovertemplate: '%{x}<br><b>%{y}</b><extra></extra>',
-        type: 'scatter'
-      };
-      
-      traces.push(trace);
-      colorIndex++;
-    }
-    
-    if (traces.length === 0) {
-      updateChart();
-      return;
-    }
-    
-    // Dark mode detection for chart
-    const isDarkMode = document.body.classList.contains('dark-mode');
-    
-    const layout = {
-      height: 580,
-      margin: { l: 60, r: 30, t: 20, b: 50 },
-      hovermode: 'closest',
-      plot_bgcolor: 'rgba(0,0,0,0)',
-      paper_bgcolor: 'rgba(0,0,0,0)',
-      xaxis: { 
-        showgrid: false, 
-        zeroline: false,
-        showline: true,           // Affiche la ligne de l'axe X
-        linecolor: colors.textColor,
-        type: 'date',
-        tickfont: { color: isDarkMode ? '#94a3b8' : '#64748b', size: 11 }
-      },
-      yaxis: { 
-        showgrid: true, 
-        zeroline: false, 
-        showline: true,           // Affiche la ligne de l'axe X
-        linecolor: colors.textColor,
-        gridcolor: isDarkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(14, 165, 233, 0.1)',
-        tickfont: { color: isDarkMode ? '#94a3b8' : '#64748b', size: 11 },
-        title: { 
-          text: useBase100 ? 'Base 100' : 'Price (€)', 
-          font: { color: isDarkMode ? '#94a3b8' : '#64748b', size: 12 } 
-        }
-      },
-      font: { color: isDarkMode ? '#cbd5e1' : '#475569' },
-      showlegend: count > 1,
-      legend: {
-        x: 0.02,
-        y: 0.98,
-        bgcolor: isDarkMode ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-        bordercolor: isDarkMode ? '#334155' : '#e2e8f0',
-        borderwidth: 1,
-        font: { color: isDarkMode ? '#cbd5e1' : '#475569' }
-      }
-    };
-
-    const config = {
-      responsive: true,
-      displayModeBar: false
-    };
-
-    chartContainer.style.transition = 'opacity 0.3s ease';
-    chartContainer.style.opacity = '0';
-    
-    setTimeout(() => {
-      Plotly.newPlot('priceChart', traces, layout, config).then(() => {
-        chartContainer.style.opacity = '1';
-        
-        const chart = document.getElementById('priceChart');
-        const lines = chart.querySelectorAll('.scatter .lines path');
-        const markers = chart.querySelectorAll('.scatter .points path');
-
-        lines.forEach(line => {
-          if (line) {
-            const length = line.getTotalLength();
-            line.style.strokeDasharray = length;
-            line.style.strokeDashoffset = length;
-            line.style.animation = 'drawLine 1.5s ease-out forwards';
+            rows.forEach(row => {
+              const th = row.querySelector('th');
+              if (th && th.textContent.includes('Reference price')) {
+                const input = row.querySelector('input[name="reference_price"]');
+                if (isFixedCriteria) {
+                  row.style.display = 'none';
+                  input.required = false; // Désactiver la validation
+                  input.value = '0'; // Mettre une valeur par défaut
+                } else {
+                  row.style.display = 'table-row';
+                  input.required = true; // Réactiver la validation
+                }
+              }
+            });
           }
+          
+          window.removeSliceRow = function(button) {
+            const row = button.closest('tr');
+            row.remove();
+
+            const tableBody = document.getElementById('slicesTableBody');
+            const noMessage = document.getElementById('noSlicesMessage');
+            if (tableBody.children.length === 0) {
+              noMessage.classList.remove('hidden');
+            }
+
+            updateTotalPercentage();
+          };
+
+          window.toggleIndexSelect = function(typeSelect, sliceId) {
+            const indexSelect = document.querySelector(`select[name="slice_index_${sliceId}"]`);
+            if (typeSelect.value === 'indexed') {
+              indexSelect.disabled = false;
+            } else {
+              indexSelect.disabled = true;
+              indexSelect.value = '';
+            }
+          };
+
+          window.updateTotalPercentage = function() {
+            const percentageInputs = document.querySelectorAll('input[name^="slice_percentage_"]');
+            let total = 0;
+
+            percentageInputs.forEach(input => {
+              const value = parseFloat(input.value) || 0;
+              total += value;
+            });
+
+            const totalElement = document.getElementById('totalPercentage');
+            const warningElement = document.getElementById('percentageWarning');
+            const submitBtn = document.getElementById('submitPartBtn');
+
+            totalElement.textContent = total.toFixed(1) + '%';
+
+            if (Math.abs(total - 100) < 0.1) {
+              totalElement.style.color = '#059669';
+              warningElement.classList.add('hidden');
+              submitBtn.disabled = false;
+              submitBtn.classList.remove('opacity-50');
+            } else {
+              totalElement.style.color = '#dc2626';
+              warningElement.classList.remove('hidden');
+              submitBtn.disabled = true;
+              submitBtn.classList.add('opacity-50');
+            }
+
+            // Dark mode color adaptation
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            if (isDarkMode) {
+              if (Math.abs(total - 100) < 0.1) {
+                totalElement.style.color = '#10b981';
+              } else {
+                totalElement.style.color = '#ef4444';
+              }
+            }
+          };
+
+          // Close modals by clicking on overlay
+          document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+              if (e.target === modal) {
+                modal.classList.add('hidden');
+              }
+            });
+          });
+
+          // Listen for dark mode changes to update chart
+          const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+              if (mutation.attributeName === 'class') {
+                // If there are active charts, redraw them with the new theme
+                if (activeItems.size > 0) {
+                  updateChart();
+                }
+              }
+            });
+          });
+
+          observer.observe(document.body, { attributes: true });
         });
+        </script>
 
-        markers.forEach(m => m.style.opacity = '0');
-
-        setTimeout(() => {
-          markers.forEach(m => {
-            m.style.transition = 'opacity 0.4s ease';
-            m.style.opacity = '1';
-          });
-        }, 1500);
-      });
-    }, 300);
-  }
-
-  // === PART MODAL ===
-  const partModal = document.getElementById("partModal");
-  const openPartBtn = document.getElementById("openPartModal");
-  const closePartBtn = document.getElementById("closePartModal");
-
-  if (openPartBtn && partModal) {
-    openPartBtn.addEventListener("click", () => {
-      resetPartModal();
-      partModal.classList.remove("hidden");
-    });
-  }
-
-  if (closePartBtn && partModal) {
-    closePartBtn.addEventListener("click", () => {
-      partModal.classList.add("hidden");
-    });
-  }
-
-  document.querySelectorAll(".edit-part-button").forEach(btn => {
-    btn.addEventListener("click", e => {
-      e.stopPropagation();
-      const partId = btn.dataset.partId;
-      loadPartData(partId);
-    });
-  });
-
-  document.querySelectorAll(".delete-part-button").forEach(btn => {
-    btn.addEventListener("click", e => {
-      e.stopPropagation();
-      if (!confirm("Delete this part?")) return;
-      fetch("{% url 'main:prix_indexes' %}", {
-        method: "POST",
-        headers: { 
-          "X-CSRFToken": "{{ csrf_token }}",
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: new URLSearchParams({ 
-          part_id: btn.dataset.partId, 
-          delete_part: "1" 
-        })
-      })
-      .then(res => {
-        if (res.ok) location.reload();
-        else alert("Error deleting");
-      })
-      .catch(() => alert("Error deleting"));
-    });
-  });
-
-  document.getElementById('addSliceBtn').addEventListener('click', addSliceRow);
-
-  document.getElementById('partForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    
-    fetch("{% url 'main:prix_indexes' %}", {
-      method: "POST",
-      headers: { 
-        "X-CSRFToken": "{{ csrf_token }}",
-      },
-      body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === 'success') {
-        location.reload();
-      } else {
-        alert(data.message || 'Error saving');
-      }
-    })
-    .catch(() => alert("Error saving"));
-  });
-
-  function resetPartModal() {
-    partModal.querySelector("h5").innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-plus" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <path d="M14 2v6h6"/>
-        <path d="M12 18v-6m3 3h-6"/>
-      </svg>
-      New part`;
-    partModal.querySelector("input[name='name']").value = '';
-    partModal.querySelector("input[name='reference_date']").value = '';
-    partModal.querySelector("input[name='reference_price']").value = '';
-    partModal.querySelector("select[name='product_id']").selectedIndex = 0;
-    partModal.querySelector("input[name='part_id']").value = '';
-    
-    document.getElementById('slicesTableBody').innerHTML = '';
-    document.getElementById('noSlicesMessage').classList.remove('hidden');
-    updateTotalPercentage();
-    sliceCounter = 0;
-  }
-
-  function loadPartData(partId) {
-    fetch(`/get-part-data/${partId}/`, {
-      method: "POST",
-      headers: { 
-        "X-CSRFToken": "{{ csrf_token }}",
-        "Content-Type": "application/x-www-form-urlencoded"
-      }
-    })
-    .then(res => res.json())
-    .then(response => {
-      if (response.status === 'success') {
-        const data = response.data;
-        
-        partModal.querySelector("input[name='name']").value = data.name;
-        partModal.querySelector("input[name='reference_date']").value = data.reference_date;
-        partModal.querySelector("input[name='reference_price']").value = data.reference_price;
-        partModal.querySelector("select[name='product_id']").value = data.product_id;
-        partModal.querySelector("input[name='part_id']").value = partId;
-        
-        partModal.querySelector("h5").innerHTML = `
-          <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path d="M15 5 19 9M5 19l4-1 9-9"/>
-          </svg>
-          Edit part`;
-        
-        document.getElementById('slicesTableBody').innerHTML = '';
-        sliceCounter = 0;
-        
-        if (data.slices && data.slices.length > 0) {
-          document.getElementById('noSlicesMessage').classList.add('hidden');
-          data.slices.forEach(slice => {
-            addSliceRow(slice);
-          });
-        } else {
-          document.getElementById('noSlicesMessage').classList.remove('hidden');
-        }
-        
-        partModal.classList.remove("hidden");
-        updateTotalPercentage();
-      }
-    })
-    .catch(() => alert("Error loading data"));
-  }
-
-  function addSliceRow(sliceData = null) {
-    const tableBody = document.getElementById('slicesTableBody');
-    const noMessage = document.getElementById('noSlicesMessage');
-    
-    noMessage.classList.add('hidden');
-    
-    const row = document.createElement('tr');
-    row.classList.add('slice-row');
-    row.dataset.sliceId = sliceCounter;
-    
-    const indexOptions = favoriteIndexes.map(index => 
-      `<option value="${index.id}" ${sliceData?.index_id === index.id ? 'selected' : ''}>${index.name} (${index.unit})</option>`
-    ).join('');
-    
-    row.innerHTML = `
-      <td>
-        <input type="text" name="slice_label_${sliceCounter}" placeholder="Ex: Energy, Transport..." value="${sliceData?.label || ''}" required>
-      </td>
-      <td>
-        <select name="slice_type_${sliceCounter}" onchange="toggleIndexSelect(this, ${sliceCounter})" required>
-          <option value="">-- Choose --</option>
-          <option value="fixed" ${sliceData?.component_type === 'fixed' ? 'selected' : ''}>Fixed</option>
-          <option value="indexed" ${sliceData?.component_type === 'indexed' ? 'selected' : ''}>Indexed</option>
-        </select>
-      </td>
-      <td>
-        <select name="slice_index_${sliceCounter}" ${sliceData?.component_type !== 'indexed' ? 'disabled' : ''}>
-          <option value="">-- Select an index --</option>
-          ${indexOptions}
-        </select>
-      </td>
-      <td>
-        <input type="number" name="slice_percentage_${sliceCounter}" step="0.01" min="0" max="100" placeholder="0.00" value="${sliceData?.percentage || ''}" onchange="updateTotalPercentage()" required>
-      </td>
-      <td style="text-align: center;">
-        <button type="button" class="delete-slice-btn" onclick="removeSliceRow(this)" title="Delete slice">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="5" rx="1"/>
-            <path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/>
-            <path d="M10 13l4 4m0-4l-4 4"/>
-          </svg>
-        </button>
-      </td>
-    `;
-    
-    tableBody.appendChild(row);
-    sliceCounter++;
-    updateTotalPercentage();
-  }
-
-  window.removeSliceRow = function(button) {
-    const row = button.closest('tr');
-    row.remove();
-    
-    const tableBody = document.getElementById('slicesTableBody');
-    const noMessage = document.getElementById('noSlicesMessage');
-    if (tableBody.children.length === 0) {
-      noMessage.classList.remove('hidden');
-    }
-    
-    updateTotalPercentage();
-  };
-
-  window.toggleIndexSelect = function(typeSelect, sliceId) {
-    const indexSelect = document.querySelector(`select[name="slice_index_${sliceId}"]`);
-    if (typeSelect.value === 'indexed') {
-      indexSelect.disabled = false;
-    } else {
-      indexSelect.disabled = true;
-      indexSelect.value = '';
-    }
-  };
-
-  window.updateTotalPercentage = function() {
-    const percentageInputs = document.querySelectorAll('input[name^="slice_percentage_"]');
-    let total = 0;
-    
-    percentageInputs.forEach(input => {
-      const value = parseFloat(input.value) || 0;
-      total += value;
-    });
-    
-    const totalElement = document.getElementById('totalPercentage');
-    const warningElement = document.getElementById('percentageWarning');
-    const submitBtn = document.getElementById('submitPartBtn');
-    
-    totalElement.textContent = total.toFixed(1) + '%';
-    
-    if (Math.abs(total - 100) < 0.1) {
-      totalElement.style.color = '#059669';
-      warningElement.classList.add('hidden');
-      submitBtn.disabled = false;
-      submitBtn.classList.remove('opacity-50');
-    } else {
-      totalElement.style.color = '#dc2626';
-      warningElement.classList.remove('hidden');
-      submitBtn.disabled = true;
-      submitBtn.classList.add('opacity-50');
-    }
-    
-    // Dark mode color adaptation
-    const isDarkMode = document.body.classList.contains('dark-mode');
-    if (isDarkMode) {
-      if (Math.abs(total - 100) < 0.1) {
-        totalElement.style.color = '#10b981';
-      } else {
-        totalElement.style.color = '#ef4444';
-      }
-    }
-  };
-
-  // Close modals by clicking on overlay
-  document.querySelectorAll('.modal-overlay').forEach(modal => {
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) {
-        modal.classList.add('hidden');
-      }
-    });
-  });
-  
-  // Listen for dark mode changes to update chart
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.attributeName === 'class') {
-        // If there are active charts, redraw them with the new theme
-        if (activeItems.size > 0) {
-          updateChart();
-        }
-      }
-    });
-  });
-  
-  observer.observe(document.body, { attributes: true });
-});
-</script>
-
-{% endblock %}
+        {% endblock %}

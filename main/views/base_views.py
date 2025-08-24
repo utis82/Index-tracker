@@ -251,22 +251,29 @@ def calculate_product_current_price(product, index_data):
     today = datetime_date.today()
 
     for part in product.parts.all():
-        part_current_price = calculate_part_price_at_date(
+        part_current_price = calculate_part_price_at_dat(
             part, today, index_data)
         total_price += part_current_price
 
     return total_price
 
-
-def calculate_part_price_at_date(part, target_date, index_data):
+def calculate_part_price_at_dat(part, target_date, index_data):
     """Calcule le prix d'une pièce à une date donnée"""
     total_price = 0
 
     for slice_obj in part.slices.all():
-        slice_reference_value = part.reference_price * (slice_obj.percentage /
-                                                        100)
+        # Vérification du pourcentage
+        if slice_obj.percentage is None:
+            continue  # Ignore cette tranche si le pourcentage est manquant
 
-        if slice_obj.component_type == 'indexed' and slice_obj.index_id and slice_obj.percentage:
+        # Vérification du prix de référence
+        if part.reference_price is None:
+            continue  # Ignore si le prix de référence est manquant
+
+        slice_reference_value = part.reference_price * (
+            slice_obj.percentage / 100)
+
+        if slice_obj.component_type == 'indexed' and slice_obj.index_id:
             # Calcul pour tranches indexées
             series = index_data.get(slice_obj.index_id, {})
             base_val = series.get(part.reference_date)
@@ -281,7 +288,7 @@ def calculate_part_price_at_date(part, target_date, index_data):
                     closest_date = max(available_dates)
                     current_val = series.get(closest_date)
 
-            if base_val and current_val and base_val != 0:
+            if base_val is not None and current_val is not None and base_val != 0:
                 evolution_ratio = current_val / base_val
                 slice_current_value = slice_reference_value * evolution_ratio
                 total_price += slice_current_value
@@ -289,7 +296,7 @@ def calculate_part_price_at_date(part, target_date, index_data):
                 # Pas de données d'index, utiliser la valeur de référence
                 total_price += slice_reference_value
 
-        elif slice_obj.component_type == 'fixed' and slice_obj.percentage:
+        elif slice_obj.component_type == 'fixed':
             # Calcul pour tranches fixes - reste constant
             total_price += slice_reference_value
 
@@ -351,7 +358,7 @@ def generate_product_mini_chart_data(product, index_data):
     for date in sorted_dates:
         product_price = 0
         for part in product.parts.all():
-            part_price = calculate_part_price_at_date(part, date, index_data)
+            part_price = calculate_part_price_at_dat(part, date, index_data)
             product_price += part_price
 
         dates.append(date.strftime("%Y-%m-%d"))
@@ -1409,7 +1416,7 @@ def calculate_part_current_price_for_dashboard(part, index_data):
 
     # Prendre la date la plus récente
     latest_date = max(available_dates)
-    return calculate_part_price_at_date(part, latest_date, index_data)
+    return calculate_part_price_at_dat(part, latest_date, index_data)
 
 
 def generate_part_mini_chart_data(part, index_data):
@@ -1463,7 +1470,7 @@ def generate_part_mini_chart_data(part, index_data):
     values = []
 
     for date in sorted_dates:
-        part_price = calculate_part_price_at_date(part, date, index_data)
+        part_price = calculate_part_price_at_dat(part, date, index_data)
         dates.append(date.strftime("%Y-%m-%d"))
         values.append(round(part_price, 2))
 
