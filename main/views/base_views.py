@@ -14,7 +14,7 @@ from django.core.mail import send_mail, EmailMessage  # Modifier l'import exista
 import os
 from main.models import PasswordResetRequest
 from main.forms import PasswordResetRequestForm, PasswordResetCodeForm, CustomSetPasswordForm
-
+from main.views.prix_indexes_views import calculate_part_price_at_date_v3
 # 🆕 AJOUT : Imports pour changement de mot de passe
 from django.contrib.auth.views import PasswordChangeView, PasswordChangeDoneView
 from django.urls import reverse_lazy
@@ -149,7 +149,14 @@ def dashboard(request):
 
         # Calculer le prix actuel
         current_price = calculate_product_current_price(product, index_data)
+        # AJOUTEZ CES LIGNES DE DEBUG ICI :
+        print(f"DEBUG - Product: {product.name}")
+        print(f"  Reference price: {reference_price}")
+        print(f"  Current price: {current_price}")
+        print(f"  Parts count: {product.parts.count()}")
+        print(f"  Index data available: {bool(index_data)}")
 
+        
         # Calculer la variation depuis la date de référence
         variation_since_ref = None
         if reference_price and reference_price > 0:
@@ -164,24 +171,16 @@ def dashboard(request):
         last_update = get_product_last_update(product, index_data)
 
         product_charts.append({
-            "id":
-            product.id,
-            "name":
-            product.name,
-            "reference_price":
-            round(reference_price, 2) if reference_price else 0,
-            "current_price":
-            round(current_price, 2),
-            "reference_date":
-            product.reference_date.strftime("%Y-%m-%d"),
-            "variation_since_ref":
-            variation_since_ref,
-            "mini_dates":
-            json.dumps(mini_dates),
-            "mini_values":
-            json.dumps(mini_values),
-            "last_update":
-            last_update,
+            "id": product.id,
+            "name": product.name,
+            "part_number": product.part_number or "",  # NOUVELLE LIGNE
+            "reference_price": round(reference_price, 2) if reference_price else 0,
+            "current_price": round(current_price, 2),
+            "reference_date": product.reference_date.strftime("%Y-%m-%d"),
+            "variation_since_ref": variation_since_ref,
+            "mini_dates": json.dumps(mini_dates),
+            "mini_values": json.dumps(mini_values),
+            "last_update": last_update,
         })
 
     # === ✨ NOUVEAU : ORPHAN PART CHARTS ===
@@ -194,7 +193,13 @@ def dashboard(request):
         # Calculer le prix actuel de la part
         current_price = calculate_part_current_price_for_dashboard(
             part, index_data)
-
+        # Ajoutez ceci pour débugger :
+        print(f"DEBUG - Part: {part.name}")
+        print(f"  Reference price: {part.reference_price}")
+        print(f"  Current price: {current_price}")
+        print(f"  Slices count: {part.slices.count()}")
+        print(f"  Index data available: {bool(index_data)}")
+        
         # Calculer la variation depuis la date de référence
         variation_since_ref = None
         if part.reference_price and part.reference_price > 0:
@@ -248,59 +253,36 @@ def dashboard(request):
 def calculate_product_current_price(product, index_data):
     """Calcule le prix actuel d'un produit"""
     total_price = 0
-    today = datetime_date.today()
+
+    # Chercher la date la plus récente disponible dans les données d'index
+    all_index_ids = set()
+    for part in product.parts.all():
+        for slice_obj in part.slices.all():
+            if slice_obj.component_type == "indexed" and slice_obj.index_id:
+                all_index_ids.add(slice_obj.index_id)
+
+    # Si pas d'index, utiliser aujourd'hui
+    if not all_index_ids or not index_data:
+        target_date = datetime_date.today()
+    else:
+        # Trouver la date la plus récente avec des données
+        available_dates = set()
+        for index_id in all_index_ids:
+            if index_id in index_data:
+                available_dates.update(index_data[index_id].keys())
+
+        if available_dates:
+            target_date = max(available_dates)
+        else:
+            target_date = datetime_date.today()
 
     for part in product.parts.all():
-        part_current_price = calculate_part_price_at_dat(
-            part, today, index_data)
+        part_current_price = calculate_part_price_at_date_v3(
+            part, target_date, index_data)
         total_price += part_current_price
 
     return total_price
 
-def calculate_part_price_at_dat(part, target_date, index_data):
-    """Calcule le prix d'une pièce à une date donnée"""
-    total_price = 0
-
-    for slice_obj in part.slices.all():
-        # Vérification du pourcentage
-        if slice_obj.percentage is None:
-            continue  # Ignore cette tranche si le pourcentage est manquant
-
-        # Vérification du prix de référence
-        if part.reference_price is None:
-            continue  # Ignore si le prix de référence est manquant
-
-        slice_reference_value = part.reference_price * (
-            slice_obj.percentage / 100)
-
-        if slice_obj.component_type == 'indexed' and slice_obj.index_id:
-            # Calcul pour tranches indexées
-            series = index_data.get(slice_obj.index_id, {})
-            base_val = series.get(part.reference_date)
-
-            # Chercher la valeur la plus proche de target_date
-            current_val = None
-            if series:
-                available_dates = [
-                    d for d in series.keys() if d <= target_date
-                ]
-                if available_dates:
-                    closest_date = max(available_dates)
-                    current_val = series.get(closest_date)
-
-            if base_val is not None and current_val is not None and base_val != 0:
-                evolution_ratio = current_val / base_val
-                slice_current_value = slice_reference_value * evolution_ratio
-                total_price += slice_current_value
-            else:
-                # Pas de données d'index, utiliser la valeur de référence
-                total_price += slice_reference_value
-
-        elif slice_obj.component_type == 'fixed':
-            # Calcul pour tranches fixes - reste constant
-            total_price += slice_reference_value
-
-    return total_price
 
 
 def generate_product_mini_chart_data(product, index_data):
@@ -358,7 +340,7 @@ def generate_product_mini_chart_data(product, index_data):
     for date in sorted_dates:
         product_price = 0
         for part in product.parts.all():
-            part_price = calculate_part_price_at_dat(part, date, index_data)
+            part_price = calculate_part_price_at_date_v3(part, date, index_data)
             product_price += part_price
 
         dates.append(date.strftime("%Y-%m-%d"))
@@ -1416,7 +1398,7 @@ def calculate_part_current_price_for_dashboard(part, index_data):
 
     # Prendre la date la plus récente
     latest_date = max(available_dates)
-    return calculate_part_price_at_dat(part, latest_date, index_data)
+    return calculate_part_price_at_date_v3(part, latest_date, index_data)
 
 
 def generate_part_mini_chart_data(part, index_data):
@@ -1470,7 +1452,7 @@ def generate_part_mini_chart_data(part, index_data):
     values = []
 
     for date in sorted_dates:
-        part_price = calculate_part_price_at_dat(part, date, index_data)
+        part_price = calculate_part_price_at_date_v3(part, date, index_data)
         dates.append(date.strftime("%Y-%m-%d"))
         values.append(round(part_price, 2))
 

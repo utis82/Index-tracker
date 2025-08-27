@@ -48,12 +48,14 @@ def prix_indexes_view(request):
 
         # === LOGIQUE CLAIRE : Différencier Product vs Part ===
 
+        # Dans votre vue prix_indexes_view, modifiez la section de gestion des PARTS
+
         # ✅ GESTION DES PARTS (ont reference_price dans le POST)
         if request.POST.get("reference_price"):
             part_id = request.POST.get("part_id")
 
             # Extraire les données des tranches AVANT la validation
-            slice_data = extract_slice_data(request.POST)
+            slice_data = extract_slice_data_v2(request.POST)
             validation_error = validate_slices(slice_data)
             if validation_error:
                 return JsonResponse({
@@ -61,26 +63,15 @@ def prix_indexes_view(request):
                     "message": validation_error
                 })
 
-            # Validation du prix de référence (différente selon le mode)
-            is_fixed_criteria_mode = slice_data and slice_data[0].get(
-                "mode") == "fixed_criteria"
-
             try:
                 reference_price = float(request.POST.get("reference_price", 0))
-                if not is_fixed_criteria_mode and reference_price <= 0:
+                if reference_price <= 0:
                     return JsonResponse({
                         "status":
                         "error",
                         "message":
                         "Le prix de référence doit être supérieur à 0"
                     })
-                elif is_fixed_criteria_mode:
-                # Récupérer la date de référence depuis le POST
-                    reference_date_str = request.POST.get("reference_date")
-                    reference_date = datetime.strptime(reference_date_str, "%Y-%m-%d").date() if reference_date_str else datetime_date.today()
-
-                # Calculer le prix de référence basé sur les critères fixes
-                    reference_price = calculate_reference_price_for_fixed_criteria(slice_data, request.user, reference_date)
             except (ValueError, TypeError):
                 return JsonResponse({
                     "status": "error",
@@ -97,6 +88,9 @@ def prix_indexes_view(request):
                         part = part_form.save(commit=False)
                         part.reference_price = reference_price
                         part.user = request.user
+
+                        # 🔧 AJOUT : Récupération manuelle du part_number
+                        part.part_number = request.POST.get("part_number", "")
 
                         # Gestion du product_id (optionnel maintenant)
                         product_id = request.POST.get("product_id")
@@ -119,7 +113,8 @@ def prix_indexes_view(request):
 
                         # Supprimer les anciennes tranches et créer les nouvelles
                         part.slices.all().delete()
-                        create_slices_for_part(part, slice_data, request.user)
+                        create_slices_for_part_v2(part, slice_data,
+                                                  request.user)
 
                         return JsonResponse({"status": "success"})
                     else:
@@ -140,6 +135,9 @@ def prix_indexes_view(request):
                     part.reference_price = reference_price
                     part.user = request.user
 
+                    # 🔧 AJOUT : Récupération manuelle du part_number
+                    part.part_number = request.POST.get("part_number", "")
+
                     # Gestion du product_id (optionnel maintenant)
                     product_id = request.POST.get("product_id")
                     if product_id and product_id != "":
@@ -158,7 +156,7 @@ def prix_indexes_view(request):
                     part.save()
 
                     # Créer les tranches
-                    create_slices_for_part(part, slice_data, request.user)
+                    create_slices_for_part_v2(part, slice_data, request.user)
 
                     return JsonResponse({"status": "success"})
                 else:
@@ -167,6 +165,7 @@ def prix_indexes_view(request):
                         "message": "Formulaire part invalide"
                     })
 
+
         # ✅ GESTION DES PRODUCTS (n'ont PAS reference_price dans le POST)
         elif request.POST.get("name") and request.POST.get("reference_date"):
             structure_id = request.POST.get("structure_id")
@@ -174,8 +173,7 @@ def prix_indexes_view(request):
             if structure_id:
                 # Modification d'un produit existant
                 try:
-                    structure = Product.objects.get(id=structure_id,
-                                                    user=request.user)
+                    structure = Product.objects.get(id=structure_id, user=request.user)
                     form = ProductForm(request.POST, instance=structure)
                 except Product.DoesNotExist:
                     structure = Product(user=request.user)
@@ -188,6 +186,12 @@ def prix_indexes_view(request):
             if form.is_valid():
                 structure = form.save(commit=False)
                 structure.user = request.user
+
+                # 🔧 AJOUT : Récupération manuelle du part_number (au cas où)
+                # Normalement le formulaire devrait le gérer, mais par sécurité
+                if 'part_number' in request.POST:
+                    structure.part_number = request.POST.get("part_number", "")
+
                 structure.save()
                 return redirect('main:prix_indexes')
             else:
@@ -257,7 +261,7 @@ def prix_indexes_view(request):
 
                     # Calculer le prix de chaque pièce
                     for part in parts:
-                        part_current_price = calculate_part_price_at_dat_v2(
+                        part_current_price = calculate_part_price_at_date_v3(
                             part, date, index_data)
                         total_price += part_current_price
 
@@ -272,7 +276,7 @@ def prix_indexes_view(request):
             # Créer une ligne horizontale de la date de référence à aujourd'hui
             total_price = 0
             for part in parts:
-                part_current_price = calculate_part_price_at_dat_v2(
+                part_current_price = calculate_part_price_at_date_v3(
                     part, s.reference_date, index_data)
                 total_price += part_current_price
 
@@ -330,7 +334,7 @@ def prix_indexes_view(request):
 
             for date in all_dates:
                 if date >= part_reference_date:
-                    part_current_price = calculate_part_price_at_dat_v2(
+                    part_current_price = calculate_part_price_at_date_v3(
                         part, date, index_data)
 
                     part_data_points.append({
@@ -342,7 +346,7 @@ def prix_indexes_view(request):
                     })
         elif has_fixed_slices:  # Seulement des tranches fixes
             # Créer une ligne horizontale de la date de référence à aujourd'hui
-            part_current_price = calculate_part_price_at_dat_v2(
+            part_current_price = calculate_part_price_at_date_v3(
                 part, part.reference_date, index_data)
 
             # Créer des points mensuels de la référence à aujourd'hui
@@ -446,7 +450,7 @@ def calculate_reference_price_for_fixed_criteria(slice_data, user,
 
     for slice_info in slice_data:
         if slice_info["mode"] == "fixed_criteria":
-            criteria_value = slice_info["criteria_value"]
+            criteria_value = slice_info["criteria_value_tonnes"]
             index_id = slice_info["index_id"]
 
             # Récupérer la valeur de l'index à la date de référence
@@ -481,21 +485,23 @@ def calculate_reference_price_for_fixed_criteria(slice_data, user,
     return total_reference_price if total_reference_price > 0 else 1.0
 
 
-def calculate_part_price_at_dat_v2(part, target_date, index_data):
-    """Calcule le prix d'une pièce à une date donnée - supporte les deux modes"""
-    total_price = 0
+def calculate_part_price_at_date_v3(part, target_date, index_data):
+    """
+    Nouvelle version qui calcule le prix selon le nouveau mode Fixed Criteria
+    Prix = prix_référence + (valeur_tonnes × delta_index)
+    """
+    total_price = part.reference_price  # On part du prix de référence
 
     for slice_obj in part.slices.all():
         if slice_obj.slice_mode == "percentage":
-            # Mode Cost Structure (ancien)
+            # Mode Cost Structure (ancien) - inchangé
             if slice_obj.percentage is None:
-                continue  # Skip si pas de pourcentage défini
+                continue
 
             slice_reference_value = part.reference_price * (
                 slice_obj.percentage / 100)
 
             if slice_obj.component_type == 'indexed' and slice_obj.index_id:
-                # Calcul pour tranches indexées
                 series = index_data.get(slice_obj.index_id, {})
                 base_val = series.get(part.reference_date)
                 current_val = series.get(target_date)
@@ -503,37 +509,35 @@ def calculate_part_price_at_dat_v2(part, target_date, index_data):
                 if base_val and current_val and base_val != 0:
                     evolution_ratio = current_val / base_val
                     slice_current_value = slice_reference_value * evolution_ratio
-                    total_price += slice_current_value
-                else:
-                    # Pas de données d'index, utiliser la valeur de référence
-                    total_price += slice_reference_value
+                    # Pour le mode percentage, on remplace la part correspondante
+                    total_price += (slice_current_value -
+                                    slice_reference_value)
 
             elif slice_obj.component_type == 'fixed':
-                # Calcul pour tranches fixes - reste constant
-                total_price += slice_reference_value
-
-        elif slice_obj.slice_mode == "fixed_criteria":
-            # Mode Fixed Criteria (nouveau)
-            if slice_obj.criteria_value is None or slice_obj.index_id is None:
-                continue  # Skip si pas de valeur ou d'index défini
-
-            # Calcul : valeur × index_actuel
-            series = index_data.get(slice_obj.index_id, {})
-            current_val = series.get(target_date)
-
-            if current_val:
-                slice_current_value = slice_obj.criteria_value * current_val
-                total_price += slice_current_value
-            else:
-                # Pas de données d'index disponible pour cette date
-                # On peut soit ignorer, soit utiliser une valeur par défaut
+                # Rien à faire pour les tranches fixes en mode percentage
                 pass
 
-    return total_price
+        elif slice_obj.slice_mode == "fixed_criteria":
+            # Nouveau mode Fixed Criteria
+            if slice_obj.criteria_value_tonnes is None or slice_obj.index_id is None:
+                continue
+
+            series = index_data.get(slice_obj.index_id, {})
+            reference_val = series.get(
+                part.reference_date)  # Valeur à la date de référence
+            current_val = series.get(target_date)  # Valeur actuelle
+
+            if reference_val and current_val:
+                # Delta = (valeur_actuelle - valeur_référence) × tonnage
+                delta_index = current_val - reference_val
+                price_impact = slice_obj.criteria_value_tonnes * delta_index
+                total_price += price_impact
+
+    return max(total_price, 0)  # Éviter les prix négatifs
 
 
-def extract_slice_data(post_data):
-    """Extrait les données des tranches depuis POST - supporte les deux modes"""
+def extract_slice_data_v2(post_data):
+    """Version mise à jour pour extraire les données des tranches"""
     slice_data = []
     i = 0
     while f"slice_label_{i}" in post_data:
@@ -556,19 +560,16 @@ def extract_slice_data(post_data):
                 }
                 slice_data.append(slice_info)
 
-        # Mode Fixed Criteria (nouveau format)
+        # Mode Fixed Criteria (nouveau format simplifié)
         elif f"slice_value_{i}" in post_data:
-            value = post_data.get(f"slice_value_{i}", "")
-            unit = post_data.get(f"slice_unit_{i}", "")
+            value_tonnes = post_data.get(f"slice_value_{i}", "")
             index_id = post_data.get(f"slice_index_{i}", "")
 
-            if label and value and unit and index_id:
+            if label and value_tonnes and index_id:
                 slice_info = {
                     "label": label,
-                    "component_type":
-                    "indexed",  # Changé de "criteria" vers "indexed"
-                    "criteria_value": float(value),
-                    "criteria_unit": unit.strip(),
+                    "component_type": "indexed",
+                    "criteria_value_tonnes": float(value_tonnes),
                     "index_id": int(index_id),
                     "mode": "fixed_criteria"
                 }
@@ -607,14 +608,14 @@ def validate_slices(slice_data):
         for slice_info in slice_data:
             if not slice_info["index_id"]:
                 return f"Slice '{slice_info['label']}' must have an index selected"
-            if slice_info["criteria_value"] <= 0:
+            if slice_info["criteria_value_tonnes"] <= 0:
                 return f"Slice '{slice_info['label']}' must have a value greater than 0"
 
     return None
 
 
-def create_slices_for_part(part, slice_data, user):
-    """Crée les tranches pour une pièce - supporte les deux modes"""
+def create_slices_for_part_v2(part, slice_data, user):
+    """Version mise à jour pour créer les tranches"""
     for slice_info in slice_data:
         slice_obj = Slice(part=part,
                           label=slice_info["label"],
@@ -637,8 +638,8 @@ def create_slices_for_part(part, slice_data, user):
         elif slice_info["mode"] == "fixed_criteria":
             # Mode Fixed Criteria
             slice_obj.slice_mode = "fixed_criteria"
-            slice_obj.criteria_value = slice_info["criteria_value"]
-            slice_obj.criteria_unit = slice_info["criteria_unit"]
+            slice_obj.criteria_value_tonnes = slice_info[
+                "criteria_value_tonnes"]
             try:
                 index = user.userprofile.favorite_indexes.get(
                     id=slice_info["index_id"])
@@ -664,28 +665,33 @@ def get_part_data(request, part_id):
                 "label": slice_obj.label,
                 "component_type": slice_obj.component_type,
                 "index_id": slice_obj.index.id if slice_obj.index else None,
-                "index_name": slice_obj.index.name if slice_obj.index else None,
+                "index_name":
+                slice_obj.index.name if slice_obj.index else None,
             }
 
             # Ajouter les données spécifiques selon le mode
             if slice_obj.slice_mode == "percentage":
                 # Mode Cost Structure
-                slice_data["percentage"] = float(slice_obj.percentage) if slice_obj.percentage else 0
+                slice_data["percentage"] = float(
+                    slice_obj.percentage) if slice_obj.percentage else 0
                 slice_data["slice_mode"] = "percentage"
             elif slice_obj.slice_mode == "fixed_criteria":
                 # Mode Fixed Criteria
-                slice_data["criteria_value"] = float(slice_obj.criteria_value) if slice_obj.criteria_value else 0
-                slice_data["criteria_unit"] = slice_obj.criteria_unit if slice_obj.criteria_unit else ""
+                slice_data["criteria_value_tonnes"] = float(
+                    slice_obj.criteria_value_tonnes
+                ) if slice_obj.criteria_value_tonnes else 0
                 slice_data["slice_mode"] = "fixed_criteria"
             else:
                 # Fallback pour les anciens enregistrements
-                slice_data["percentage"] = float(slice_obj.percentage) if slice_obj.percentage else 0
+                slice_data["percentage"] = float(
+                    slice_obj.percentage) if slice_obj.percentage else 0
                 slice_data["slice_mode"] = "percentage"
 
             slices_data.append(slice_data)
 
         data = {
             "name": part.name,
+            "part_number": part.part_number or "",
             "reference_date": part.reference_date.strftime("%Y-%m-%d"),
             "reference_price": float(part.reference_price),
             "product_id": part.product.id if part.product else "",
@@ -698,6 +704,7 @@ def get_part_data(request, part_id):
             "status": "error",
             "message": "Pièce non trouvée"
         })
+
 
 @require_POST
 @login_required
@@ -782,7 +789,7 @@ def get_current_prices_for_display(user):
                 if available_dates:
                     # Prendre la date la plus récente (pas forcément aujourd'hui)
                     latest_date = max(available_dates)
-                    part_current_price = calculate_part_price_at_dat_v2(
+                    part_current_price = calculate_part_price_at_date_v3(
                         part, latest_date, index_data)
                 else:
                     part_current_price = part_reference_price
@@ -823,7 +830,7 @@ def get_current_prices_for_display(user):
             if available_dates:
                 # Prendre la date la plus récente (pas forcément aujourd'hui)
                 latest_date = max(available_dates)
-                part_current_price = calculate_part_price_at_dat_v2(
+                part_current_price = calculate_part_price_at_date_v3(
                     part, latest_date, index_data)
             else:
                 part_current_price = part_reference_price

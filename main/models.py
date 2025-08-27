@@ -11,6 +11,7 @@ class Product(models.Model):
                              on_delete=models.CASCADE,
                              related_name='products')
     name = models.CharField(max_length=100)
+    part_number = models.CharField(max_length=100, blank=True, null=True)
     reference_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -32,6 +33,7 @@ class Part(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE)  # ← AJOUTEZ cette ligne complète
     name = models.CharField(max_length=100)
+    part_number = models.CharField(max_length=100, blank=True, null=True)
     reference_date = models.DateField()
     reference_price = models.FloatField(
         "Prix de référence (€)", help_text="Prix à la date de référence")
@@ -171,16 +173,11 @@ class Slice(models.Model):
                                   help_text="Mode de calcul de la tranche")
 
     # Pour le mode critère fixe
-    criteria_value = models.FloatField(
+    criteria_value_tonnes = models.FloatField(
         null=True,
         blank=True,
-        help_text="Valeur du critère (ex: 2.5 pour 2.5 tonnes)")
-
-    criteria_unit = models.CharField(
-        max_length=50,
-        null=True,
-        blank=True,
-        help_text="Unité du critère (ex: tonnes, m², m³, kg...)")
+        help_text="Value in tonnes (ex: 2.5 tonnes)"
+    )
 
     def __str__(self):
         return f"🔸 {self.label} ({self.part.name})"

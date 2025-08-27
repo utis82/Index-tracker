@@ -106,7 +106,7 @@
               </td>
 
               <!-- Price -->
-              <td style="padding: 12px;">{{ item.price }} </td>
+              <td style="padding: 12px; text-align: right;">{{ item.price }} </td>
               <td style="padding: 12px;">{{ item.unit }}</td>
 
               <!-- Δ 1 month -->
@@ -202,6 +202,7 @@
         <thead>
           <tr style="text-align: left; font-weight: 600; background-color: rgba(240, 248, 255, 0.6);">
             <th style="padding: 12px;">Element</th>
+            <th style="padding: 12px;">Part Number</th>
             <th style="padding: 12px;">Type</th>
             <th style="padding: 12px;">Reference Price</th>
             <th style="padding: 12px;">Last Value</th>
@@ -222,7 +223,11 @@
                   <span style="font-weight: 600; line-height: 1;">{{ product.name }}</span>
                 </div>
               </td>
-              
+              <td style="padding: 12px;">
+                <span style="color: #059669; font-size: 0.8rem; font-weight: 500;">
+                  {{ product.part_number|default:"-" }}
+                </span>
+              </td>
               <!-- Type -->
               <td style="padding: 12px;">
                 <span style="font-size: 0.8rem; background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 12px; font-weight: 500;">Product</span>

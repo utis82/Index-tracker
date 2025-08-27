@@ -8,7 +8,7 @@
         <style>
           /* 🎛️ MAIN PARAMETER - Modify this value to change row height */
           :root {
-            --row-height: 20px;
+            --row-height: 16px;
             --header-height: calc(var(--row-height) - 4px);
           }
 
@@ -68,6 +68,7 @@
           }
 
           .modal-card h5, .modal-card h6 {
+            font-size: 1rem;
             font-weight: 600;
             color: #1e293b;
           }
@@ -190,6 +191,16 @@
             height: 20px;
             stroke: #0ea5e9;
           }
+          .level-2 .icon-button svg {
+            width: 14px !important;
+            height: 14px !important;
+          }
+
+          .level-2 .actions {
+            display: flex;
+            gap: 0.2rem;
+            align-items: center;
+          }
 
           body.dark-mode .icon-button svg {
             stroke: #38bdf8;
@@ -213,7 +224,7 @@
           table.arbo-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -227,7 +238,7 @@
 
           table.arbo-table th,
           table.arbo-table td {
-            padding: 10px 12px;
+            padding: 4px 6px;
             border: none;
             text-align: left;
             height: var(--row-height);
@@ -264,7 +275,7 @@
           .level-1 td {
             font-weight: 600;
             color: #0284c7;
-            padding: 10px 12px;
+            padding: 6px 8px;
             padding-left: 16px;
             height: var(--row-height) !important;
             max-height: var(--row-height) !important;
@@ -301,10 +312,11 @@
             color: #475569;
             padding: 10px 12px;
             padding-left: 44px !important;
-            height: var(--row-height) !important;
-            max-height: var(--row-height) !important;
-            overflow: hidden;
+            height: calc(var(--row-height) + 8px) !important;
+            max-height: calc(var(--row-height) + 8px) !important;
+            overflow: visible;
             font-size: 0.8rem;
+            vertical-align: middle;
           }
 
           body.dark-mode .level-2 td {
@@ -698,6 +710,7 @@
               <thead>
                 <tr>
                   <th>Element</th>
+                  <th>Part Number</th>
                   <th>Ref. date</th>
                   <th>Reference price</th>
                   <th>Current price</th>
@@ -712,6 +725,11 @@
                       <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73z"/>
                     </svg>
                     <span>{{ product.name }}</span>
+                  </td>
+                  <td>
+                    <span style="color: #059669; font-size: 0.8rem; font-weight: 500;">
+                      {{ product.part_number|default:"-" }}
+                    </span>
                   </td>
                   <td>
                     <span style="color: #0284c7; font-weight: 500; font-size: 0.85rem;">{{ product.reference_date }}</span>
@@ -754,6 +772,7 @@
                       <button class="icon-button edit-product"
                         data-product-id="{{ product.id }}"
                         data-product-name="{{ product.name }}"
+                        data-product-part-number="{{ product.part_number|default:'' }}"
                         title="Edit">
                         <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                           <path d="M15 5 19 9M5 19l4-1 9-9a2.828 2.828 0 1 0-4-4l-9 9-1 4z"/>
@@ -785,6 +804,11 @@
                         <path d="M14 2v6h6"/>
                       </svg>
                       <span>{{ part.name }}</span>
+                    </td>
+                    <td>
+                      <span style="color: #059669; font-size: 0.8rem; font-weight: 500;">
+                        {{ part.part_number|default:"-" }}
+                      </span>
                     </td>
                     <td>
                       <span style="color: #64748b; font-size: 0.85rem;">{{ part.reference_date }}</span>
@@ -863,6 +887,7 @@
                       <td></td>
                       <td></td>
                       <td></td>
+                      <td></td>
                     </tr>
                   {% endfor %}
                 {% endfor %}
@@ -881,6 +906,11 @@
                       <path d="M14 2v6h6"/>
                     </svg>
                     <span>{{ part.name }} <em style="color: #6b7280; font-size: 0.8rem;"></em></span>
+                  </td>
+                  <td>
+                    <span style="color: #059669; font-size: 0.8rem; font-weight: 500;">
+                      {{ part.part_number|default:"-" }}
+                    </span>
                   </td>
                   <td>
                     <span style="color: #0284c7; font-weight: 500; font-size: 0.85rem;">{{ part.reference_date }}</span>
@@ -962,6 +992,7 @@
                     <td></td>
                     <td></td>
                     <td></td>
+                    <td></td>
                   </tr>
                 {% endfor %}
               {% endfor %}
@@ -999,6 +1030,7 @@
         </div>
 
         <!-- PRODUCT MODAL -->
+        
         <div id="productModal" class="modal-overlay hidden">
           <div class="modal-card">
             <form method="POST" id="productForm">
@@ -1016,6 +1048,11 @@
                 <tr style="border-bottom: 1px solid #dbeafe;">
                   <td style="width:30%; padding:0.75rem;"><label for="{{ form.name.id_for_label }}">Name</label></td>
                   <td style="padding:0.75rem;">{{ form.name }}</td>
+                </tr>
+                <!-- NOUVEAU : Ligne pour Part Number -->
+                <tr style="border-bottom: 1px solid #dbeafe;">
+                  <td style="width:30%; padding:0.75rem;"><label for="{{ form.part_number.id_for_label }}">Part Number</label></td>
+                  <td style="padding:0.75rem;">{{ form.part_number }}</td>
                 </tr>
                 <tr style="border-bottom: 1px solid #dbeafe;">
                   <td style="width:30%; padding:0.75rem;"><label for="{{ form.reference_date.id_for_label }}">Reference date</label></td>
@@ -1060,13 +1097,17 @@
               <!-- Hidden field to know if we're in edit mode -->
               <input type="hidden" name="part_id" id="part-id-input" />
 
-              <!-- Basic part information -->
+              <!-- Section des informations de base dans le modal Part -->
               <div class="part-form-section" style="background-color: #f8fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                <h6 style="font-weight: 600; margin-bottom: 1rem; color: #1e293b;">📋 Basic information</h6>
+                <h6 style="margin-bottom: 1rem; color: #1e293b;">📋 Basic information</h6>
                 <table class="form-table">
                   <tr>
                     <th>Name</th>
                     <td><input type="text" name="name" required /></td>
+                  </tr>
+                  <tr>
+                    <th>Part Number</th>
+                    <td><input type="text" name="part_number" placeholder="Optional" /></td>
                   </tr>
                   <tr>
                     <th>Reference date</th>
@@ -1318,6 +1359,13 @@
               if (productModal) {
                 productModal.querySelector("input[name='name']").value = btn.dataset.productName;
                 productModal.querySelector("input[name='structure_id']").value = btn.dataset.productId;
+
+                // 🔧 AJOUT : Gérer le part_number s'il existe
+                const partNumberInput = productModal.querySelector("input[name='part_number']");
+                if (partNumberInput && btn.dataset.productPartNumber) {
+                  partNumberInput.value = btn.dataset.productPartNumber;
+                }
+
                 productModal.querySelector("h5").innerHTML = `
                   <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-pencil" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path d="M15 5 19 9M5 19l4-1 9-9"/>
@@ -1639,7 +1687,6 @@
           // Event listener for toggle switch
           document.getElementById('sliceModeToggle').addEventListener('change', function() {
             updateTableHeaders();
-            updateReferencePrice();
 
             // Clear existing slices when switching modes
             document.getElementById('slicesTableBody').innerHTML = '';
@@ -1713,7 +1760,6 @@
             // Reset toggle to Cost Structure mode
             document.getElementById('sliceModeToggle').checked = false;
             updateTableHeaders();
-            updateReferencePrice();
 
             // Show percentage summary and reset submit button
             const percentageSummary = document.querySelector('.percentage-summary');
@@ -1738,6 +1784,7 @@
 
                 // Pré-remplir les champs de base
                 partModal.querySelector("input[name='name']").value = data.name;
+                partModal.querySelector("input[name='part_number']").value = data.part_number || '';
                 partModal.querySelector("input[name='reference_date']").value = data.reference_date;
                 partModal.querySelector("input[name='reference_price']").value = data.reference_price;
                 partModal.querySelector("select[name='product_id']").value = data.product_id;
@@ -1754,7 +1801,7 @@
                 if (data.slices && data.slices.length > 0) {
                   const firstSlice = data.slices[0];
                   isFixedCriteria = firstSlice.slice_mode === 'fixed_criteria' || 
-                                  (firstSlice.criteria_value !== undefined && firstSlice.criteria_value > 0);
+                                  (firstSlice.criteria_value_tonnes !== undefined && firstSlice.criteria_value_tonnes > 0);
                 }
 
                 // Positionner le toggle switch selon le mode détecté
@@ -1763,7 +1810,6 @@
 
                 // Déclencher l'événement change pour mettre à jour l'interface
                 updateTableHeaders();
-                updateReferencePrice();
 
                 // Vider les tranches existantes
                 document.getElementById('slicesTableBody').innerHTML = '';
@@ -1814,16 +1860,13 @@
             ).join('');
 
             if (isFixedCriteria) {
-              // Mode Fixed Criteria
+              // Mode Fixed Criteria - SIMPLIFIÉ pour tonnes uniquement
               row.innerHTML = `
                 <td>
                   <input type="text" name="slice_label_${sliceCounter}" placeholder="Ex: Steel, Concrete..." value="${sliceData?.label || ''}" required>
                 </td>
                 <td>
-                  <input type="number" name="slice_value_${sliceCounter}" step="0.01" min="0" placeholder="2.5" value="${sliceData?.criteria_value || ''}" required>
-                </td>
-                <td>
-                  <input type="text" name="slice_unit_${sliceCounter}" placeholder="tonnes, m², kg..." value="${sliceData?.criteria_unit || ''}" required>
+                  <input type="number" name="slice_value_${sliceCounter}" step="0.01" min="0" placeholder="2.5" value="${sliceData?.criteria_value_tonnes || ''}" required>
                 </td>
                 <td>
                   <select name="slice_index_${sliceCounter}" required>
@@ -1842,7 +1885,7 @@
                 </td>
               `;
             } else {
-              // Mode Cost Structure (défaut)
+              // Mode Cost Structure (défaut) - INCHANGÉ
               row.innerHTML = `
                 <td>
                   <input type="text" name="slice_label_${sliceCounter}" placeholder="Ex: Energy, Transport..." value="${sliceData?.label || ''}" required>
@@ -1878,7 +1921,6 @@
             tableBody.appendChild(row);
             sliceCounter++;
 
-            // Enable submit button for Fixed Criteria mode, or update percentage for Cost Structure
             const submitBtn = document.getElementById('submitPartBtn');
             if (isFixedCriteria) {
               submitBtn.disabled = false;
@@ -1888,22 +1930,20 @@
             }
           }
 
-          
           function updateTableHeaders() {
             const isFixedCriteria = document.getElementById('sliceModeToggle').checked;
             const tableHead = document.querySelector('#slicesTable thead tr');
 
             if (isFixedCriteria) {
-              // Mode Fixed Criteria
+              // Mode Fixed Criteria - SIMPLIFIÉ
               tableHead.innerHTML = `
                 <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Slice name</th>
-                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Value</th>
-                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Unit</th>
+                <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Tonnes</th>
                 <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Index</th>
                 <th style="padding: 0.75rem; text-align: center; font-weight: 600; border-bottom: 1px solid #e2e8f0; width: 60px;">Actions</th>
               `;
             } else {
-              // Mode Cost Structure
+              // Mode Cost Structure - INCHANGÉ
               tableHead.innerHTML = `
                 <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Slice name</th>
                 <th style="padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;">Type</th>
@@ -1912,29 +1952,6 @@
                 <th style="padding: 0.75rem; text-align: center; font-weight: 600; border-bottom: 1px solid #e2e8f0; width: 60px;">Actions</th>
               `;
             }
-          }
-
-          function updateReferencePrice() {
-            const isFixedCriteria = document.getElementById('sliceModeToggle').checked;
-
-            // Trouver la ligne "Reference price" dans le tableau des informations de base
-            const formTable = document.querySelector('.form-table');
-            const rows = formTable.querySelectorAll('tr');
-
-            rows.forEach(row => {
-              const th = row.querySelector('th');
-              if (th && th.textContent.includes('Reference price')) {
-                const input = row.querySelector('input[name="reference_price"]');
-                if (isFixedCriteria) {
-                  row.style.display = 'none';
-                  input.required = false; // Désactiver la validation
-                  input.value = '0'; // Mettre une valeur par défaut
-                } else {
-                  row.style.display = 'table-row';
-                  input.required = true; // Réactiver la validation
-                }
-              }
-            });
           }
           
           window.removeSliceRow = function(button) {

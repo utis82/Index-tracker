@@ -13,11 +13,18 @@ from django.contrib.auth.forms import SetPasswordForm
 # 🔹 Product (Produit)
 # ------------------------
 class ProductForm(forms.ModelForm):
-
     class Meta:
         model = Product
-        fields = ['name', 'reference_date']  # ← Ajouter reference_date
+        fields = ['name', 'part_number', 'reference_date']  # Ajout de 'part_number'
         widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nom du produit'
+            }),
+            'part_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Numéro de pièce (optionnel)'
+            }),
             'reference_date': forms.DateInput(attrs={'type': 'date'}),
         }
 
@@ -28,8 +35,12 @@ class ProductForm(forms.ModelForm):
         self.helper.layout = Layout(
             Row(
                 Column('name', css_class='col-md-6'),
-                Column('reference_date', css_class='col-md-6'),
-            ))
+                Column('part_number', css_class='col-md-6'),  # Ajout de part_number
+            ),
+            Row(
+                Column('reference_date', css_class='col-md-12'),
+            )
+        )
 
 
 # ------------------------
