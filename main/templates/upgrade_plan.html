@@ -2,362 +2,361 @@
 {% block title %}Upgrade Your Plan{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+{% csrf_token %}
+<div class="page-container">
   <!-- Header Section -->
-  <div class="text-center mb-5">
-    <h1 class="display-4 fw-bold text-primary mb-3">Upgrade Your Plan</h1>
-    <p class="lead text-muted">Choose the perfect plan for your indexing needs</p>
+  <div class="section-header">
+    <h1 class="section-title">
+      <i data-lucide="crown"></i> Upgrade Your Plan
+    </h1>
+    <p class="section-subtitle">Choose the perfect plan for your indexing needs</p>
   </div>
 
   <!-- Current Plan Status -->
-  <div class="row justify-content-center mb-5">
-    <div class="col-md-8">
-      <div class="card border-info">
-        <div class="card-body text-center">
-          <h5 class="card-title text-info">
-            <i class="fas fa-info-circle me-2"></i>
-            Your Current Plan
-          </h5>
-          <div class="row align-items-center">
-            <div class="col-md-4">
-              <span class="badge bg-info fs-6 p-2">{{ user.userprofile.subscription_plan|title }}</span>
-            </div>
-            <div class="col-md-4">
-              <div class="text-muted">
-                <strong>{{ user.userprofile.favorite_indexes.count }}</strong> / 
-                <strong>{{ user.userprofile.index_limit }}</strong> 
-                indexes used
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="text-muted">
-                <strong>{{ user.userprofile.primary_index_change_count }}</strong> / 
-                <strong>{{ user.userprofile.change_limit }}</strong> 
-                changes used
-              </div>
-            </div>
-          </div>
+  <div class="current-plan-card">
+    <div class="plan-status-header">
+      <h3>
+        <i data-lucide="info"></i>
+        Your Current Plan
+      </h3>
+    </div>
+    <div class="plan-status-content">
+      <div class="status-item">
+        <span class="plan-badge plan-badge-{{ user.userprofile.subscription_plan }}">{{ user.userprofile.subscription_plan|title }}</span>
+      </div>
+      <div class="status-item">
+        <div class="usage-info">
+          <strong>{{ user.userprofile.favorite_indexes.count }}</strong> / 
+          <strong>{{ user.userprofile.index_limit }}</strong> 
+          indexes used
+        </div>
+      </div>
+      <div class="status-item">
+        <div class="usage-info">
+          <strong>{{ user.userprofile.primary_index_change_count }}</strong> / 
+          <strong>{{ user.userprofile.change_limit }}</strong> 
+          changes used
         </div>
       </div>
     </div>
   </div>
 
   <!-- Pricing Cards -->
-  <div class="row g-4 justify-content-center">
-
+  <div class="pricing-grid">
     <!-- Free Plan -->
-    <div class="col-lg-3 col-md-6">
-      <div class="card h-100 {% if user.userprofile.subscription_plan == 'free' %}border-primary{% else %}border-light{% endif %} position-relative">
+    <div class="pricing-card {% if user.userprofile.subscription_plan == 'free' %}pricing-card-current{% endif %}">
+      {% if user.userprofile.subscription_plan == 'free' %}
+        <div class="plan-badge-top">Current Plan</div>
+      {% endif %}
+
+      <div class="plan-header">
+        <div class="plan-icon">
+          <i data-lucide="gift"></i>
+        </div>
+        <h4 class="plan-name">Free</h4>
+      </div>
+
+      <div class="plan-price">
+        <span class="price-amount">$0</span>
+        <span class="price-period">/month</span>
+      </div>
+
+      <div class="plan-features">
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          <strong>1</strong> index tracking
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          <strong>3</strong> plan changes allowed
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          Basic dashboard
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          Email support
+        </div>
+        <div class="feature-item feature-disabled">
+          <i data-lucide="x" class="feature-icon"></i>
+          Advanced analytics
+        </div>
+      </div>
+
+      <div class="plan-action">
         {% if user.userprofile.subscription_plan == 'free' %}
-        <div class="position-absolute top-0 start-50 translate-middle">
-          <span class="badge bg-primary px-3 py-2">Current Plan</span>
-        </div>
-        {% endif %}
-        <div class="card-header text-center bg-light">
-          <h4 class="my-0 fw-normal">Free</h4>
-        </div>
-        <div class="card-body d-flex flex-column">
-          <h1 class="card-title pricing-card-title text-center">
-            $0<small class="text-muted fw-light">/month</small>
-          </h1>
-          <ul class="list-unstyled mt-3 mb-4 flex-grow-1">
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              <strong>1</strong> index tracking
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              <strong>3</strong> plan changes allowed
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              Basic dashboard
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              Email support
-            </li>
-            <li class="mb-2 text-muted">
-              <i class="fas fa-times text-danger me-2"></i>
-              Advanced analytics
-            </li>
-          </ul>
-          {% if user.userprofile.subscription_plan == 'free' %}
-            <button class="btn btn-outline-primary disabled" disabled>Current Plan</button>
-          {% else %}
-            <button class="btn btn-outline-secondary" onclick="downgrade('free')">Downgrade</button>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <!-- 5 Index Plan -->
-    <div class="col-lg-3 col-md-6">
-      <div class="card h-100 {% if user.userprofile.subscription_plan == '5_index' %}border-primary{% else %}border-light{% endif %} position-relative">
-        {% if user.userprofile.subscription_plan == '5_index' %}
-        <div class="position-absolute top-0 start-50 translate-middle">
-          <span class="badge bg-primary px-3 py-2">Current Plan</span>
-        </div>
-        {% endif %}
-        <div class="card-header text-center bg-light">
-          <h4 class="my-0 fw-normal">Starter</h4>
-        </div>
-        <div class="card-body d-flex flex-column">
-          <h1 class="card-title pricing-card-title text-center">
-            $19<small class="text-muted fw-light">/month</small>
-          </h1>
-          <ul class="list-unstyled mt-3 mb-4 flex-grow-1">
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              <strong>5</strong> indexes tracking
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              <strong>5</strong> plan changes allowed
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              Enhanced dashboard
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              Priority email support
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              Basic analytics
-            </li>
-          </ul>
-          {% if user.userprofile.subscription_plan == '5_index' %}
-            <button class="btn btn-primary disabled" disabled>Current Plan</button>
-          {% elif user.userprofile.subscription_plan == 'free' %}
-            <button class="btn btn-primary" onclick="upgrade('5_index')">Upgrade Now</button>
-          {% else %}
-            <button class="btn btn-outline-secondary" onclick="changePlan('5_index')">Switch Plan</button>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <!-- 10 Index Plan -->
-    <div class="col-lg-3 col-md-6">
-      <div class="card h-100 {% if user.userprofile.subscription_plan == '10_index' %}border-primary{% else %}border-success{% endif %} position-relative">
-        {% if user.userprofile.subscription_plan == '10_index' %}
-        <div class="position-absolute top-0 start-50 translate-middle">
-          <span class="badge bg-primary px-3 py-2">Current Plan</span>
-        </div>
+          <button class="btn-plan btn-current" disabled>Current Plan</button>
         {% else %}
-        <div class="position-absolute top-0 start-50 translate-middle">
-          <span class="badge bg-success px-3 py-2">Most Popular</span>
-        </div>
+          <button class="btn-plan btn-downgrade" onclick="downgrade('free')">Downgrade</button>
         {% endif %}
-        <div class="card-header text-center bg-success text-white">
-          <h4 class="my-0 fw-normal">Professional</h4>
+      </div>
+    </div>
+
+    <!-- Starter Plan -->
+    <div class="pricing-card {% if user.userprofile.subscription_plan == '5_index' %}pricing-card-current{% endif %}">
+      {% if user.userprofile.subscription_plan == '5_index' %}
+        <div class="plan-badge-top">Current Plan</div>
+      {% endif %}
+
+      <div class="plan-header">
+        <div class="plan-icon">
+          <i data-lucide="rocket"></i>
         </div>
-        <div class="card-body d-flex flex-column">
-          <h1 class="card-title pricing-card-title text-center">
-            $39<small class="text-muted fw-light">/month</small>
-          </h1>
-          <ul class="list-unstyled mt-3 mb-4 flex-grow-1">
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              <strong>10</strong> indexes tracking
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              <strong>10</strong> plan changes allowed
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              Advanced dashboard
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              Priority support
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              Advanced analytics
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              Export features
-            </li>
-          </ul>
-          {% if user.userprofile.subscription_plan == '10_index' %}
-            <button class="btn btn-success disabled" disabled>Current Plan</button>
-          {% elif user.userprofile.subscription_plan in 'free,5_index' %}
-            <button class="btn btn-success" onclick="upgrade('10_index')">Upgrade Now</button>
-          {% else %}
-            <button class="btn btn-outline-secondary" onclick="changePlan('10_index')">Switch Plan</button>
-          {% endif %}
+        <h4 class="plan-name">Starter</h4>
+      </div>
+
+      <div class="plan-price">
+        <span class="price-amount">$19</span>
+        <span class="price-period">/month</span>
+      </div>
+
+      <div class="plan-features">
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          <strong>5</strong> indexes tracking
         </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          <strong>5</strong> plan changes allowed
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          Enhanced dashboard
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          Priority email support
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          Basic analytics
+        </div>
+      </div>
+
+      <div class="plan-action">
+        {% if user.userprofile.subscription_plan == '5_index' %}
+          <button class="btn-plan btn-current" disabled>Current Plan</button>
+        {% elif user.userprofile.subscription_plan == 'free' %}
+          <button class="btn-plan btn-upgrade" onclick="upgrade('5_index')">Upgrade Now</button>
+        {% else %}
+          <button class="btn-plan btn-change" onclick="changePlan('5_index')">Switch Plan</button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Professional Plan -->
+    <div class="pricing-card pricing-card-popular {% if user.userprofile.subscription_plan == '10_index' %}pricing-card-current{% endif %}">
+      {% if user.userprofile.subscription_plan == '10_index' %}
+        <div class="plan-badge-top">Current Plan</div>
+      {% else %}
+        <div class="plan-badge-top plan-badge-popular">Most Popular</div>
+      {% endif %}
+
+      <div class="plan-header">
+        <div class="plan-icon">
+          <i data-lucide="briefcase"></i>
+        </div>
+        <h4 class="plan-name">Professional</h4>
+      </div>
+
+      <div class="plan-price">
+        <span class="price-amount">$39</span>
+        <span class="price-period">/month</span>
+      </div>
+
+      <div class="plan-features">
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          <strong>10</strong> indexes tracking
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          <strong>10</strong> plan changes allowed
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          Advanced dashboard
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          Priority support
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          Advanced analytics
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          Export features
+        </div>
+      </div>
+
+      <div class="plan-action">
+        {% if user.userprofile.subscription_plan == '10_index' %}
+          <button class="btn-plan btn-current" disabled>Current Plan</button>
+        {% elif user.userprofile.subscription_plan in 'free,5_index' %}
+          <button class="btn-plan btn-upgrade" onclick="upgrade('10_index')">Upgrade Now</button>
+        {% else %}
+          <button class="btn-plan btn-change" onclick="changePlan('10_index')">Switch Plan</button>
+        {% endif %}
       </div>
     </div>
 
     <!-- Premium Plan -->
-    <div class="col-lg-3 col-md-6">
-      <div class="card h-100 {% if user.userprofile.subscription_plan == 'premium' %}border-primary{% else %}border-warning{% endif %} position-relative">
+    <div class="pricing-card {% if user.userprofile.subscription_plan == 'premium' %}pricing-card-current{% endif %}">
+      {% if user.userprofile.subscription_plan == 'premium' %}
+        <div class="plan-badge-top">Current Plan</div>
+      {% else %}
+        <div class="plan-badge-top plan-badge-enterprise">Enterprise</div>
+      {% endif %}
+
+      <div class="plan-header">
+        <div class="plan-icon">
+          <i data-lucide="star"></i>
+        </div>
+        <h4 class="plan-name">Premium</h4>
+      </div>
+
+      <div class="plan-price">
+        <span class="price-amount">$99</span>
+        <span class="price-period">/month</span>
+      </div>
+
+      <div class="plan-features">
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          <strong>Unlimited</strong> indexes tracking
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          <strong>Unlimited</strong> plan changes
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          Premium dashboard
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          24/7 priority support
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          Advanced analytics & reports
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          API access
+        </div>
+        <div class="feature-item">
+          <i data-lucide="check" class="feature-icon"></i>
+          Custom integrations
+        </div>
+      </div>
+
+      <div class="plan-action">
         {% if user.userprofile.subscription_plan == 'premium' %}
-        <div class="position-absolute top-0 start-50 translate-middle">
-          <span class="badge bg-primary px-3 py-2">Current Plan</span>
-        </div>
+          <button class="btn-plan btn-current" disabled>Current Plan</button>
         {% else %}
-        <div class="position-absolute top-0 start-50 translate-middle">
-          <span class="badge bg-warning text-dark px-3 py-2">Enterprise</span>
-        </div>
+          <button class="btn-plan btn-upgrade" onclick="upgrade('premium')">Upgrade Now</button>
         {% endif %}
-        <div class="card-header text-center bg-warning text-dark">
-          <h4 class="my-0 fw-normal">Premium</h4>
-        </div>
-        <div class="card-body d-flex flex-column">
-          <h1 class="card-title pricing-card-title text-center">
-            $99<small class="text-muted fw-light">/month</small>
-          </h1>
-          <ul class="list-unstyled mt-3 mb-4 flex-grow-1">
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              <strong>Unlimited</strong> indexes tracking
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              <strong>Unlimited</strong> plan changes
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              Premium dashboard
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              24/7 priority support
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              Advanced analytics & reports
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              API access
-            </li>
-            <li class="mb-2">
-              <i class="fas fa-check text-success me-2"></i>
-              Custom integrations
-            </li>
-          </ul>
-          {% if user.userprofile.subscription_plan == 'premium' %}
-            <button class="btn btn-warning disabled" disabled>Current Plan</button>
-          {% else %}
-            <button class="btn btn-warning" onclick="upgrade('premium')">Upgrade Now</button>
-          {% endif %}
-        </div>
       </div>
     </div>
   </div>
 
   <!-- Features Comparison -->
-  <div class="row mt-5">
-    <div class="col-12">
-      <h3 class="text-center mb-4">Feature Comparison</h3>
-      <div class="table-responsive">
-        <table class="table table-striped">
-          <thead class="table-dark">
-            <tr>
-              <th>Feature</th>
-              <th class="text-center">Free</th>
-              <th class="text-center">Starter</th>
-              <th class="text-center">Professional</th>
-              <th class="text-center">Premium</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Index Tracking</td>
-              <td class="text-center">1</td>
-              <td class="text-center">5</td>
-              <td class="text-center">10</td>
-              <td class="text-center">Unlimited</td>
-            </tr>
-            <tr>
-              <td>Plan Changes</td>
-              <td class="text-center">3</td>
-              <td class="text-center">5</td>
-              <td class="text-center">10</td>
-              <td class="text-center">Unlimited</td>
-            </tr>
-            <tr>
-              <td>Dashboard</td>
-              <td class="text-center">Basic</td>
-              <td class="text-center">Enhanced</td>
-              <td class="text-center">Advanced</td>
-              <td class="text-center">Premium</td>
-            </tr>
-            <tr>
-              <td>Analytics</td>
-              <td class="text-center"><i class="fas fa-times text-danger"></i></td>
-              <td class="text-center">Basic</td>
-              <td class="text-center">Advanced</td>
-              <td class="text-center">Advanced + Reports</td>
-            </tr>
-            <tr>
-              <td>Support</td>
-              <td class="text-center">Email</td>
-              <td class="text-center">Priority Email</td>
-              <td class="text-center">Priority</td>
-              <td class="text-center">24/7 Priority</td>
-            </tr>
-            <tr>
-              <td>API Access</td>
-              <td class="text-center"><i class="fas fa-times text-danger"></i></td>
-              <td class="text-center"><i class="fas fa-times text-danger"></i></td>
-              <td class="text-center"><i class="fas fa-times text-danger"></i></td>
-              <td class="text-center"><i class="fas fa-check text-success"></i></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+  <div class="comparison-section">
+    <h3 class="comparison-title">Feature Comparison</h3>
+    <div class="comparison-table-wrapper">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Free</th>
+            <th>Starter</th>
+            <th>Professional</th>
+            <th>Premium</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Index Tracking</td>
+            <td>1</td>
+            <td>5</td>
+            <td>10</td>
+            <td>Unlimited</td>
+          </tr>
+          <tr>
+            <td>Plan Changes</td>
+            <td>3</td>
+            <td>5</td>
+            <td>10</td>
+            <td>Unlimited</td>
+          </tr>
+          <tr>
+            <td>Dashboard</td>
+            <td>Basic</td>
+            <td>Enhanced</td>
+            <td>Advanced</td>
+            <td>Premium</td>
+          </tr>
+          <tr>
+            <td>Analytics</td>
+            <td><i data-lucide="x" style="color: #ef4444;"></i></td>
+            <td>Basic</td>
+            <td>Advanced</td>
+            <td>Advanced + Reports</td>
+          </tr>
+          <tr>
+            <td>Support</td>
+            <td>Email</td>
+            <td>Priority Email</td>
+            <td>Priority</td>
+            <td>24/7 Priority</td>
+          </tr>
+          <tr>
+            <td>API Access</td>
+            <td><i data-lucide="x" style="color: #ef4444;"></i></td>
+            <td><i data-lucide="x" style="color: #ef4444;"></i></td>
+            <td><i data-lucide="x" style="color: #ef4444;"></i></td>
+            <td><i data-lucide="check" style="color: #10b981;"></i></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
   <!-- FAQ Section -->
-  <div class="row mt-5">
-    <div class="col-md-8 mx-auto">
-      <h3 class="text-center mb-4">Frequently Asked Questions</h3>
-      <div class="accordion" id="faqAccordion">
-        <div class="accordion-item">
-          <h2 class="accordion-header">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-              Can I change my plan anytime?
-            </button>
-          </h2>
-          <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-            <div class="accordion-body">
-              Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately, and billing is prorated.
-            </div>
-          </div>
+  <div class="faq-section">
+    <h3 class="faq-title">Frequently Asked Questions</h3>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>Can I change my plan anytime?</span>
+          <i data-lucide="plus" class="faq-toggle"></i>
         </div>
-        <div class="accordion-item">
-          <h2 class="accordion-header">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-              What happens to my data if I downgrade?
-            </button>
-          </h2>
-          <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-            <div class="accordion-body">
-              Your data is safe. If you exceed the new plan's limits, you'll need to remove excess indexes, but no data is lost.
-            </div>
-          </div>
+        <div class="faq-answer">
+          Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately, and billing is prorated.
         </div>
-        <div class="accordion-item">
-          <h2 class="accordion-header">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-              Do you offer refunds?
-            </button>
-          </h2>
-          <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-            <div class="accordion-body">
-              We offer a 30-day money-back guarantee for all paid plans. Contact support for assistance.
-            </div>
-          </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>What happens to my data if I downgrade?</span>
+          <i data-lucide="plus" class="faq-toggle"></i>
+        </div>
+        <div class="faq-answer">
+          Your data is safe. If you exceed the new plan's limits, you'll need to remove excess indexes, but no data is lost.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          <span>Do you offer refunds?</span>
+          <i data-lucide="plus" class="faq-toggle"></i>
+        </div>
+        <div class="faq-answer">
+          We offer a 30-day money-back guarantee for all paid plans. Contact support for assistance.
         </div>
       </div>
     </div>
@@ -365,69 +364,630 @@
 </div>
 
 <!-- Loading Modal -->
-<div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-body text-center py-4">
-        <div class="spinner-border text-primary mb-3" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-        <h5>Processing your request...</h5>
-        <p class="text-muted">Please wait while we update your plan.</p>
-      </div>
+<div class="modal-overlay hidden" id="loadingModal">
+  <div class="modal-card">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <h5>Processing your request...</h5>
+      <p>Please wait while we update your plan.</p>
     </div>
   </div>
 </div>
 
 <style>
-.pricing-card-title {
-  font-size: 3rem;
+/* Page Container */
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
 }
 
-.card {
-  transition: transform 0.2s, box-shadow 0.2s;
+/* Header Section */
+.section-header {
+  text-align: center;
+  margin-bottom: 3rem;
 }
 
-.card:hover {
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.section-subtitle {
+  font-size: 1.2rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Plan Icons and Feature Icons */
+.plan-icon i {
+  font-size: 2.5rem;
+  color: #0ea5e9;
+  margin-bottom: 0.5rem;
+}
+
+.feature-icon {
+  margin-right: 0.75rem;
+  font-size: 1rem;
+  color: #10b981;
+  width: 16px;
+  height: 16px;
+}
+
+.feature-disabled .feature-icon {
+  color: #ef4444;
+}
+
+.section-title i {
+  color: #0ea5e9;
+  font-size: 2rem;
+}
+
+/* Current Plan Card */
+.current-plan-card {
+  background: white;
+  border: 2px solid #0ea5e9;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.plan-status-header h3 {
+  color: #0ea5e9;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.plan-status-content {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.status-item {
+  flex: 1;
+  min-width: 150px;
+}
+
+.plan-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.plan-badge-free {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.plan-badge-5_index {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.plan-badge-10_index {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.plan-badge-premium {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.usage-info {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+/* Pricing Grid */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+/* Pricing Cards */
+.pricing-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 2rem;
+  position: relative;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.pricing-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
-.badge {
-  font-size: 0.75rem;
+.pricing-card-current {
+  border-color: #0ea5e9;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
 }
 
-body.dark-mode .card {
-  background: rgb(31, 41, 55) !important;
-  border-color: rgba(75, 85, 99, 0.5) !important;
+.pricing-card-popular {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
 }
 
-body.dark-mode .card-header {
-  background: rgba(55, 65, 81, 0.5) !important;
-  border-color: rgba(75, 85, 99, 0.5) !important;
+.plan-badge-top {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0ea5e9;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
-body.dark-mode .table {
-  color: rgb(229, 231, 235) !important;
+.plan-badge-popular {
+  background: #10b981;
 }
 
-body.dark-mode .table-dark {
-  background: rgb(17, 24, 39) !important;
+.plan-badge-enterprise {
+  background: #f59e0b;
 }
 
-body.dark-mode .accordion-item {
-  background: rgb(31, 41, 55) !important;
-  border-color: rgba(75, 85, 99, 0.5) !important;
+/* Plan Header */
+.plan-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
 }
 
-body.dark-mode .accordion-button {
-  background: rgb(31, 41, 55) !important;
-  color: rgb(229, 231, 235) !important;
-  border-color: rgba(75, 85, 99, 0.5) !important;
+.plan-icon {
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.plan-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+/* Plan Price */
+.plan-price {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.price-amount {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.price-period {
+  font-size: 1rem;
+  color: #64748b;
+  margin-left: 0.5rem;
+}
+
+/* Plan Features */
+.plan-features {
+  margin-bottom: 2rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.feature-disabled {
+  color: #9ca3af;
+}
+
+/* Plan Actions */
+.plan-action {
+  text-align: center;
+}
+
+.btn-plan {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-current {
+  background: #e2e8f0;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.btn-upgrade {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  color: white;
+}
+
+.btn-upgrade:hover {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  transform: translateY(-2px);
+}
+
+.btn-downgrade {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn-downgrade:hover {
+  background: #e5e7eb;
+}
+
+.btn-change {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-change:hover {
+  background: #d97706;
+}
+
+/* Comparison Section */
+.comparison-section {
+  margin-bottom: 3rem;
+}
+
+.comparison-title {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 2rem;
+}
+
+.comparison-table-wrapper {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.comparison-table th {
+  background: #f8fafc;
+  padding: 1rem;
+  text-align: center;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.comparison-table td {
+  padding: 1rem;
+  text-align: center;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.comparison-table tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.comparison-table td:first-child {
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* FAQ Section */
+.faq-section {
+  margin-bottom: 3rem;
+}
+
+.faq-title {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 2rem;
+}
+
+.faq-list {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.faq-item {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.faq-question {
+  padding: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  color: #374151;
+  background: #f8fafc;
+  transition: all 0.3s ease;
+}
+
+.faq-question:hover {
+  background: #f1f5f9;
+}
+
+.faq-toggle {
+  color: #0ea5e9;
+  transition: transform 0.3s ease;
+  width: 20px;
+  height: 20px;
+}
+
+.faq-answer {
+  padding: 0 1.5rem;
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.faq-item.active .faq-answer {
+  padding: 1.5rem;
+  max-height: 200px;
+}
+
+.faq-item.active .faq-toggle {
+  transform: rotate(45deg);
+}
+
+/* Loading Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  max-width: 400px;
+  width: 90%;
+}
+
+.loading-content {
+  text-align: center;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #0ea5e9;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-content h5 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.loading-content p {
+  color: #64748b;
+  margin: 0;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Dark Mode Styles */
+body.dark-mode .page-container {
+  color: #e0f2fe;
+}
+
+body.dark-mode .section-title {
+  color: #e0f2fe;
+}
+
+body.dark-mode .section-title i {
+  color: #38bdf8;
+}
+
+body.dark-mode .section-subtitle {
+  color: #94a3b8;
+}
+
+body.dark-mode .current-plan-card {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: #0ea5e9;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .plan-status-header h3 {
+  color: #38bdf8;
+}
+
+body.dark-mode .plan-icon i {
+  color: #38bdf8;
+}
+
+body.dark-mode .feature-icon {
+  color: #34d399;
+}
+
+body.dark-mode .feature-disabled .feature-icon {
+  color: #f87171;
+}
+
+body.dark-mode .usage-info {
+  color: #94a3b8;
+}
+
+body.dark-mode .pricing-card {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: #334155;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .pricing-card-current {
+  background: rgba(14, 165, 233, 0.1);
+  border-color: #0ea5e9;
+}
+
+body.dark-mode .pricing-card-popular {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: #10b981;
+}
+
+body.dark-mode .plan-name {
+  color: #e0f2fe;
+}
+
+body.dark-mode .price-amount {
+  color: #e0f2fe;
+}
+
+body.dark-mode .price-period {
+  color: #94a3b8;
+}
+
+body.dark-mode .feature-disabled {
+  color: #64748b;
+}
+
+body.dark-mode .comparison-table-wrapper {
+  background: rgba(30, 41, 59, 0.7);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .comparison-table th {
+  background: rgba(15, 23, 42, 0.5);
+  color: #e0f2fe;
+  border-color: #334155;
+}
+
+body.dark-mode .comparison-table td {
+  color: #e0f2fe;
+  border-color: #334155;
+}
+
+body.dark-mode .comparison-table tr:nth-child(even) {
+  background: rgba(15, 23, 42, 0.3);
+}
+
+body.dark-mode .comparison-table td:first-child {
+  color: #e0f2fe;
+}
+
+body.dark-mode .faq-item {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: #334155;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .faq-question {
+  background: rgba(15, 23, 42, 0.5);
+  color: #e0f2fe;
+}
+
+body.dark-mode .faq-question:hover {
+  background: rgba(15, 23, 42, 0.7);
+}
+
+body.dark-mode .faq-answer {
+  color: #94a3b8;
+}
+
+body.dark-mode .modal-card {
+  background: rgba(30, 41, 59, 0.95);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .loading-content h5 {
+  color: #e0f2fe;
+}
+
+body.dark-mode .loading-content p {
+  color: #94a3b8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .plan-status-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-title {
+    font-size: 2rem;
+  }
+
+  .price-amount {
+    font-size: 2.5rem;
+  }
 }
 </style>
 
 <script>
+function toggleFaq(element) {
+  const faqItem = element.parentElement;
+  faqItem.classList.toggle('active');
+}
+
 function upgrade(plan) {
   showLoadingModal();
 
@@ -446,17 +1006,17 @@ function upgrade(plan) {
   .then(data => {
     hideLoadingModal();
     if (data.success) {
-      showSuccessMessage(`Successfully upgraded to ${plan} plan!`);
+      showNotification(`Successfully upgraded to ${plan} plan!`, 'success');
       setTimeout(() => {
         window.location.reload();
       }, 2000);
     } else {
-      showErrorMessage(data.message || 'Error upgrading plan');
+      showNotification(data.message || 'Error upgrading plan', 'error');
     }
   })
   .catch(error => {
     hideLoadingModal();
-    showErrorMessage('An error occurred while upgrading your plan');
+    showNotification('An error occurred while upgrading your plan', 'error');
     console.error('Error:', error);
   });
 }
@@ -477,72 +1037,49 @@ function downgrade(plan) {
 }
 
 function showLoadingModal() {
-  const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
-  modal.show();
+  const modal = document.getElementById('loadingModal');
+  modal.classList.remove('hidden');
 }
 
 function hideLoadingModal() {
-  const modal = bootstrap.Modal.getInstance(document.getElementById('loadingModal'));
-  if (modal) {
-    modal.hide();
-  }
+  const modal = document.getElementById('loadingModal');
+  modal.classList.add('hidden');
 }
 
-function showSuccessMessage(message) {
-  const toast = `
-    <div class="toast align-items-center text-white bg-success border-0" role="alert">
-      <div class="d-flex">
-        <div class="toast-body">
-          <i class="fas fa-check-circle me-2"></i>
-          ${message}
-        </div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-      </div>
-    </div>
+function showNotification(message, type) {
+  // Créer une notification simple
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    z-index: 9999;
+    max-width: 400px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    ${type === 'success' ? 'background: #10b981;' : 'background: #ef4444;'}
   `;
+  notification.textContent = message;
 
-  let toastContainer = document.getElementById('toast-container');
-  if (!toastContainer) {
-    toastContainer = document.createElement('div');
-    toastContainer.id = 'toast-container';
-    toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-    toastContainer.style.zIndex = '9999';
-    document.body.appendChild(toastContainer);
-  }
+  document.body.appendChild(notification);
 
-  toastContainer.insertAdjacentHTML('beforeend', toast);
-  const toastElement = toastContainer.lastElementChild;
-  const bsToast = new bootstrap.Toast(toastElement);
-  bsToast.show();
+  // Supprimer après 4 secondes
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.parentNode.removeChild(notification);
+    }
+  }, 4000);
 }
 
-function showErrorMessage(message) {
-  const toast = `
-    <div class="toast align-items-center text-white bg-danger border-0" role="alert">
-      <div class="d-flex">
-        <div class="toast-body">
-          <i class="fas fa-times-circle me-2"></i>
-          ${message}
-        </div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-      </div>
-    </div>
-  `;
-
-  let toastContainer = document.getElementById('toast-container');
-  if (!toastContainer) {
-    toastContainer = document.createElement('div');
-    toastContainer.id = 'toast-container';
-    toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-    toastContainer.style.zIndex = '9999';
-    document.body.appendChild(toastContainer);
+// Initialize Lucide icons
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
   }
-
-  toastContainer.insertAdjacentHTML('beforeend', toast);
-  const toastElement = toastContainer.lastElementChild;
-  const bsToast = new bootstrap.Toast(toastElement);
-  bsToast.show();
-}
+});
 </script>
 
 {% endblock %}

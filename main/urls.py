@@ -4,16 +4,20 @@ from main.views.base_views import (
     home, login_view, dashboard, register_view, upload_excel, logout_view,
     search_index, choose_primary_index, contact_view, verify_email,
     resend_verification_code, cleanup_duplicate_indexes,
-    CustomPasswordChangeView, CustomPasswordChangeDoneView)
+    CustomPasswordChangeView, CustomPasswordChangeDoneView,
+    # SUPPRIMÉ: upgrade_plan_view, upgrade_plan_api (maintenant dans upgrade_plan_views)
+    password_reset_request, password_reset_code, password_reset_confirm,
+    resend_password_reset_code
+)
 from main.views.index_views import liste_index_view
 from main.views.chart_views import (index_viewer, toggle_favorite_ajax,
                                     get_index_data_ajax, export_analysis_data,
-                                    export_analysis_excel
-                                    )  # ← AJOUTER export_analysis_excel ici
-from main.views.user_views import toggle_favorite
+                                    export_analysis_excel)
+from main.views.user_views import toggle_favorite, get_user_plan_status
 from main.views.prix_indexes_views import prix_indexes_view, delete_structure, get_structure_data
-from main.views import prix_indexes_views, base_views
-from main.views.user_views import get_user_plan_status
+from main.views import prix_indexes_views
+# NOUVEAU: Import depuis upgrade_plan_views
+from main.views.upgrade_plan_views import upgrade_plan_view, upgrade_plan_api
 
 app_name = 'main'
 urlpatterns = [
@@ -66,30 +70,30 @@ urlpatterns = [
          name='get_index_data'),
     path('api/analysis/export/', export_analysis_data, name='export_analysis'),
     path('contact/', contact_view, name='contact'),
-    path('upgrade-plan/', base_views.upgrade_plan_view, name='upgrade_plan'),
-    path('api/upgrade-plan/',
-         base_views.upgrade_plan_api,
-         name='upgrade_plan_api'),
+
+    # CORRIGÉ: Maintenant depuis upgrade_plan_views
+    path('upgrade-plan/', upgrade_plan_view, name='upgrade_plan'),
+    path('api/upgrade-plan/', upgrade_plan_api, name='upgrade_plan_api'),
+
     path('api/plan-status/', get_user_plan_status, name='plan_status'),
     path('tools/cleanup-duplicates/',
          cleanup_duplicate_indexes,
          name='cleanup_duplicates'),
+    path('export-analysis-excel/',
+         export_analysis_excel,
+         name='export_analysis_excel'),
 
-    # ✅ CORRECTION : Utiliser directement la fonction importée
-    path(
-        'export-analysis-excel/',
-        export_analysis_excel,  # ← Sans chart_views. devant
-        name='export_analysis_excel'),
+    # Password reset URLs (restent dans base_views)
     path('password-reset/',
-         base_views.password_reset_request,
+         password_reset_request,
          name='password_reset_request'),
     path('password-reset-code/<int:request_id>/',
-         base_views.password_reset_code,
+         password_reset_code,
          name='password_reset_code'),
     path('password-reset-confirm/<int:request_id>/',
-         base_views.password_reset_confirm,
+         password_reset_confirm,
          name='password_reset_confirm'),
     path('resend-reset-code/<int:request_id>/',
-         base_views.resend_password_reset_code,
+         resend_password_reset_code,
          name='resend_password_reset_code'),
 ]
