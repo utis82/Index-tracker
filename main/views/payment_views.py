@@ -279,14 +279,42 @@ def payment_success(request):
                 }
             )
             
-            # If there's a subscription, create/update subscription record
+            # If there's a subscription, create/update subscription record safely
             if session.subscription:
                 subscription_data = session.subscription
                 if isinstance(subscription_data, str):
                     # If it's just an ID, retrieve the full subscription
                     subscription_data = stripe.Subscription.retrieve(subscription_data)
                 
-                from datetime import datetime, timezone
+                from datetime import datetime, timezone, timedelta
+                
+                # Safely extract timestamps (may not be available immediately after checkout)
+                current_period_start = None
+                current_period_end = None
+                
+                if hasattr(subscription_data, 'current_period_start') and subscription_data.current_period_start:
+                    current_period_start = datetime.fromtimestamp(subscription_data.current_period_start, tz=timezone.utc)
+                elif hasattr(subscription_data, 'get'):
+                    start_timestamp = subscription_data.get('current_period_start')
+                    if start_timestamp:
+                        current_period_start = datetime.fromtimestamp(start_timestamp, tz=timezone.utc)
+                
+                if hasattr(subscription_data, 'current_period_end') and subscription_data.current_period_end:
+                    current_period_end = datetime.fromtimestamp(subscription_data.current_period_end, tz=timezone.utc)
+                elif hasattr(subscription_data, 'get'):
+                    end_timestamp = subscription_data.get('current_period_end')
+                    if end_timestamp:
+                        current_period_end = datetime.fromtimestamp(end_timestamp, tz=timezone.utc)
+                
+                # If timestamps are missing, use fallback values
+                if not current_period_start:
+                    current_period_start = datetime.now(tz=timezone.utc)
+                    logger.warning(f"Missing current_period_start for subscription {subscription_data.id}, using current time")
+                
+                if not current_period_end:
+                    current_period_end = current_period_start + timedelta(days=30)
+                    logger.warning(f"Missing current_period_end for subscription {subscription_data.id}, using 30-day default")
+                
                 stripe_subscription, sub_created = StripeSubscription.objects.update_or_create(
                     stripe_subscription_id=subscription_data.id,
                     defaults={
@@ -294,8 +322,8 @@ def payment_success(request):
                         'stripe_customer': stripe_customer,
                         'subscription_plan': plan_type,
                         'status': subscription_data.status,
-                        'current_period_start': datetime.fromtimestamp(subscription_data.current_period_start, tz=timezone.utc),
-                        'current_period_end': datetime.fromtimestamp(subscription_data.current_period_end, tz=timezone.utc),
+                        'current_period_start': current_period_start,
+                        'current_period_end': current_period_end,
                     }
                 )
             else:
