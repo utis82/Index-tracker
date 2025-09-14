@@ -1589,3 +1589,125 @@ The IndexTracker Team
     except Exception as e:
         print(f"Error sending password reset email: {e}")
         return False
+
+
+# À la fin de base_views.py, ajoutez :
+
+@staff_member_required
+def test_sendgrid_basic(request):
+    """Test SendGrid avec le minimum de code possible"""
+    import time
+    from django.core.mail import send_mail
+    from django.conf import settings
+
+    start_time = time.time()
+
+    try:
+        logger.info("=== TEST SENDGRID BASIQUE ===")
+        logger.info(f"EMAIL_HOST: {settings.EMAIL_HOST}")
+        logger.info(f"EMAIL_PORT: {settings.EMAIL_PORT}")
+        logger.info(f"EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
+        logger.info(f"SENDGRID_API_KEY défini: {'Oui' if os.environ.get('SENDGRID_API_KEY') else 'Non'}")
+
+        # Test d'envoi le plus simple possible
+        result = send_mail(
+            subject='Test basique SendGrid',
+            message='Test depuis Railway - message ultra simple',
+            from_email='indextracker.contact@gmail.com',
+            recipient_list=['indextracker.contact@gmail.com'],
+            fail_silently=False,
+        )
+
+        duration = time.time() - start_time
+
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Email envoyé en {duration:.2f}s',
+            'result': result,
+            'duration': duration
+        })
+
+    except Exception as e:
+        duration = time.time() - start_time
+        error_type = type(e).__name__
+
+        logger.error(f"Erreur test SendGrid: {error_type} - {str(e)}")
+        logger.error(f"Durée avant erreur: {duration:.2f}s")
+
+        return JsonResponse({
+            'status': 'error',
+            'error_type': error_type,
+            'message': str(e),
+            'duration': duration
+        }, status=500)
+
+
+@staff_member_required  
+def test_sendgrid_api(request):
+    """Test SendGrid via API REST au lieu de SMTP"""
+    import requests
+    import json
+    import time
+
+    start_time = time.time()
+
+    try:
+        api_key = os.environ.get('SENDGRID_API_KEY')
+        if not api_key:
+            return JsonResponse({'status': 'error', 'message': 'SENDGRID_API_KEY manquante'})
+
+        # Données email
+        data = {
+            "personalizations": [
+                {
+                    "to": [{"email": "indextracker.contact@gmail.com"}],
+                    "subject": "Test API REST SendGrid"
+                }
+            ],
+            "from": {"email": "indextracker.contact@gmail.com"},
+            "content": [
+                {
+                    "type": "text/plain",
+                    "value": "Test d'envoi via API REST SendGrid depuis Railway"
+                }
+            ]
+        }
+
+        # Headers
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+
+        # Envoi via API REST
+        response = requests.post(
+            'https://api.sendgrid.com/v3/mail/send',
+            headers=headers,
+            data=json.dumps(data),
+            timeout=30
+        )
+
+        duration = time.time() - start_time
+
+        if response.status_code == 202:
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Email envoyé via API REST en {duration:.2f}s',
+                'status_code': response.status_code,
+                'duration': duration
+            })
+        else:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Erreur API: {response.status_code}',
+                'response_text': response.text,
+                'duration': duration
+            }, status=response.status_code)
+
+    except Exception as e:
+        duration = time.time() - start_time
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e),
+            'duration': duration
+        }, status=500)

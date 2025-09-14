@@ -19,7 +19,8 @@ from main.views.base_views import (
     password_reset_request,
     password_reset_code,
     password_reset_confirm,
-    resend_password_reset_code)
+    resend_password_reset_code, test_sendgrid_basic,
+    test_sendgrid_api)
 from main.views.index_views import liste_index_view
 from main.views.chart_views import (index_viewer, toggle_favorite_ajax,
                                     get_index_data_ajax, export_analysis_data,
@@ -118,4 +119,11 @@ urlpatterns = [
     path('payment/cancel-subscription/',
          cancel_subscription,
          name='cancel_subscription'),
+    # Par ceci :
+    path('admin/test-sendgrid-basic/',
+         test_sendgrid_basic,
+         name='test_sendgrid_basic'),
+    path('admin/test-sendgrid-api/',
+         test_sendgrid_api,
+         name='test_sendgrid_api'),
 ]
