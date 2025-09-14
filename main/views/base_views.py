@@ -403,7 +403,7 @@ def get_product_last_update(product, index_data):
     return latest_date.strftime("%Y-%m-%d")
 
 
-ddef contact_view(request):
+def contact_view(request):
     """View to handle contact form avec API REST SendGrid"""
 
     # Test SendGrid si paramètre test=sendgrid
