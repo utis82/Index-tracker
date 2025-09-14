@@ -1,4 +1,8 @@
-les variables d'environnement depuis .env (uniquement en local)
+#les variables d'environnement depuis .env (uniquement en local)
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+import dj_database_url
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
