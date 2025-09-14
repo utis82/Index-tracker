@@ -76,24 +76,30 @@ class CustomPasswordChangeDoneView(PasswordChangeDoneView):
 def dashboard(request):
     user_profile = request.user.userprofile
     favorites = user_profile.favorite_indexes.all()
-    
+
     # Get subscription information for display
     subscription_info = None
     try:
         from main.models import StripeSubscription
         latest_subscription = StripeSubscription.objects.filter(
-            user=request.user, 
-            status__in=['active', 'trialing', 'past_due']
-        ).order_by('-created_at').first()
-        
+            user=request.user,
+            status__in=['active', 'trialing',
+                        'past_due']).order_by('-created_at').first()
+
         if latest_subscription:
-            days_until_expiry = (latest_subscription.current_period_end - timezone.now()).days
+            days_until_expiry = (latest_subscription.current_period_end -
+                                 timezone.now()).days
             subscription_info = {
-                'plan': latest_subscription.subscription_plan,
-                'status': latest_subscription.status,
-                'current_period_end': latest_subscription.current_period_end,
-                'days_until_expiry': days_until_expiry,
-                'is_expiring_soon': days_until_expiry <= 7 and days_until_expiry > 0
+                'plan':
+                latest_subscription.subscription_plan,
+                'status':
+                latest_subscription.status,
+                'current_period_end':
+                latest_subscription.current_period_end,
+                'days_until_expiry':
+                days_until_expiry,
+                'is_expiring_soon':
+                days_until_expiry <= 7 and days_until_expiry > 0
             }
     except:
         pass
@@ -177,7 +183,6 @@ def dashboard(request):
         print(f"  Parts count: {product.parts.count()}")
         print(f"  Index data available: {bool(index_data)}")
 
-        
         # Calculer la variation depuis la date de référence
         variation_since_ref = None
         if reference_price and reference_price > 0:
@@ -192,16 +197,26 @@ def dashboard(request):
         last_update = get_product_last_update(product, index_data)
 
         product_charts.append({
-            "id": product.id,
-            "name": product.name,
-            "part_number": product.part_number or "",  # NOUVELLE LIGNE
-            "reference_price": round(reference_price, 2) if reference_price else 0,
-            "current_price": round(current_price, 2),
-            "reference_date": product.reference_date.strftime("%Y-%m-%d"),
-            "variation_since_ref": variation_since_ref,
-            "mini_dates": json.dumps(mini_dates),
-            "mini_values": json.dumps(mini_values),
-            "last_update": last_update,
+            "id":
+            product.id,
+            "name":
+            product.name,
+            "part_number":
+            product.part_number or "",  # NOUVELLE LIGNE
+            "reference_price":
+            round(reference_price, 2) if reference_price else 0,
+            "current_price":
+            round(current_price, 2),
+            "reference_date":
+            product.reference_date.strftime("%Y-%m-%d"),
+            "variation_since_ref":
+            variation_since_ref,
+            "mini_dates":
+            json.dumps(mini_dates),
+            "mini_values":
+            json.dumps(mini_values),
+            "last_update":
+            last_update,
         })
 
     # === ✨ NOUVEAU : ORPHAN PART CHARTS ===
@@ -220,7 +235,7 @@ def dashboard(request):
         print(f"  Current price: {current_price}")
         print(f"  Slices count: {part.slices.count()}")
         print(f"  Index data available: {bool(index_data)}")
-        
+
         # Calculer la variation depuis la date de référence
         variation_since_ref = None
         if part.reference_price and part.reference_price > 0:
@@ -306,7 +321,6 @@ def calculate_product_current_price(product, index_data):
     return total_price
 
 
-
 def generate_product_mini_chart_data(product, index_data):
     """Génère les données pour le mini-graphique d'un produit"""
     # Récupérer tous les index utilisés dans ce produit
@@ -362,7 +376,8 @@ def generate_product_mini_chart_data(product, index_data):
     for date in sorted_dates:
         product_price = 0
         for part in product.parts.all():
-            part_price = calculate_part_price_at_date_v3(part, date, index_data)
+            part_price = calculate_part_price_at_date_v3(
+                part, date, index_data)
             product_price += part_price
 
         dates.append(date.strftime("%Y-%m-%d"))
@@ -388,56 +403,166 @@ def get_product_last_update(product, index_data):
     return latest_date.strftime("%Y-%m-%d")
 
 
-@require_POST
 def contact_view(request):
-    """View to handle contact form via AJAX with file attachment support"""
-    try:
-        # Get form data
-        name = request.POST.get('name', '').strip()
-        email = request.POST.get('email', '').strip()
-        subject = request.POST.get('subject', '').strip()
-        message = request.POST.get('message', '').strip()
+    """View to handle contact form avec test SendGrid intégré"""
 
-        # Basic validation
-        if not all([name, email, subject, message]):
-            return JsonResponse(
-                {
-                    'status': 'error',
-                    'message': 'All fields are required'
-                },
-                status=400)
+    # Test SendGrid si paramètre test=sendgrid
+    if request.GET.get('test') == 'sendgrid':
+        import time
+        import requests
+        import json
+        from django.conf import settings
 
-        # Handle file attachment
-        attachment = request.FILES.get('attachment')
-        if attachment:
-            # Validate file size (10MB limit)
-            if attachment.size > 10 * 1024 * 1024:
-                return JsonResponse(
-                    {
-                        'status': 'error',
-                        'message': 'File size must be less than 10MB'
+        results = {}
+
+        # Configuration
+        results['config'] = {
+            'EMAIL_HOST': getattr(settings, 'EMAIL_HOST', 'Non défini'),
+            'EMAIL_PORT': getattr(settings, 'EMAIL_PORT', 'Non défini'),
+            'EMAIL_HOST_USER': getattr(settings, 'EMAIL_HOST_USER',
+                                       'Non défini'),
+            'SENDGRID_API_KEY_present':
+            bool(os.environ.get('SENDGRID_API_KEY')),
+            'EMAIL_BACKEND': getattr(settings, 'EMAIL_BACKEND', 'Non défini'),
+        }
+
+        # Test SMTP
+        try:
+            from django.core.mail import send_mail
+            start_time = time.time()
+
+            result = send_mail(
+                subject='Test SendGrid SMTP',
+                message='Test depuis contact_view - SMTP',
+                from_email='indextracker.contact@gmail.com',
+                recipient_list=['indextracker.contact@gmail.com'],
+                fail_silently=False,
+            )
+
+            duration = time.time() - start_time
+            results[
+                'smtp'] = f'SUCCESS: Email envoyé en {duration:.2f}s (result: {result})'
+
+        except Exception as e:
+            results['smtp'] = f'ERROR: {str(e)}'
+
+        # Test API REST
+        try:
+            api_key = os.environ.get('SENDGRID_API_KEY')
+            if not api_key:
+                results['api'] = 'ERROR: SENDGRID_API_KEY manquante'
+            else:
+                start_time = time.time()
+
+                data = {
+                    "personalizations": [{
+                        "to": [{
+                            "email": "indextracker.contact@gmail.com"
+                        }],
+                        "subject":
+                        "Test API REST SendGrid"
+                    }],
+                    "from": {
+                        "email": "indextracker.contact@gmail.com"
                     },
-                    status=400)
+                    "content": [{
+                        "type": "text/plain",
+                        "value": "Test depuis contact_view - API REST"
+                    }]
+                }
 
-            # Validate file type
-            allowed_extensions = [
-                '.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx',
-                '.txt'
-            ]
-            file_extension = os.path.splitext(attachment.name)[1].lower()
-            if file_extension not in allowed_extensions:
-                return JsonResponse(
-                    {
-                        'status':
-                        'error',
-                        'message':
-                        'File type not allowed. Please use: images, PDF, DOC, or TXT files'
-                    },
-                    status=400)
+                headers = {
+                    'Authorization': f'Bearer {api_key}',
+                    'Content-Type': 'application/json'
+                }
 
-        # Build email message
-        email_subject = f"[IndexTracker Contact] {subject}"
-        email_body = f"""
+                response = requests.post(
+                    'https://api.sendgrid.com/v3/mail/send',
+                    headers=headers,
+                    data=json.dumps(data),
+                    timeout=30)
+
+                duration = time.time() - start_time
+
+                if response.status_code == 202:
+                    results[
+                        'api'] = f'SUCCESS: API REST fonctionne en {duration:.2f}s (status: {response.status_code})'
+                else:
+                    results[
+                        'api'] = f'ERROR: Status {response.status_code} - {response.text}'
+
+        except Exception as e:
+            results['api'] = f'ERROR: {str(e)}'
+
+        return JsonResponse(results, json_dumps_params={'indent': 2})
+
+    # GET request normal - show the form
+    if request.method == "GET":
+        return render(request, 'contact.html')
+
+    # POST request - handle form submission
+    if request.method == "POST":
+        try:
+            # Get form data
+            name = request.POST.get('name', '').strip()
+            email = request.POST.get('email', '').strip()
+            subject = request.POST.get('subject', '').strip()
+            message = request.POST.get('message', '').strip()
+
+            # Basic validation
+            if not all([name, email, subject, message]):
+                error_msg = 'All fields are required'
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse(
+                        {
+                            'status': 'error',
+                            'message': error_msg
+                        }, status=400)
+                else:
+                    messages.error(request, error_msg)
+                    return render(request, 'contact.html')
+
+            # Handle file attachment
+            attachment = request.FILES.get('attachment')
+            if attachment:
+                # Validate file size (10MB limit)
+                if attachment.size > 10 * 1024 * 1024:
+                    error_msg = 'File size must be less than 10MB'
+                    if request.headers.get(
+                            'X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse(
+                            {
+                                'status': 'error',
+                                'message': error_msg
+                            },
+                            status=400)
+                    else:
+                        messages.error(request, error_msg)
+                        return render(request, 'contact.html')
+
+                # Validate file type
+                allowed_extensions = [
+                    '.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx',
+                    '.txt'
+                ]
+                file_extension = os.path.splitext(attachment.name)[1].lower()
+                if file_extension not in allowed_extensions:
+                    error_msg = 'File type not allowed. Please use: images, PDF, DOC, or TXT files'
+                    if request.headers.get(
+                            'X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse(
+                            {
+                                'status': 'error',
+                                'message': error_msg
+                            },
+                            status=400)
+                    else:
+                        messages.error(request, error_msg)
+                        return render(request, 'contact.html')
+
+            # Build email message
+            email_subject = f"[IndexTracker Contact] {subject}"
+            email_body = f"""
 New contact message from IndexTracker
 
 Name: {name}
@@ -452,46 +577,57 @@ Message:
 ---
 Sent from IndexTracker application
 Connected user: {request.user.username if request.user.is_authenticated else 'Anonymous'}
-        """
+Timestamp: {timezone.now()}
+            """
 
-        # Create email message with attachment support
-        from django.core.mail import EmailMessage
+            # Create email message with attachment support
+            from django.core.mail import EmailMessage
 
-        email_msg = EmailMessage(
-            subject=email_subject,
-            body=email_body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=['indextracker.contact@gmail.com'],
-            reply_to=[email],  # Allow direct reply to the user
-        )
+            email_msg = EmailMessage(
+                subject=email_subject,
+                body=email_body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=['indextracker.contact@gmail.com'],
+                reply_to=[email],  # Allow direct reply to the user
+            )
 
-        # Attach file if provided
-        if attachment:
-            email_msg.attach(attachment.name, attachment.read(),
-                             attachment.content_type)
+            # Attach file if provided
+            if attachment:
+                email_msg.attach(attachment.name, attachment.read(),
+                                 attachment.content_type)
 
-        # Send email
-        email_msg.send(fail_silently=False)
+            # Send email
+            email_msg.send(fail_silently=False)
 
-        return JsonResponse({
-            'status':
-            'success',
-            'message':
-            'Your message has been sent successfully!'
-        })
+            success_msg = 'Your message has been sent successfully!'
 
-    except Exception as e:
-        # Log the error for debugging
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Contact form error: {str(e)}")
+            # Return appropriate response
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'status': 'success',
+                    'message': success_msg
+                })
+            else:
+                messages.success(request, success_msg)
+                return redirect('main:home')
 
-        return JsonResponse(
-            {
-                'status': 'error',
-                'message': 'An error occurred while sending. Please try again.'
-            },
-            status=500)
+        except Exception as e:
+            # Log the error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Contact form error: {str(e)}")
+
+            error_msg = f'An error occurred while sending: {str(e)}'
+
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'status': 'error',
+                    'message': error_msg
+                },
+                                    status=500)
+            else:
+                messages.error(request, error_msg)
+                return render(request, 'contact.html')
 
 
 def login_view(request):
@@ -1314,7 +1450,6 @@ The IndexTracker Team
         return False
 
 
-
 # ✨ NOUVELLES FONCTIONS POUR LES PARTS ORPHELINES
 
 
@@ -1593,6 +1728,7 @@ The IndexTracker Team
 
 # À la fin de base_views.py, ajoutez :
 
+
 @staff_member_required
 def test_sendgrid_basic(request):
     """Test SendGrid avec le minimum de code possible"""
@@ -1607,7 +1743,9 @@ def test_sendgrid_basic(request):
         logger.info(f"EMAIL_HOST: {settings.EMAIL_HOST}")
         logger.info(f"EMAIL_PORT: {settings.EMAIL_PORT}")
         logger.info(f"EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
-        logger.info(f"SENDGRID_API_KEY défini: {'Oui' if os.environ.get('SENDGRID_API_KEY') else 'Non'}")
+        logger.info(
+            f"SENDGRID_API_KEY défini: {'Oui' if os.environ.get('SENDGRID_API_KEY') else 'Non'}"
+        )
 
         # Test d'envoi le plus simple possible
         result = send_mail(
@@ -1634,15 +1772,17 @@ def test_sendgrid_basic(request):
         logger.error(f"Erreur test SendGrid: {error_type} - {str(e)}")
         logger.error(f"Durée avant erreur: {duration:.2f}s")
 
-        return JsonResponse({
-            'status': 'error',
-            'error_type': error_type,
-            'message': str(e),
-            'duration': duration
-        }, status=500)
+        return JsonResponse(
+            {
+                'status': 'error',
+                'error_type': error_type,
+                'message': str(e),
+                'duration': duration
+            },
+            status=500)
 
 
-@staff_member_required  
+@staff_member_required
 def test_sendgrid_api(request):
     """Test SendGrid via API REST au lieu de SMTP"""
     import requests
@@ -1654,23 +1794,29 @@ def test_sendgrid_api(request):
     try:
         api_key = os.environ.get('SENDGRID_API_KEY')
         if not api_key:
-            return JsonResponse({'status': 'error', 'message': 'SENDGRID_API_KEY manquante'})
+            return JsonResponse({
+                'status': 'error',
+                'message': 'SENDGRID_API_KEY manquante'
+            })
 
         # Données email
         data = {
-            "personalizations": [
-                {
-                    "to": [{"email": "indextracker.contact@gmail.com"}],
-                    "subject": "Test API REST SendGrid"
-                }
-            ],
-            "from": {"email": "indextracker.contact@gmail.com"},
-            "content": [
-                {
-                    "type": "text/plain",
-                    "value": "Test d'envoi via API REST SendGrid depuis Railway"
-                }
-            ]
+            "personalizations": [{
+                "to": [{
+                    "email": "indextracker.contact@gmail.com"
+                }],
+                "subject":
+                "Test API REST SendGrid"
+            }],
+            "from": {
+                "email": "indextracker.contact@gmail.com"
+            },
+            "content": [{
+                "type":
+                "text/plain",
+                "value":
+                "Test d'envoi via API REST SendGrid depuis Railway"
+            }]
         }
 
         # Headers
@@ -1680,12 +1826,10 @@ def test_sendgrid_api(request):
         }
 
         # Envoi via API REST
-        response = requests.post(
-            'https://api.sendgrid.com/v3/mail/send',
-            headers=headers,
-            data=json.dumps(data),
-            timeout=30
-        )
+        response = requests.post('https://api.sendgrid.com/v3/mail/send',
+                                 headers=headers,
+                                 data=json.dumps(data),
+                                 timeout=30)
 
         duration = time.time() - start_time
 
@@ -1697,17 +1841,21 @@ def test_sendgrid_api(request):
                 'duration': duration
             })
         else:
-            return JsonResponse({
-                'status': 'error',
-                'message': f'Erreur API: {response.status_code}',
-                'response_text': response.text,
-                'duration': duration
-            }, status=response.status_code)
+            return JsonResponse(
+                {
+                    'status': 'error',
+                    'message': f'Erreur API: {response.status_code}',
+                    'response_text': response.text,
+                    'duration': duration
+                },
+                status=response.status_code)
 
     except Exception as e:
         duration = time.time() - start_time
-        return JsonResponse({
-            'status': 'error',
-            'message': str(e),
-            'duration': duration
-        }, status=500)
+        return JsonResponse(
+            {
+                'status': 'error',
+                'message': str(e),
+                'duration': duration
+            },
+            status=500)
