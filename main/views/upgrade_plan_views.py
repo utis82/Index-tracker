@@ -9,10 +9,20 @@ import json
 
 def upgrade_plan_view(request):
     """Vue pour afficher la page d'upgrade des plans"""
-    context = {
-        # Le contexte user est automatiquement disponible dans les templates
-        # Vous pouvez ajouter d'autres données si nécessaire
-    }
+    # Support users who are not logged in
+    if request.user.is_authenticated:
+        context = {
+            'user_authenticated': True,
+            'current_plan': request.user.userprofile.subscription_plan,
+            'favorite_count': request.user.userprofile.favorite_indexes.count(),
+            'index_limit': request.user.userprofile.index_limit,
+            'change_count': request.user.userprofile.primary_index_change_count,
+            'change_limit': request.user.userprofile.change_limit,
+        }
+    else:
+        context = {
+            'user_authenticated': False,
+        }
     return render(request, "upgrade_plan.html", context)
 
 @require_POST

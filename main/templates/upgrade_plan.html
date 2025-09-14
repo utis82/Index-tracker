@@ -7,12 +7,20 @@
   <!-- Header Section -->
   <div class="section-header">
     <h1 class="section-title">
-      <i data-lucide="crown"></i> Upgrade Your Plan
+      <i data-lucide="crown"></i> 
+      {% if user_authenticated %}Upgrade Your Plan{% else %}Choose Your Plan{% endif %}
     </h1>
-    <p class="section-subtitle">Choose the perfect plan for your indexing needs</p>
+    <p class="section-subtitle">
+      {% if user_authenticated %}
+        Choose the perfect plan for your indexing needs
+      {% else %}
+        Get started with index tracking - Sign up to access our powerful features
+      {% endif %}
+    </p>
   </div>
 
-  <!-- Current Plan Status -->
+  <!-- Current Plan Status (only for authenticated users) -->
+  {% if user_authenticated %}
   <div class="current-plan-card">
     <div class="plan-status-header">
       <h3>
@@ -22,30 +30,31 @@
     </div>
     <div class="plan-status-content">
       <div class="status-item">
-        <span class="plan-badge plan-badge-{{ user.userprofile.subscription_plan }}">{{ user.userprofile.subscription_plan|title }}</span>
+        <span class="plan-badge plan-badge-{{ current_plan }}">{{ current_plan|title }}</span>
       </div>
       <div class="status-item">
         <div class="usage-info">
-          <strong>{{ user.userprofile.favorite_indexes.count }}</strong> / 
-          <strong>{{ user.userprofile.index_limit }}</strong> 
+          <strong>{{ favorite_count }}</strong> / 
+          <strong>{{ index_limit }}</strong> 
           indexes used
         </div>
       </div>
       <div class="status-item">
         <div class="usage-info">
-          <strong>{{ user.userprofile.primary_index_change_count }}</strong> / 
-          <strong>{{ user.userprofile.change_limit }}</strong> 
+          <strong>{{ change_count }}</strong> / 
+          <strong>{{ change_limit }}</strong> 
           changes used
         </div>
       </div>
     </div>
   </div>
+  {% endif %}
 
   <!-- Pricing Cards -->
   <div class="pricing-grid">
     <!-- Free Plan -->
-    <div class="pricing-card {% if user.userprofile.subscription_plan == 'free' %}pricing-card-current{% endif %}">
-      {% if user.userprofile.subscription_plan == 'free' %}
+    <div class="pricing-card {% if user_authenticated and current_plan == 'free' %}pricing-card-current{% endif %}">
+      {% if user_authenticated and current_plan == 'free' %}
         <div class="plan-badge-top">Current Plan</div>
       {% endif %}
 
@@ -85,7 +94,9 @@
       </div>
 
       <div class="plan-action">
-        {% if user.userprofile.subscription_plan == 'free' %}
+        {% if not user_authenticated %}
+          <button class="btn-plan btn-upgrade" onclick="signUpFirst('free')">Get Started</button>
+        {% elif current_plan == 'free' %}
           <button class="btn-plan btn-current" disabled>Current Plan</button>
         {% else %}
           <button class="btn-plan btn-downgrade" onclick="downgrade('free')">Downgrade</button>
@@ -94,8 +105,8 @@
     </div>
 
     <!-- Starter Plan -->
-    <div class="pricing-card {% if user.userprofile.subscription_plan == '5_index' %}pricing-card-current{% endif %}">
-      {% if user.userprofile.subscription_plan == '5_index' %}
+    <div class="pricing-card {% if user_authenticated and current_plan == '5_index' %}pricing-card-current{% endif %}">
+      {% if user_authenticated and current_plan == '5_index' %}
         <div class="plan-badge-top">Current Plan</div>
       {% endif %}
 
@@ -135,9 +146,11 @@
       </div>
 
       <div class="plan-action">
-        {% if user.userprofile.subscription_plan == '5_index' %}
+        {% if not user_authenticated %}
+          <button class="btn-plan btn-upgrade" onclick="signUpFirst('5_index')">Sign Up & Subscribe</button>
+        {% elif current_plan == '5_index' %}
           <button class="btn-plan btn-current" disabled>Current Plan</button>
-        {% elif user.userprofile.subscription_plan == 'free' %}
+        {% elif current_plan == 'free' %}
           <button class="btn-plan btn-upgrade" onclick="upgrade('5_index')">Upgrade Now</button>
         {% else %}
           <button class="btn-plan btn-change" onclick="changePlan('5_index')">Switch Plan</button>
@@ -146,8 +159,8 @@
     </div>
 
     <!-- Professional Plan -->
-    <div class="pricing-card pricing-card-popular {% if user.userprofile.subscription_plan == '10_index' %}pricing-card-current{% endif %}">
-      {% if user.userprofile.subscription_plan == '10_index' %}
+    <div class="pricing-card pricing-card-popular {% if user_authenticated and current_plan == '10_index' %}pricing-card-current{% endif %}">
+      {% if user_authenticated and current_plan == '10_index' %}
         <div class="plan-badge-top">Current Plan</div>
       {% else %}
         <div class="plan-badge-top plan-badge-popular">Most Popular</div>
@@ -193,9 +206,11 @@
       </div>
 
       <div class="plan-action">
-        {% if user.userprofile.subscription_plan == '10_index' %}
+        {% if not user_authenticated %}
+          <button class="btn-plan btn-upgrade" onclick="signUpFirst('10_index')">Sign Up & Subscribe</button>
+        {% elif current_plan == '10_index' %}
           <button class="btn-plan btn-current" disabled>Current Plan</button>
-        {% elif user.userprofile.subscription_plan in 'free,5_index' %}
+        {% elif current_plan in 'free,5_index' %}
           <button class="btn-plan btn-upgrade" onclick="upgrade('10_index')">Upgrade Now</button>
         {% else %}
           <button class="btn-plan btn-change" onclick="changePlan('10_index')">Switch Plan</button>
@@ -204,8 +219,8 @@
     </div>
 
     <!-- Premium Plan -->
-    <div class="pricing-card {% if user.userprofile.subscription_plan == 'premium' %}pricing-card-current{% endif %}">
-      {% if user.userprofile.subscription_plan == 'premium' %}
+    <div class="pricing-card {% if user_authenticated and current_plan == 'premium' %}pricing-card-current{% endif %}">
+      {% if user_authenticated and current_plan == 'premium' %}
         <div class="plan-badge-top">Current Plan</div>
       {% else %}
         <div class="plan-badge-top plan-badge-enterprise">Enterprise</div>
@@ -255,7 +270,9 @@
       </div>
 
       <div class="plan-action">
-        {% if user.userprofile.subscription_plan == 'premium' %}
+        {% if not user_authenticated %}
+          <button class="btn-plan btn-upgrade" onclick="signUpFirst('premium')">Sign Up & Subscribe</button>
+        {% elif current_plan == 'premium' %}
           <button class="btn-plan btn-current" disabled>Current Plan</button>
         {% else %}
           <button class="btn-plan btn-upgrade" onclick="upgrade('premium')">Upgrade Now</button>
@@ -989,7 +1006,7 @@ function toggleFaq(element) {
 }
 
 function upgrade(plan) {
-  const currentPlan = "{{ user.userprofile.subscription_plan }}";
+  const currentPlan = "{% if user_authenticated %}{{ current_plan }}{% else %}free{% endif %}";
   
   // For paid plans, use Stripe checkout
   if (plan !== 'free') {
@@ -998,6 +1015,13 @@ function upgrade(plan) {
     // For downgrade to free, use secure cancellation endpoint
     cancelSubscription();
   }
+}
+
+function signUpFirst(plan) {
+  // Store the intended plan in session storage
+  sessionStorage.setItem('intended_plan', plan);
+  // Redirect to signup page
+  window.location.href = '/register/';
 }
 
 function createStripeCheckout(plan) {
@@ -1065,7 +1089,7 @@ function directPlanChange(plan) {
 }
 
 function changePlan(plan) {
-  const currentPlan = "{{ user.userprofile.subscription_plan }}";
+  const currentPlan = "{% if user_authenticated %}{{ current_plan }}{% else %}free{% endif %}";
   const action = plan === 'free' || (currentPlan === 'premium' && plan !== 'premium') ? 'downgrade' : 'upgrade';
 
   if (confirm(`Are you sure you want to ${action} to ${plan} plan?`)) {
