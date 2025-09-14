@@ -18,6 +18,8 @@ from main.views.prix_indexes_views import prix_indexes_view, delete_structure, g
 from main.views import prix_indexes_views
 # NOUVEAU: Import depuis upgrade_plan_views
 from main.views.upgrade_plan_views import upgrade_plan_view, upgrade_plan_api
+# Import payment views for Stripe integration
+from main.views.payment_views import create_checkout_session, payment_success, stripe_webhook, cancel_subscription
 
 app_name = 'main'
 urlpatterns = [
@@ -96,4 +98,18 @@ urlpatterns = [
     path('resend-reset-code/<int:request_id>/',
          resend_password_reset_code,
          name='resend_password_reset_code'),
+
+    # 💳 STRIPE PAYMENT URLS
+    path('payment/create-checkout-session/', 
+         create_checkout_session, 
+         name='create_checkout_session'),
+    path('payment/success/', 
+         payment_success, 
+         name='payment_success'),
+    path('payment/webhook/', 
+         stripe_webhook, 
+         name='stripe_webhook'),
+    path('payment/cancel-subscription/', 
+         cancel_subscription, 
+         name='cancel_subscription'),
 ]

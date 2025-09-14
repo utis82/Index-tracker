@@ -30,6 +30,21 @@ def upgrade_plan_api(request):
                 'success': False,
                 'message': 'Invalid plan selected'
             })
+        
+        # Block downgrades to free - must use secure cancellation endpoint
+        if new_plan == 'free':
+            return JsonResponse({
+                'success': False,
+                'message': 'Please use the cancellation option to downgrade to free plan'
+            })
+        
+        # Block upgrades to any paid plan - must go through Stripe checkout
+        paid_plans = ['5_index', '10_index', 'premium']
+        if new_plan in paid_plans:
+            return JsonResponse({
+                'success': False,
+                'message': 'Please use the upgrade buttons to purchase a paid plan'
+            })
 
         user_profile = request.user.userprofile
         old_plan = user_profile.subscription_plan

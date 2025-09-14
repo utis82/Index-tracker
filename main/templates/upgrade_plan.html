@@ -989,6 +989,49 @@ function toggleFaq(element) {
 }
 
 function upgrade(plan) {
+  const currentPlan = "{{ user.userprofile.subscription_plan }}";
+  
+  // For paid plans, use Stripe checkout
+  if (plan !== 'free') {
+    createStripeCheckout(plan);
+  } else {
+    // For downgrade to free, use secure cancellation endpoint
+    cancelSubscription();
+  }
+}
+
+function createStripeCheckout(plan) {
+  showLoadingModal();
+
+  fetch('/payment/create-checkout-session/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: JSON.stringify({
+      'plan_type': plan
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    hideLoadingModal();
+    if (data.success) {
+      // Redirect to Stripe checkout
+      window.location.href = data.checkout_url;
+    } else {
+      showNotification(data.error || 'Error creating checkout session', 'error');
+    }
+  })
+  .catch(error => {
+    hideLoadingModal();
+    showNotification('An error occurred while processing payment', 'error');
+    console.error('Error:', error);
+  });
+}
+
+function directPlanChange(plan) {
   showLoadingModal();
 
   fetch('/api/upgrade-plan/', {
@@ -1006,17 +1049,17 @@ function upgrade(plan) {
   .then(data => {
     hideLoadingModal();
     if (data.success) {
-      showNotification(`Successfully upgraded to ${plan} plan!`, 'success');
+      showNotification(`Successfully changed to ${plan} plan!`, 'success');
       setTimeout(() => {
         window.location.reload();
       }, 2000);
     } else {
-      showNotification(data.message || 'Error upgrading plan', 'error');
+      showNotification(data.message || 'Error changing plan', 'error');
     }
   })
   .catch(error => {
     hideLoadingModal();
-    showNotification('An error occurred while upgrading your plan', 'error');
+    showNotification('An error occurred while changing your plan', 'error');
     console.error('Error:', error);
   });
 }
@@ -1032,8 +1075,44 @@ function changePlan(plan) {
 
 function downgrade(plan) {
   if (confirm('Are you sure you want to downgrade? You may lose access to some features.')) {
-    upgrade(plan);
+    if (plan === 'free') {
+      // Use secure cancellation endpoint for downgrade to free
+      cancelSubscription();
+    } else {
+      // For plan switches (not to free), use regular upgrade
+      upgrade(plan);
+    }
   }
+}
+
+function cancelSubscription() {
+  showLoadingModal();
+
+  fetch('/payment/cancel-subscription/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    hideLoadingModal();
+    if (data.success) {
+      showNotification(data.message, 'success');
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } else {
+      showNotification(data.error || 'Error cancelling subscription', 'error');
+    }
+  })
+  .catch(error => {
+    hideLoadingModal();
+    showNotification('An error occurred while cancelling subscription', 'error');
+    console.error('Error:', error);
+  });
 }
 
 function showLoadingModal() {
