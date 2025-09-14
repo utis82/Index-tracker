@@ -3,9 +3,85 @@
 
 {% block content %}
 
+<style>
+.subscription-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.subscription-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.subscription-status, .subscription-expiry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.subscription-expiry small {
+  margin-left: 22px;
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .subscription-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+</style>
+
 <div class="dashboard-header with-badge">
   <h2>Welcome {{ user.username }}, here are your favorite indexes</h2>
-  <div class="subscription-badge">🔐 {{ subscription|capfirst }}</div>
+  <div class="subscription-info">
+    <div class="subscription-badge">🔐 {{ subscription|capfirst }}</div>
+    {% if subscription_info %}
+      <div class="subscription-details">
+        <div class="subscription-status">
+          {% if subscription_info.status == 'active' %}
+            <i data-lucide="check-circle" style="width: 16px; height: 16px; color: #10b981;"></i>
+            <span style="color: #10b981;">Active</span>
+          {% elif subscription_info.status == 'past_due' %}
+            <i data-lucide="alert-triangle" style="width: 16px; height: 16px; color: #f59e0b;"></i>
+            <span style="color: #f59e0b;">Past Due</span>
+          {% else %}
+            <i data-lucide="info" style="width: 16px; height: 16px; color: #6b7280;"></i>
+            <span style="color: #6b7280;">{{ subscription_info.status|capfirst }}</span>
+          {% endif %}
+        </div>
+        <div class="subscription-expiry">
+          {% if subscription_info.is_expiring_soon %}
+            <i data-lucide="clock" style="width: 16px; height: 16px; color: #ef4444;"></i>
+            <span style="color: #ef4444; font-weight: 600;">
+              Expires in {{ subscription_info.days_until_expiry }} day{{ subscription_info.days_until_expiry|pluralize }}
+            </span>
+          {% else %}
+            <i data-lucide="calendar" style="width: 16px; height: 16px; color: #6b7280;"></i>
+            <span style="color: #6b7280;">
+              {% if subscription_info.days_until_expiry > 0 %}
+                Expires in {{ subscription_info.days_until_expiry }} day{{ subscription_info.days_until_expiry|pluralize }}
+              {% else %}
+                Renewed {{ subscription_info.current_period_end|timesince }} ago
+              {% endif %}
+            </span>
+          {% endif %}
+          <small style="color: #9ca3af; display: block;">{{ subscription_info.current_period_end|date:"F d, Y" }}</small>
+        </div>
+      </div>
+    {% elif subscription == 'free' %}
+      <div class="subscription-details">
+        <a href="{% url 'main:upgrade_plan' %}" style="color: #3b82f6; text-decoration: none; font-weight: 500;">
+          <i data-lucide="arrow-up" style="width: 16px; height: 16px;"></i> Upgrade Plan
+        </a>
+      </div>
+    {% endif %}
+  </div>
 </div>
 
 <!-- SECTION MY INDEXES -->

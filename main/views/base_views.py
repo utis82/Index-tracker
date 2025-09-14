@@ -76,6 +76,27 @@ class CustomPasswordChangeDoneView(PasswordChangeDoneView):
 def dashboard(request):
     user_profile = request.user.userprofile
     favorites = user_profile.favorite_indexes.all()
+    
+    # Get subscription information for display
+    subscription_info = None
+    try:
+        from .models import StripeSubscription
+        latest_subscription = StripeSubscription.objects.filter(
+            user=request.user, 
+            status__in=['active', 'trialing', 'past_due']
+        ).order_by('-created_at').first()
+        
+        if latest_subscription:
+            days_until_expiry = (latest_subscription.current_period_end - timezone.now()).days
+            subscription_info = {
+                'plan': latest_subscription.subscription_plan,
+                'status': latest_subscription.status,
+                'current_period_end': latest_subscription.current_period_end,
+                'days_until_expiry': days_until_expiry,
+                'is_expiring_soon': days_until_expiry <= 7 and days_until_expiry > 0
+            }
+    except:
+        pass
 
     # === INDEX CHARTS (code existant) ===
     charts = []
@@ -246,6 +267,7 @@ def dashboard(request):
             "product_charts": product_charts,
             "orphan_part_charts": orphan_part_charts,  # ✨ AJOUT
             "subscription": user_profile.subscription_plan,
+            "subscription_info": subscription_info,  # ✨ NOUVEAU
             "favorite_ids": favorite_ids,
         })
 
