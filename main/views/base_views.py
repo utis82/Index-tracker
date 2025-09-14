@@ -403,140 +403,62 @@ def get_product_last_update(product, index_data):
     return latest_date.strftime("%Y-%m-%d")
 
 
+@require_POST
 def contact_view(request):
-    """View to handle contact form avec API REST SendGrid"""
+    """View to handle contact form via AJAX with SendGrid API REST"""
 
-    # Test SendGrid si paramètre test=sendgrid
-    if request.GET.get('test') == 'sendgrid':
-        import time
+    try:
+        from django.conf import settings
         import requests
         import json
-        from django.conf import settings
+        import base64
 
-        results = {}
+        # Get form data
+        name = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip()
+        subject = request.POST.get('subject', '').strip()
+        message = request.POST.get('message', '').strip()
 
-        # Configuration
-        results['config'] = {
-            'EMAIL_HOST': getattr(settings, 'EMAIL_HOST', 'Non défini'),
-            'EMAIL_PORT': getattr(settings, 'EMAIL_PORT', 'Non défini'),
-            'EMAIL_HOST_USER': getattr(settings, 'EMAIL_HOST_USER', 'Non défini'),
-            'SENDGRID_API_KEY_present': bool(os.environ.get('SENDGRID_API_KEY')),
-            'EMAIL_BACKEND': getattr(settings, 'EMAIL_BACKEND', 'Non défini'),
-        }
+        # Basic validation
+        if not all([name, email, subject, message]):
+            return JsonResponse(
+                {
+                    'status': 'error',
+                    'message': 'All fields are required'
+                },
+                status=400)
 
-        # Test SMTP
-        try:
-            from django.core.mail import send_mail
-            start_time = time.time()
+        # Handle file attachment
+        attachment = request.FILES.get('attachment')
+        if attachment:
+            # Validate file size (5MB limit pour API)
+            if attachment.size > 5 * 1024 * 1024:
+                return JsonResponse(
+                    {
+                        'status': 'error',
+                        'message': 'File size must be less than 5MB'
+                    },
+                    status=400)
 
-            result = send_mail(
-                subject='Test SendGrid SMTP',
-                message='Test depuis contact_view - SMTP',
-                from_email='indextracker.contact@gmail.com',
-                recipient_list=['indextracker.contact@gmail.com'],
-                fail_silently=False,
-            )
+            # Validate file type
+            allowed_extensions = [
+                '.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx',
+                '.txt'
+            ]
+            file_extension = os.path.splitext(attachment.name)[1].lower()
+            if file_extension not in allowed_extensions:
+                return JsonResponse(
+                    {
+                        'status':
+                        'error',
+                        'message':
+                        'File type not allowed. Please use: images, PDF, DOC, or TXT files'
+                    },
+                    status=400)
 
-            duration = time.time() - start_time
-            results['smtp'] = f'SUCCESS: Email envoyé en {duration:.2f}s (result: {result})'
-
-        except Exception as e:
-            results['smtp'] = f'ERROR: {str(e)}'
-
-        # Test API REST
-        try:
-            api_key = os.environ.get('SENDGRID_API_KEY')
-            if not api_key:
-                results['api'] = 'ERROR: SENDGRID_API_KEY manquante'
-            else:
-                start_time = time.time()
-
-                data = {
-                    "personalizations": [{
-                        "to": [{"email": "indextracker.contact@gmail.com"}],
-                        "subject": "Test API REST SendGrid"
-                    }],
-                    "from": {"email": "indextracker.contact@gmail.com"},
-                    "content": [{
-                        "type": "text/plain",
-                        "value": "Test depuis contact_view - API REST"
-                    }]
-                }
-
-                headers = {
-                    'Authorization': f'Bearer {api_key}',
-                    'Content-Type': 'application/json'
-                }
-
-                response = requests.post(
-                    'https://api.sendgrid.com/v3/mail/send',
-                    headers=headers,
-                    data=json.dumps(data),
-                    timeout=30
-                )
-
-                duration = time.time() - start_time
-
-                if response.status_code == 202:
-                    results['api'] = f'SUCCESS: API REST fonctionne en {duration:.2f}s (status: {response.status_code})'
-                else:
-                    results['api'] = f'ERROR: Status {response.status_code} - {response.text}'
-
-        except Exception as e:
-            results['api'] = f'ERROR: {str(e)}'
-
-        return JsonResponse(results, json_dumps_params={'indent': 2})
-
-    # GET request normal - show the form
-    if request.method == "GET":
-        return render(request, 'contact.html')
-
-    # POST request - handle form submission
-    if request.method == "POST":
-        try:
-            # Get form data
-            name = request.POST.get('name', '').strip()
-            email = request.POST.get('email', '').strip()
-            subject = request.POST.get('subject', '').strip()
-            message = request.POST.get('message', '').strip()
-
-            # Basic validation
-            if not all([name, email, subject, message]):
-                error_msg = 'All fields are required'
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({'status': 'error', 'message': error_msg}, status=400)
-                else:
-                    messages.error(request, error_msg)
-                    return render(request, 'contact.html')
-
-            # Handle file attachment
-            attachment = request.FILES.get('attachment')
-            if attachment:
-                # Validate file size (5MB limit pour API)
-                if attachment.size > 5 * 1024 * 1024:
-                    error_msg = 'File size must be less than 5MB'
-                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                        return JsonResponse({'status': 'error', 'message': error_msg}, status=400)
-                    else:
-                        messages.error(request, error_msg)
-                        return render(request, 'contact.html')
-
-                # Validate file type
-                allowed_extensions = [
-                    '.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx', '.txt'
-                ]
-                file_extension = os.path.splitext(attachment.name)[1].lower()
-                if file_extension not in allowed_extensions:
-                    error_msg = 'File type not allowed. Please use: images, PDF, DOC, or TXT files'
-                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                        return JsonResponse({'status': 'error', 'message': error_msg}, status=400)
-                    else:
-                        messages.error(request, error_msg)
-                        return render(request, 'contact.html')
-
-            # Build email message
-            email_subject = f"[IndexTracker Contact] {subject}"
-            email_body = f"""
+        # Build email message
+        email_subject = f"[IndexTracker Contact] {subject}"
+        email_body = f"""
 New contact message from IndexTracker
 
 Name: {name}
@@ -552,79 +474,79 @@ Message:
 Sent from IndexTracker application
 Connected user: {request.user.username if request.user.is_authenticated else 'Anonymous'}
 Timestamp: {timezone.now()}
-            """
+        """
 
-            # Envoi via API REST SendGrid (fonctionne sur Railway)
-            import requests
-            import json
-            import base64
+        # Envoi via API REST SendGrid
+        api_key = os.environ.get('SENDGRID_API_KEY')
+        if not api_key:
+            raise Exception("SENDGRID_API_KEY non configurée")
 
-            api_key = os.environ.get('SENDGRID_API_KEY')
-            if not api_key:
-                raise Exception("SENDGRID_API_KEY non configurée")
-
-            # Préparer les données email
-            email_data = {
-                "personalizations": [{
-                    "to": [{"email": "indextracker.contact@gmail.com"}],
-                    "subject": email_subject
+        # Préparer les données email
+        email_data = {
+            "personalizations": [{
+                "to": [{
+                    "email": "indextracker.contact@gmail.com"
                 }],
-                "from": {"email": settings.DEFAULT_FROM_EMAIL},
-                "reply_to": {"email": email},
-                "content": [{
-                    "type": "text/plain",
-                    "value": email_body
-                }]
-            }
+                "subject":
+                email_subject
+            }],
+            "from": {
+                "email": settings.DEFAULT_FROM_EMAIL
+            },
+            "reply_to": {
+                "email": email
+            },
+            "content": [{
+                "type": "text/plain",
+                "value": email_body
+            }]
+        }
 
-            # Ajouter la pièce jointe si présente
-            if attachment:
-                attachment_content = base64.b64encode(attachment.read()).decode()
-                email_data["attachments"] = [{
-                    "content": attachment_content,
-                    "filename": attachment.name,
-                    "type": attachment.content_type,
-                    "disposition": "attachment"
-                }]
+        # Ajouter la pièce jointe si présente
+        if attachment:
+            attachment_content = base64.b64encode(attachment.read()).decode()
+            email_data["attachments"] = [{
+                "content": attachment_content,
+                "filename": attachment.name,
+                "type": attachment.content_type,
+                "disposition": "attachment"
+            }]
 
-            # Envoyer via API REST
-            headers = {
-                'Authorization': f'Bearer {api_key}',
-                'Content-Type': 'application/json'
-            }
+        # Envoyer via API REST
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
 
-            response = requests.post(
-                'https://api.sendgrid.com/v3/mail/send',
-                headers=headers,
-                data=json.dumps(email_data),
-                timeout=30
+        response = requests.post('https://api.sendgrid.com/v3/mail/send',
+                                 headers=headers,
+                                 data=json.dumps(email_data),
+                                 timeout=30)
+
+        if response.status_code != 202:
+            raise Exception(
+                f"Erreur SendGrid API: {response.status_code} - {response.text}"
             )
 
-            if response.status_code != 202:
-                raise Exception(f"Erreur SendGrid API: {response.status_code} - {response.text}")
+        return JsonResponse({
+            'status':
+            'success',
+            'message':
+            'Your message has been sent successfully!'
+        })
 
-            success_msg = 'Your message has been sent successfully!'
+    except Exception as e:
+        # Log the error for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Contact form error: {str(e)}")
 
-            # Return appropriate response
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'status': 'success', 'message': success_msg})
-            else:
-                messages.success(request, success_msg)
-                return redirect('main:home')
-
-        except Exception as e:
-            # Log the error for debugging
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Contact form error: {str(e)}")
-
-            error_msg = f'An error occurred while sending: {str(e)}'
-
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'status': 'error', 'message': error_msg}, status=500)
-            else:
-                messages.error(request, error_msg)
-                return render(request, 'contact.html')
+        return JsonResponse(
+            {
+                'status': 'error',
+                'message': 'An error occurred while sending. Please try again.'
+            },
+            status=500)
 
 
 def login_view(request):
@@ -1723,136 +1645,5 @@ The IndexTracker Team
         return False
 
 
-# À la fin de base_views.py, ajoutez :
 
 
-@staff_member_required
-def test_sendgrid_basic(request):
-    """Test SendGrid avec le minimum de code possible"""
-    import time
-    from django.core.mail import send_mail
-    from django.conf import settings
-
-    start_time = time.time()
-
-    try:
-        logger.info("=== TEST SENDGRID BASIQUE ===")
-        logger.info(f"EMAIL_HOST: {settings.EMAIL_HOST}")
-        logger.info(f"EMAIL_PORT: {settings.EMAIL_PORT}")
-        logger.info(f"EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
-        logger.info(
-            f"SENDGRID_API_KEY défini: {'Oui' if os.environ.get('SENDGRID_API_KEY') else 'Non'}"
-        )
-
-        # Test d'envoi le plus simple possible
-        result = send_mail(
-            subject='Test basique SendGrid',
-            message='Test depuis Railway - message ultra simple',
-            from_email='indextracker.contact@gmail.com',
-            recipient_list=['indextracker.contact@gmail.com'],
-            fail_silently=False,
-        )
-
-        duration = time.time() - start_time
-
-        return JsonResponse({
-            'status': 'success',
-            'message': f'Email envoyé en {duration:.2f}s',
-            'result': result,
-            'duration': duration
-        })
-
-    except Exception as e:
-        duration = time.time() - start_time
-        error_type = type(e).__name__
-
-        logger.error(f"Erreur test SendGrid: {error_type} - {str(e)}")
-        logger.error(f"Durée avant erreur: {duration:.2f}s")
-
-        return JsonResponse(
-            {
-                'status': 'error',
-                'error_type': error_type,
-                'message': str(e),
-                'duration': duration
-            },
-            status=500)
-
-
-@staff_member_required
-def test_sendgrid_api(request):
-    """Test SendGrid via API REST au lieu de SMTP"""
-    import requests
-    import json
-    import time
-
-    start_time = time.time()
-
-    try:
-        api_key = os.environ.get('SENDGRID_API_KEY')
-        if not api_key:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'SENDGRID_API_KEY manquante'
-            })
-
-        # Données email
-        data = {
-            "personalizations": [{
-                "to": [{
-                    "email": "indextracker.contact@gmail.com"
-                }],
-                "subject":
-                "Test API REST SendGrid"
-            }],
-            "from": {
-                "email": "indextracker.contact@gmail.com"
-            },
-            "content": [{
-                "type":
-                "text/plain",
-                "value":
-                "Test d'envoi via API REST SendGrid depuis Railway"
-            }]
-        }
-
-        # Headers
-        headers = {
-            'Authorization': f'Bearer {api_key}',
-            'Content-Type': 'application/json'
-        }
-
-        # Envoi via API REST
-        response = requests.post('https://api.sendgrid.com/v3/mail/send',
-                                 headers=headers,
-                                 data=json.dumps(data),
-                                 timeout=30)
-
-        duration = time.time() - start_time
-
-        if response.status_code == 202:
-            return JsonResponse({
-                'status': 'success',
-                'message': f'Email envoyé via API REST en {duration:.2f}s',
-                'status_code': response.status_code,
-                'duration': duration
-            })
-        else:
-            return JsonResponse(
-                {
-                    'status': 'error',
-                    'message': f'Erreur API: {response.status_code}',
-                    'response_text': response.text,
-                    'duration': duration
-                },
-                status=response.status_code)
-
-    except Exception as e:
-        duration = time.time() - start_time
-        return JsonResponse(
-            {
-                'status': 'error',
-                'message': str(e),
-                'duration': duration
-            },
-            status=500)
