@@ -286,7 +286,7 @@ def payment_success(request):
                     # If it's just an ID, retrieve the full subscription
                     subscription_data = stripe.Subscription.retrieve(subscription_data)
                 
-                from datetime import datetime
+                from datetime import datetime, timezone
                 stripe_subscription, sub_created = StripeSubscription.objects.update_or_create(
                     stripe_subscription_id=subscription_data.id,
                     defaults={
@@ -294,8 +294,26 @@ def payment_success(request):
                         'stripe_customer': stripe_customer,
                         'subscription_plan': plan_type,
                         'status': subscription_data.status,
-                        'current_period_start': datetime.fromtimestamp(subscription_data.current_period_start),
-                        'current_period_end': datetime.fromtimestamp(subscription_data.current_period_end),
+                        'current_period_start': datetime.fromtimestamp(subscription_data.current_period_start, tz=timezone.utc),
+                        'current_period_end': datetime.fromtimestamp(subscription_data.current_period_end, tz=timezone.utc),
+                    }
+                )
+            else:
+                # For one-time payments (no subscription), create a basic subscription record
+                from datetime import datetime, timezone, timedelta
+                now = datetime.now(tz=timezone.utc)
+                # Set a 30-day period for one-time payments as a default
+                period_end = now + timedelta(days=30)
+                
+                stripe_subscription, sub_created = StripeSubscription.objects.update_or_create(
+                    stripe_subscription_id=f"onetime_{session.id}",  # Use session ID as unique identifier
+                    defaults={
+                        'user': request.user,
+                        'stripe_customer': stripe_customer,
+                        'subscription_plan': plan_type,
+                        'status': 'active',  # One-time payment is considered active
+                        'current_period_start': now,
+                        'current_period_end': period_end,
                     }
                 )
             
