@@ -101,22 +101,22 @@ class UserProfileAdmin(admin.ModelAdmin):
     def get_subscription_status(self, obj):
         """Get user's subscription status with color coding"""
         try:
+            from django.utils.html import format_html
             subscription = obj.user.stripe_subscriptions.filter(
                 status__in=['active', 'trialing', 'past_due']
             ).order_by('-created_at').first()
             if subscription:
                 status = subscription.status
                 if status == 'active':
-                    return f'<span style="color: green; font-weight: bold;">✓ {status.title()}</span>'
+                    return format_html('<span style="color: green; font-weight: bold;">✓ {}</span>', status.title())
                 elif status == 'past_due':
-                    return f'<span style="color: orange; font-weight: bold;">⚠ {status.title()}</span>'
+                    return format_html('<span style="color: orange; font-weight: bold;">⚠ {}</span>', status.title())
                 else:
-                    return f'<span style="color: blue;">{status.title()}</span>'
-            return '<span style="color: gray;">No subscription</span>'
+                    return format_html('<span style="color: blue;">{}</span>', status.title())
+            return format_html('<span style="color: gray;">No subscription</span>')
         except:
             return "N/A"
     get_subscription_status.short_description = "Status"
-    get_subscription_status.allow_tags = True
     
     def get_subscription_info_display(self, obj):
         """Detailed subscription information for admin detail view"""

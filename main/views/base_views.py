@@ -80,7 +80,7 @@ def dashboard(request):
     # Get subscription information for display
     subscription_info = None
     try:
-        from .models import StripeSubscription
+        from main.models import StripeSubscription
         latest_subscription = StripeSubscription.objects.filter(
             user=request.user, 
             status__in=['active', 'trialing', 'past_due']
