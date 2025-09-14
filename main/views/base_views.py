@@ -403,8 +403,8 @@ def get_product_last_update(product, index_data):
     return latest_date.strftime("%Y-%m-%d")
 
 
-def contact_view(request):
-    """View to handle contact form avec test SendGrid intégré"""
+ddef contact_view(request):
+    """View to handle contact form avec API REST SendGrid"""
 
     # Test SendGrid si paramètre test=sendgrid
     if request.GET.get('test') == 'sendgrid':
@@ -419,10 +419,8 @@ def contact_view(request):
         results['config'] = {
             'EMAIL_HOST': getattr(settings, 'EMAIL_HOST', 'Non défini'),
             'EMAIL_PORT': getattr(settings, 'EMAIL_PORT', 'Non défini'),
-            'EMAIL_HOST_USER': getattr(settings, 'EMAIL_HOST_USER',
-                                       'Non défini'),
-            'SENDGRID_API_KEY_present':
-            bool(os.environ.get('SENDGRID_API_KEY')),
+            'EMAIL_HOST_USER': getattr(settings, 'EMAIL_HOST_USER', 'Non défini'),
+            'SENDGRID_API_KEY_present': bool(os.environ.get('SENDGRID_API_KEY')),
             'EMAIL_BACKEND': getattr(settings, 'EMAIL_BACKEND', 'Non défini'),
         }
 
@@ -440,8 +438,7 @@ def contact_view(request):
             )
 
             duration = time.time() - start_time
-            results[
-                'smtp'] = f'SUCCESS: Email envoyé en {duration:.2f}s (result: {result})'
+            results['smtp'] = f'SUCCESS: Email envoyé en {duration:.2f}s (result: {result})'
 
         except Exception as e:
             results['smtp'] = f'ERROR: {str(e)}'
@@ -456,15 +453,10 @@ def contact_view(request):
 
                 data = {
                     "personalizations": [{
-                        "to": [{
-                            "email": "indextracker.contact@gmail.com"
-                        }],
-                        "subject":
-                        "Test API REST SendGrid"
+                        "to": [{"email": "indextracker.contact@gmail.com"}],
+                        "subject": "Test API REST SendGrid"
                     }],
-                    "from": {
-                        "email": "indextracker.contact@gmail.com"
-                    },
+                    "from": {"email": "indextracker.contact@gmail.com"},
                     "content": [{
                         "type": "text/plain",
                         "value": "Test depuis contact_view - API REST"
@@ -480,16 +472,15 @@ def contact_view(request):
                     'https://api.sendgrid.com/v3/mail/send',
                     headers=headers,
                     data=json.dumps(data),
-                    timeout=30)
+                    timeout=30
+                )
 
                 duration = time.time() - start_time
 
                 if response.status_code == 202:
-                    results[
-                        'api'] = f'SUCCESS: API REST fonctionne en {duration:.2f}s (status: {response.status_code})'
+                    results['api'] = f'SUCCESS: API REST fonctionne en {duration:.2f}s (status: {response.status_code})'
                 else:
-                    results[
-                        'api'] = f'ERROR: Status {response.status_code} - {response.text}'
+                    results['api'] = f'ERROR: Status {response.status_code} - {response.text}'
 
         except Exception as e:
             results['api'] = f'ERROR: {str(e)}'
@@ -513,11 +504,7 @@ def contact_view(request):
             if not all([name, email, subject, message]):
                 error_msg = 'All fields are required'
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse(
-                        {
-                            'status': 'error',
-                            'message': error_msg
-                        }, status=400)
+                    return JsonResponse({'status': 'error', 'message': error_msg}, status=400)
                 else:
                     messages.error(request, error_msg)
                     return render(request, 'contact.html')
@@ -525,37 +512,24 @@ def contact_view(request):
             # Handle file attachment
             attachment = request.FILES.get('attachment')
             if attachment:
-                # Validate file size (10MB limit)
-                if attachment.size > 10 * 1024 * 1024:
-                    error_msg = 'File size must be less than 10MB'
-                    if request.headers.get(
-                            'X-Requested-With') == 'XMLHttpRequest':
-                        return JsonResponse(
-                            {
-                                'status': 'error',
-                                'message': error_msg
-                            },
-                            status=400)
+                # Validate file size (5MB limit pour API)
+                if attachment.size > 5 * 1024 * 1024:
+                    error_msg = 'File size must be less than 5MB'
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse({'status': 'error', 'message': error_msg}, status=400)
                     else:
                         messages.error(request, error_msg)
                         return render(request, 'contact.html')
 
                 # Validate file type
                 allowed_extensions = [
-                    '.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx',
-                    '.txt'
+                    '.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx', '.txt'
                 ]
                 file_extension = os.path.splitext(attachment.name)[1].lower()
                 if file_extension not in allowed_extensions:
                     error_msg = 'File type not allowed. Please use: images, PDF, DOC, or TXT files'
-                    if request.headers.get(
-                            'X-Requested-With') == 'XMLHttpRequest':
-                        return JsonResponse(
-                            {
-                                'status': 'error',
-                                'message': error_msg
-                            },
-                            status=400)
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        return JsonResponse({'status': 'error', 'message': error_msg}, status=400)
                     else:
                         messages.error(request, error_msg)
                         return render(request, 'contact.html')
@@ -580,33 +554,60 @@ Connected user: {request.user.username if request.user.is_authenticated else 'An
 Timestamp: {timezone.now()}
             """
 
-            # Create email message with attachment support
-            from django.core.mail import EmailMessage
+            # Envoi via API REST SendGrid (fonctionne sur Railway)
+            import requests
+            import json
+            import base64
 
-            email_msg = EmailMessage(
-                subject=email_subject,
-                body=email_body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=['indextracker.contact@gmail.com'],
-                reply_to=[email],  # Allow direct reply to the user
+            api_key = os.environ.get('SENDGRID_API_KEY')
+            if not api_key:
+                raise Exception("SENDGRID_API_KEY non configurée")
+
+            # Préparer les données email
+            email_data = {
+                "personalizations": [{
+                    "to": [{"email": "indextracker.contact@gmail.com"}],
+                    "subject": email_subject
+                }],
+                "from": {"email": settings.DEFAULT_FROM_EMAIL},
+                "reply_to": {"email": email},
+                "content": [{
+                    "type": "text/plain",
+                    "value": email_body
+                }]
+            }
+
+            # Ajouter la pièce jointe si présente
+            if attachment:
+                attachment_content = base64.b64encode(attachment.read()).decode()
+                email_data["attachments"] = [{
+                    "content": attachment_content,
+                    "filename": attachment.name,
+                    "type": attachment.content_type,
+                    "disposition": "attachment"
+                }]
+
+            # Envoyer via API REST
+            headers = {
+                'Authorization': f'Bearer {api_key}',
+                'Content-Type': 'application/json'
+            }
+
+            response = requests.post(
+                'https://api.sendgrid.com/v3/mail/send',
+                headers=headers,
+                data=json.dumps(email_data),
+                timeout=30
             )
 
-            # Attach file if provided
-            if attachment:
-                email_msg.attach(attachment.name, attachment.read(),
-                                 attachment.content_type)
-
-            # Send email
-            email_msg.send(fail_silently=False)
+            if response.status_code != 202:
+                raise Exception(f"Erreur SendGrid API: {response.status_code} - {response.text}")
 
             success_msg = 'Your message has been sent successfully!'
 
             # Return appropriate response
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'status': 'success',
-                    'message': success_msg
-                })
+                return JsonResponse({'status': 'success', 'message': success_msg})
             else:
                 messages.success(request, success_msg)
                 return redirect('main:home')
@@ -620,11 +621,7 @@ Timestamp: {timezone.now()}
             error_msg = f'An error occurred while sending: {str(e)}'
 
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'status': 'error',
-                    'message': error_msg
-                },
-                                    status=500)
+                return JsonResponse({'status': 'error', 'message': error_msg}, status=500)
             else:
                 messages.error(request, error_msg)
                 return render(request, 'contact.html')
