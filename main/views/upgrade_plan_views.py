@@ -11,13 +11,14 @@ def upgrade_plan_view(request):
     """Vue pour afficher la page d'upgrade des plans"""
     # Support users who are not logged in
     if request.user.is_authenticated:
+        user_profile = request.user.userprofile
         context = {
             'user_authenticated': True,
-            'current_plan': request.user.userprofile.subscription_plan,
-            'favorite_count': request.user.userprofile.favorite_indexes.count(),
-            'index_limit': request.user.userprofile.index_limit,
-            'change_count': request.user.userprofile.primary_index_change_count,
-            'change_limit': request.user.userprofile.change_limit,
+            'current_plan': user_profile.subscription_plan,
+            'favorite_count': user_profile.favorite_indexes.count(),
+            'index_limit': user_profile.index_limit(),  # Method call
+            'change_count': user_profile.favorite_changes_count,  # Real attribute
+            'change_limit': user_profile.change_limit(),  # Method call
         }
     else:
         context = {
