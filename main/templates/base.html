@@ -6,6 +6,7 @@
 
   <meta charset="UTF-8">
   <title>{% block title %}My Index Platform{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
@@ -50,6 +51,7 @@
           <span class="slider"></span>
         </label>
         <a href="#" id="contact-btn"><i data-lucide="mail"></i> Contact</a>
+        <a href="{% url 'main:upgrade_plan' %}"><i data-lucide="credit-card"></i> Pricing</a>
         {% if user.is_authenticated %}
           <!-- Menu déroulant utilisateur -->
           <div class="user-dropdown">

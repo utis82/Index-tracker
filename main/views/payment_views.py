@@ -379,7 +379,13 @@ def payment_success(request):
             from django.contrib import messages
             from django.shortcuts import redirect
             
-            messages.success(request, f'🎉 Payment successful! Your {plan_type.replace("_", " ").title()} plan is now active.')
+            plan_display_name = {
+                '5_index': '5 Index',
+                '10_index': '10 Index', 
+                'premium': 'Premium'
+            }.get(plan_type, plan_type.replace("_", " ").title())
+            
+            messages.success(request, f'🎉 Payment successful! Your {plan_display_name} plan is now active. Welcome to your upgraded experience!')
             return redirect('/dashboard/')
             
         else:
