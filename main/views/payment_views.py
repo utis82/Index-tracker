@@ -236,7 +236,7 @@ def create_checkout_session(request):
 
 @login_required
 def payment_success(request):
-    """Handle successful payment and redirect"""
+    """Handle successful payment and update user plan"""
     session_id = request.GET.get('session_id')
     
     if not session_id:
@@ -246,16 +246,92 @@ def payment_success(request):
         })
     
     try:
-        # Retrieve the checkout session
-        session = stripe.checkout.Session.retrieve(session_id)
+        # Retrieve the checkout session with expanded data
+        session = stripe.checkout.Session.retrieve(
+            session_id, 
+            expand=['subscription', 'customer']
+        )
+        
+        # Verify this session belongs to the authenticated user
+        user_id_from_session = session.metadata.get('user_id')
+        if not user_id_from_session or int(user_id_from_session) != request.user.id:
+            logger.error(f"Session user_id mismatch: session={user_id_from_session}, user={request.user.id}")
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid session for this user'
+            })
         
         if session.payment_status == 'paid':
-            # Payment was successful, user subscription should be updated via webhook
-            return JsonResponse({
-                'success': True,
-                'message': 'Payment successful! Your plan has been upgraded.',
-                'plan_type': session.metadata.get('plan_type')
-            })
+            # Get the plan type from metadata
+            plan_type = session.metadata.get('plan_type')
+            if not plan_type:
+                logger.error(f"No plan_type in session metadata: {session_id}")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Plan type not found in session'
+                })
+            
+            # Update or create Stripe customer record
+            stripe_customer, created = StripeCustomer.objects.update_or_create(
+                user=request.user,
+                defaults={
+                    'stripe_customer_id': session.customer.id if hasattr(session.customer, 'id') else session.customer,
+                }
+            )
+            
+            # If there's a subscription, create/update subscription record
+            if session.subscription:
+                subscription_data = session.subscription
+                if isinstance(subscription_data, str):
+                    # If it's just an ID, retrieve the full subscription
+                    subscription_data = stripe.Subscription.retrieve(subscription_data)
+                
+                stripe_subscription, sub_created = StripeSubscription.objects.update_or_create(
+                    stripe_subscription_id=subscription_data.id,
+                    defaults={
+                        'user': request.user,
+                        'stripe_customer': stripe_customer,
+                        'subscription_plan': plan_type,
+                        'status': subscription_data.status,
+                        'current_period_start': subscription_data.current_period_start,
+                        'current_period_end': subscription_data.current_period_end,
+                    }
+                )
+            
+            # Create payment record
+            StripePayment.objects.create(
+                user=request.user,
+                stripe_payment_intent_id=session.payment_intent,
+                stripe_customer=stripe_customer,
+                amount=session.amount_total / 100,  # Convert from cents
+                currency=session.currency.upper(),
+                status='succeeded',
+                subscription_plan=plan_type
+            )
+            
+            # CRITICAL: Update user's subscription plan
+            user_profile = request.user.userprofile
+            user_profile.subscription_plan = plan_type
+            user_profile.save()
+            
+            logger.info(f"Successfully updated user {request.user.username} to plan {plan_type}")
+            
+            # Check if request wants JSON response (for AJAX calls)
+            if request.headers.get('Accept') == 'application/json':
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Payment successful! Your {plan_type} plan is now active.',
+                    'plan_type': plan_type,
+                    'redirect_url': '/dashboard/'
+                })
+            
+            # For regular browser requests, redirect to dashboard with success message
+            from django.contrib import messages
+            from django.shortcuts import redirect
+            
+            messages.success(request, f'🎉 Payment successful! Your {plan_type.replace("_", " ").title()} plan is now active.')
+            return redirect('/dashboard/')
+            
         else:
             return JsonResponse({
                 'success': False,
@@ -267,6 +343,12 @@ def payment_success(request):
         return JsonResponse({
             'success': False,
             'error': 'Error verifying payment. Please contact support.'
+        })
+    except Exception as e:
+        logger.error(f"Error processing payment success: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': 'An unexpected error occurred. Please contact support.'
         })
 
 
