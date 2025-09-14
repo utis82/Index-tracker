@@ -1,0 +1,25 @@
+INFO "GET /dashboard/ HTTP/1.1" 200 75622
+INFO "GET /upgrade-plan/ HTTP/1.1" 200 49170
+WARNING Not Found: /uprade-plan
+WARNING "GET /uprade-plan HTTP/1.1" 404 9907
+INFO "GET /upgrade-plan/ HTTP/1.1" 200 49170
+INFO message='Request to Stripe api' method=post url=https://api.stripe.com/v1/customers
+INFO message='Stripe API response' path=https://api.stripe.com/v1/customers response_code=403
+INFO error_code=secret_key_required error_message='This API call cannot be made with a publishable API key. Please use a secret API key. You can find a list of your API keys at https://dashboard.stripe.com/account/apikeys.' error_param=None error_type=invalid_request_error message='Stripe v1 API error received'
+ERROR Stripe error creating checkout session: Request req_nvXO02B47NpSOp: This API call cannot be made with a publishable API key. Please use a secret API key. You can find a list of your API keys at https://dashboard.stripe.com/account/apikeys.
+INFO "POST /payment/create-checkout-session/ HTTP/1.1" 200 74
+INFO message='Request to Stripe api' method=post url=https://api.stripe.com/v1/customers
+INFO message='Stripe API response' path=https://api.stripe.com/v1/customers response_code=403
+INFO error_code=secret_key_required error_message='This API call cannot be made with a publishable API key. Please use a secret API key. You can find a list of your API keys at https://dashboard.stripe.com/account/apikeys.' error_param=None error_type=invalid_request_error message='Stripe v1 API error received'
+ERROR Stripe error creating checkout session: Request req_jA0xAlrglsvvFW: This API call cannot be made with a publishable API key. Please use a secret API key. You can find a list of your API keys at https://dashboard.stripe.com/account/apikeys.
+INFO "POST /payment/create-checkout-session/ HTTP/1.1" 200 74
+INFO message='Request to Stripe api' method=post url=https://api.stripe.com/v1/customers
+INFO message='Stripe API response' path=https://api.stripe.com/v1/customers response_code=403
+INFO error_code=secret_key_required error_message='This API call cannot be made with a publishable API key. Please use a secret API key. You can find a list of your API keys at https://dashboard.stripe.com/account/apikeys.' error_param=None error_type=invalid_request_error message='Stripe v1 API error received'
+ERROR Stripe error creating checkout session: Request req_tQe0migjvNz2LU: This API call cannot be made with a publishable API key. Please use a secret API key. You can find a list of your API keys at https://dashboard.stripe.com/account/apikeys.
+INFO "POST /payment/create-checkout-session/ HTTP/1.1" 200 74
+INFO message='Request to Stripe api' method=post url=https://api.stripe.com/v1/customers
+INFO message='Stripe API response' path=https://api.stripe.com/v1/customers response_code=403
+INFO error_code=secret_key_required error_message='This API call cannot be made with a publishable API key. Please use a secret API key. You can find a list of your API keys at https://dashboard.stripe.com/account/apikeys.' error_param=None error_type=invalid_request_error message='Stripe v1 API error received'
+ERROR Stripe error creating checkout session: Request req_4aK38QpkvJFEaY: This API call cannot be made with a publishable API key. Please use a secret API key. You can find a list of your API keys at https://dashboard.stripe.com/account/apikeys.
+INFO "POST /payment/create-checkout-session/ HTTP/1.1" 200 74
