@@ -19,7 +19,8 @@ from main.views.base_views import (
     password_reset_request,
     password_reset_code,
     password_reset_confirm,
-    resend_password_reset_code, test_sendgrid_basic,
+    resend_password_reset_code,
+    test_sendgrid_basic,
     test_sendgrid_api)
 from main.views.index_views import liste_index_view
 from main.views.chart_views import (index_viewer, toggle_favorite_ajax,
