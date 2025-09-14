@@ -278,3 +278,19 @@ LOGGING = {
         },
     },
 }
+
+# 💳 STRIPE CONFIGURATION
+# Stripe settings for payment processing
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+
+# Stripe price IDs for different subscription plans
+STRIPE_PRICE_IDS = {
+    '5_index': os.environ.get('STRIPE_PRICE_ID_5_INDEX', ''),
+    '10_index': os.environ.get('STRIPE_PRICE_ID_10_INDEX', ''), 
+    'premium': os.environ.get('STRIPE_PRICE_ID_PREMIUM', ''),
+}
+
+# Enable test mode for development
+STRIPE_TEST_MODE = DEBUG

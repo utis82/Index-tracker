@@ -299,3 +299,72 @@ class PasswordResetRequest(models.Model):
         if not self.reset_code:
             self.reset_code = self.generate_code()
         super().save(*args, **kwargs)
+
+
+# 💳 STRIPE PAYMENT MODELS
+
+class StripeCustomer(models.Model):
+    """Model to store Stripe customer information"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='stripe_customer')
+    stripe_customer_id = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Stripe Customer: {self.user.username} - {self.stripe_customer_id}"
+
+
+class StripeSubscription(models.Model):
+    """Model to store Stripe subscription information"""
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('canceled', 'Canceled'),
+        ('incomplete', 'Incomplete'),
+        ('incomplete_expired', 'Incomplete Expired'),
+        ('past_due', 'Past Due'),
+        ('unpaid', 'Unpaid'),
+        ('trialing', 'Trialing'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='stripe_subscriptions')
+    stripe_subscription_id = models.CharField(max_length=255, unique=True)
+    stripe_customer = models.ForeignKey(StripeCustomer, on_delete=models.CASCADE, related_name='subscriptions')
+    subscription_plan = models.CharField(max_length=20, choices=UserProfile.PLAN_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='incomplete')
+    current_period_start = models.DateTimeField()
+    current_period_end = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Subscription: {self.user.username} - {self.subscription_plan} ({self.status})"
+
+    @property
+    def is_active(self):
+        """Check if subscription is active"""
+        return self.status == 'active'
+
+
+class StripePayment(models.Model):
+    """Model to store Stripe payment information"""
+    STATUS_CHOICES = [
+        ('succeeded', 'Succeeded'),
+        ('pending', 'Pending'),
+        ('failed', 'Failed'),
+        ('canceled', 'Canceled'),
+        ('processing', 'Processing'),
+        ('requires_action', 'Requires Action'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='stripe_payments')
+    stripe_payment_intent_id = models.CharField(max_length=255, unique=True)
+    stripe_customer = models.ForeignKey(StripeCustomer, on_delete=models.CASCADE, related_name='payments')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, default='EUR')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    subscription_plan = models.CharField(max_length=20, choices=UserProfile.PLAN_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Payment: {self.user.username} - {self.amount} {self.currency} ({self.status})"
