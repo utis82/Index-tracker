@@ -1,14 +1,25 @@
 # main/urls.py
 from django.urls import path
 from main.views.base_views import (
-    home, login_view, dashboard, register_view, upload_excel, logout_view,
-    search_index, choose_primary_index, contact_view, verify_email,
-    resend_verification_code, cleanup_duplicate_indexes,
-    CustomPasswordChangeView, CustomPasswordChangeDoneView,
+    home,
+    login_view,
+    dashboard,
+    register_view,
+    upload_excel,
+    logout_view,
+    search_index,
+    choose_primary_index,
+    contact_view,
+    verify_email,
+    resend_verification_code,
+    cleanup_duplicate_indexes,
+    CustomPasswordChangeView,
+    CustomPasswordChangeDoneView,
     # SUPPRIMÉ: upgrade_plan_view, upgrade_plan_api (maintenant dans upgrade_plan_views)
-    password_reset_request, password_reset_code, password_reset_confirm,
-    resend_password_reset_code
-)
+    password_reset_request,
+    password_reset_code,
+    password_reset_confirm,
+    resend_password_reset_code)
 from main.views.index_views import liste_index_view
 from main.views.chart_views import (index_viewer, toggle_favorite_ajax,
                                     get_index_data_ajax, export_analysis_data,
@@ -76,7 +87,6 @@ urlpatterns = [
     # CORRIGÉ: Maintenant depuis upgrade_plan_views
     path('upgrade-plan/', upgrade_plan_view, name='upgrade_plan'),
     path('api/upgrade-plan/', upgrade_plan_api, name='upgrade_plan_api'),
-
     path('api/plan-status/', get_user_plan_status, name='plan_status'),
     path('tools/cleanup-duplicates/',
          cleanup_duplicate_indexes,
@@ -100,16 +110,12 @@ urlpatterns = [
          name='resend_password_reset_code'),
 
     # 💳 STRIPE PAYMENT URLS
-    path('payment/create-checkout-session/', 
-         create_checkout_session, 
+    path('payment/create-checkout-session/',
+         create_checkout_session,
          name='create_checkout_session'),
-    path('payment/success/', 
-         payment_success, 
-         name='payment_success'),
-    path('payment/webhook/', 
-         stripe_webhook, 
-         name='stripe_webhook'),
-    path('payment/cancel-subscription/', 
-         cancel_subscription, 
+    path('payment/success/', payment_success, name='payment_success'),
+    path('payment/webhook/', stripe_webhook, name='stripe_webhook'),
+    path('payment/cancel-subscription/',
+         cancel_subscription,
          name='cancel_subscription'),
 ]

@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 import json
 
-@login_required
+
 def upgrade_plan_view(request):
     """Vue pour afficher la page d'upgrade des plans"""
     context = {
