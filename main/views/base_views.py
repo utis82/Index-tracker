@@ -547,10 +547,8 @@ Timestamp: {timezone.now()}
         })
 
     except Exception as e:
-        # Log the error for debugging
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Contact form error: {str(e)}")
+    # Log the error for debugging
+    logger.error(f"Contact form error: {str(e)}")
 
         return JsonResponse(
             {
