@@ -345,16 +345,19 @@ def payment_success(request):
                     }
                 )
             
-            # Create payment record
-            StripePayment.objects.create(
-                user=request.user,
-                stripe_payment_intent_id=session.payment_intent,
-                stripe_customer=stripe_customer,
-                amount=session.amount_total / 100,  # Convert from cents
-                currency=session.currency.upper(),
-                status='succeeded',
-                subscription_plan=plan_type
-            )
+            # Create payment record (only if payment_intent exists)
+            if session.payment_intent:
+                StripePayment.objects.create(
+                    user=request.user,
+                    stripe_payment_intent_id=session.payment_intent,
+                    stripe_customer=stripe_customer,
+                    amount=session.amount_total / 100,  # Convert from cents
+                    currency=session.currency.upper(),
+                    status='succeeded',
+                    subscription_plan=plan_type
+                )
+            else:
+                logger.info(f"No payment_intent in session {session.id}, skipping payment record creation")
             
             # CRITICAL: Update user's subscription plan
             user_profile = request.user.userprofile
