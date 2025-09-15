@@ -546,16 +546,17 @@ Timestamp: {timezone.now()}
             'Your message has been sent successfully!'
         })
 
-    except Exception as e:
-    # Log the error for debugging
-    logger.error(f"Contact form error: {str(e)}")
 
-        return JsonResponse(
-            {
-                'status': 'error',
-                'message': 'An error occurred while sending. Please try again.'
-            },
-            status=500)
+    except Exception as e:
+            # Log the error for debugging
+            logger.error(f"Contact form error: {str(e)}")
+
+            return JsonResponse(
+                {
+                    'status': 'error',
+                    'message': 'An error occurred while sending. Please try again.'
+                },
+                status=500)
 
 
 def login_view(request):
