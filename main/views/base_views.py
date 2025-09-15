@@ -518,21 +518,11 @@ Timestamp: {timezone.now()}
             'Content-Type': 'application/json'
         }
 
-
-        
-        logger.info(f"=== ENVOI SENDGRID ===")
-        logger.info(f"API Key présente: {'Oui' if api_key else 'Non'}")
-        logger.info(f"Données email: {json.dumps(email_data, indent=2)}")
-
         
         response = requests.post('https://api.sendgrid.com/v3/mail/send',
                                  headers=headers,
                                  data=json.dumps(email_data),
                                  timeout=30)
-
-
-        logger.info(f"Réponse SendGrid: {response.status_code}")
-        logger.info(f"Contenu réponse: {response.text}")
 
         if response.status_code != 202:
             raise Exception(
