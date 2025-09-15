@@ -251,24 +251,16 @@ def dashboard(request):
         last_update = get_part_last_update(part, index_data)
 
         orphan_part_charts.append({
-            "id":
-            part.id,
-            "name":
-            part.name,
-            "reference_price":
-            round(part.reference_price, 2),
-            "current_price":
-            round(current_price, 2),
-            "reference_date":
-            part.reference_date.strftime("%Y-%m-%d"),
-            "variation_since_ref":
-            variation_since_ref,
-            "mini_dates":
-            json.dumps(mini_dates),
-            "mini_values":
-            json.dumps(mini_values),
-            "last_update":
-            last_update,
+            "id": part.id,
+            "name": part.name,
+            "part_number": part.part_number or "",  # ✨ AJOUT - Correction du décalage de colonnes
+            "reference_price": round(part.reference_price, 2),
+            "current_price": round(current_price, 2),
+            "reference_date": part.reference_date.strftime("%Y-%m-%d"),
+            "variation_since_ref": variation_since_ref,
+            "mini_dates": json.dumps(mini_dates),
+            "mini_values": json.dumps(mini_values),
+            "last_update": last_update,
         })
 
     # Favoris IDs pour les étoiles
